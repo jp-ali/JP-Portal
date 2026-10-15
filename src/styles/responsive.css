@@ -621,3 +621,70 @@
           transition-duration: .01ms !important;
         }
       }
+
+      .admin-report-view .pdf-like-table-shell,
+      .admin-report-view .table-scroll,
+      .admin-report-view .attendance-admin-table-wrap {
+        max-height: 70vh;
+        max-height: 70dvh;
+        overflow: auto !important;
+        overscroll-behavior: contain;
+      }
+      .admin-report-view .pdf-like-table-shell table,
+      .admin-report-view .table-scroll table,
+      .admin-report-view .attendance-admin-table-wrap table {
+        display: table !important;
+        max-width: none !important;
+        overflow: visible !important;
+        border-collapse: separate !important;
+        border-spacing: 0;
+      }
+      .admin-report-view .pdf-like-table-shell thead th,
+      .admin-report-view .table-scroll thead th,
+      .admin-report-view .attendance-admin-table-wrap thead th {
+        position: sticky !important;
+        top: 0;
+        z-index: 5;
+        box-shadow: 0 1px 0 #ddcbd0;
+      }
+      .admin-report-view .attendance-admin-table-wrap thead tr:first-child th { height: 44px; }
+      .admin-report-view .attendance-admin-table-wrap thead tr:nth-child(2) th { top: 44px; }
+
+      .photo-viewer {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 20px;
+        background: rgba(0,0,0,.88);
+        cursor: zoom-out;
+      }
+      .photo-viewer-image {
+        max-width: 100%;
+        max-height: 75vh;
+        max-height: 75dvh;
+        object-fit: contain;
+        border-radius: 12px;
+      }
+      .photo-viewer-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; cursor: default; }
+      .photo-viewer-actions a,
+      .photo-viewer-actions button {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 9px 14px;
+        border: 0;
+        border-radius: 9px;
+        background: #7a0f2b;
+        color: #fff;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .photo-viewer-actions a { background: #15803d; }

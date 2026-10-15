@@ -1,15 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { addDoc, collection, deleteDoc, doc, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../../services/firebase";
 
 export function useMediaTrash({ user, reports, fetchAllReports, fetchMarketerReports, fetchAttendanceRecords, fetchDeletedMedia, getMarketerName }) {
 const [fullScreenImage, setFullScreenImage] = useState(null);
-useEffect(() => {
-if (!fullScreenImage) return;
-const closeImageOnEscape = (event) => { if (event.key === "Escape") { setFullScreenImage(null); setFullScreenMediaRecord(null); } };
-window.addEventListener("keydown", closeImageOnEscape);
-return () => window.removeEventListener("keydown", closeImageOnEscape);
-}, [fullScreenImage]);
 const [mediaMarketer, setMediaMarketer] = useState(null);
 const [selectedMediaIds, setSelectedMediaIds] = useState([]);
 const [selectedDeletedMediaIds, setSelectedDeletedMediaIds] = useState([]);

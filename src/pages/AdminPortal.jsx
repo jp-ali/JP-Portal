@@ -15,6 +15,7 @@ import AdminAddMarketerPanel from "./admin/AdminAddMarketerPanel.jsx";
 import AdminDeleteMarketerPanel from "./admin/AdminDeleteMarketerPanel.jsx";
 import AdminOldMarketersPanel from "./admin/AdminOldMarketersPanel.jsx";
 import React from "react";
+import PhotoViewer from "../ui/PhotoViewer.jsx";
 
 function AdminPortalContent({ context }) {
   const { adminCss, adminSidebarOpen, adminView, containerStyle, fetchActionPlans, fetchAllReports, fetchAllSamples, fetchAttendanceRecords, fetchCatalogues, fetchDeletedMarketers, fetchDeletedMedia, fetchLocationCatalog, fetchMarketers, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getTodayInputDate, globalStyle, handleLogout, marketerEmail, mediaView, openAdminExpenseReport, openVerificationCalls, pdfExportData, pdfTemplateRef, portalSkeletonLoading, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderMarketerPersonIcon, renderRedSkeleton, renderResponsiveStyles, reports, resetMarketerAssignmentForm, restoreMedia, setAdminActionPlanFromDate, setAdminActionPlanSearch, setAdminActionPlanToDate, setAdminAttendanceFromDate, setAdminAttendanceSearch, setAdminAttendanceToDate, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminSidebarOpen, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setCatalogueSearch, setEditingId, setEditingReturnToMarketerDetails, setFullScreenImage, setFullScreenMediaRecord, setMarketerAssignedKms, setMarketerDesignation, setMarketerEmail, setMarketerName, setMarketerPass, setMarketerPhone, setMarketerWhatsappGroupLink, setMarketerWhatsappGroupName, setMediaMarketer, setMediaView, setSelectedAdminAllBoxKey, setSelectedAdminAllSchoolBox, setSelectedAdminMarketerBox, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox, setSelectedDeletedMediaIds, setSelectedMarketerDetailBox, setSelectedMarketersFilter, setSelectedMediaIds, setSubordinateMarketerIds, setSubordinatePickerOpen, setSubordinateSearch, softDeleteMedia } = context;
@@ -283,19 +284,13 @@ onClick={() => openAdminSidebarSection(item.key)}
                 <div>Page 1 of 1</div>
             </div>
         </div>
-        {fullScreenImage && (
-<div onClick={() => { setFullScreenImage(null); setFullScreenMediaRecord(null); }} style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px", cursor:"zoom-out" }}>
-            <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: "100%", maxHeight: "80vh", position: "relative", cursor:"default" }}>
-              <img src={fullScreenImage} alt="Full View" style={{ maxWidth: "100%", maxHeight: "75vh", borderRadius: "12px", objectFit: "contain" }} />
-            </div>
-            <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", gap: "12px", marginTop: "20px" }}>
-              <a href={fullScreenImage} download="photo.jpg" style={{ padding: "10px 20px", background: "#8f1532", color: "white", borderRadius: "10px", textDecoration: "none", fontWeight: "600", fontSize: "14px" }}>📥 Download Image</a>
-              {fullScreenMediaRecord?.type === "active" && <button onClick={async()=>{const r=fullScreenMediaRecord.record;setFullScreenImage(null);setFullScreenMediaRecord(null);await softDeleteMedia(r);}} style={{ padding: "10px 20px", background: "#ef4444", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>🗑️ Delete Picture</button>}
-              {fullScreenMediaRecord?.type === "deleted" && <button onClick={async()=>{const r=fullScreenMediaRecord.record;setFullScreenImage(null);setFullScreenMediaRecord(null);await restoreMedia(r);}} style={{ padding: "10px 20px", background: "#86132f", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>♻️ Restore Picture</button>}
-              <button onClick={() => { setFullScreenImage(null); setFullScreenMediaRecord(null); }} style={{ padding: "10px 20px", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}>❌ Close</button>
-            </div>
-          </div>
-)}
+        <PhotoViewer
+          image={fullScreenImage}
+          mediaRecord={fullScreenMediaRecord}
+          onClose={() => { setFullScreenImage(null); setFullScreenMediaRecord(null); }}
+          onDelete={async (record) => { setFullScreenImage(null); setFullScreenMediaRecord(null); await softDeleteMedia(record); }}
+          onRestore={async (record) => { setFullScreenImage(null); setFullScreenMediaRecord(null); await restoreMedia(record); }}
+        />
         <div className="mobile-footer-area" style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", margin: "0 auto", padding: "18px 0 10px", position: "relative", left: 0, right: 0 }}>
           <button className="mobile-footer-logout" onClick={handleLogout} style={{ display: "flex", width: "104px", height: "36px", margin: "0 auto 8px", padding: "0 11px", alignItems: "center", justifyContent: "center", gap:"7px", alignSelf: "center", position: "static", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "#fff", border: "none", borderRadius: "7px", fontWeight: 800, fontSize: "13px", lineHeight: 1, textAlign: "center", cursor: "pointer", boxShadow: "0 5px 12px rgba(122,15,43,.26)" }}>{renderLogoutArrowIcon(16)} Logout</button>
           <div style={{ ...footerStyle, width: "100%", textAlign: "center", margin: "0 auto", padding: "0" }}>Created by Ali Ashfaq</div>
