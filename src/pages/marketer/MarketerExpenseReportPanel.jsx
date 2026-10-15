@@ -47,7 +47,7 @@ const totalOtherExpenses = totalTransport + totalNight + totalFood + totalOther;
 if (!rows.length) return <div style={{ padding:"18px", textAlign:"center", color:"#78686d", fontSize:"12px" }}>No attendance / expense data found for this range.</div>;
 return (
 <>
-<div className="expense-report-totals"><div><span>Calculated KMs</span><strong>{totalKms.toFixed(1).replace(/\.0$/,'')} KMs</strong></div><div><span>Petrol Expense</span><strong>Rs. {totalPetrol.toFixed(2)}</strong></div></div>
+<div className="expense-report-totals"><div><span>Calculated KMs</span><strong>{totalKms.toFixed(1).replace(/\.0$/,'')} KMs</strong></div><div><span>Petrol Expense</span><strong>Rs. {totalPetrol.toFixed(2)}</strong></div><div><span>Other Expense</span><strong>Rs. {totalOtherExpenses.toFixed(2)}</strong></div></div>
 <div className="table-scroll" style={{ overflowX:"auto", border:"1px solid #e4d7da", borderRadius:"12px", background:"#fff" }}>
                     <table style={{ width:"100%", minWidth:"1120px", borderCollapse:"collapse", background:"#fff", fontSize:"11px" }}>
                       <thead>

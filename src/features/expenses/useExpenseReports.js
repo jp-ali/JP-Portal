@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../services/firebase";
-import { calculatedKms, dailyAssignedKms, dailyPetrolExpense } from "./expenseCalculations.js";
+import { calculatedKms, dailyAssignedKms, dailyPetrolExpense, dailyPetrolRate } from "./expenseCalculations.js";
 
 export function useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12, groupRowsByMarketerAndDate }) {
 const [expenseReportFromDate, setExpenseReportFromDate] = useState("");
@@ -357,11 +357,12 @@ const marketer = marketersList.find((m) => String(m.email || "").toLowerCase() =
 return {
 kms: calculatedKms(row),
 assignedKms: dailyAssignedKms(row, marketer),
+petrolRate: dailyPetrolRate(row, adminExpensePetrolRates),
 petrolExpense: dailyPetrolExpense(row, marketer, adminExpensePetrolRates)
 };
 };
 const buildAdminExpenseExportRows = () => getFilteredAdminExpenseRows().map((row, index) => {
-const { kms, assignedKms, petrolExpense } = getAdminExpenseValues(row);
+const { kms, assignedKms, petrolRate, petrolExpense } = getAdminExpenseValues(row);
 const transport = Number(row?.transportExpense || 0);
 const nightStay = Number(row?.nightStayExpense || 0);
 const food = Number(row?.foodExpense || 0);
@@ -377,6 +378,7 @@ dayIn: row.startReading ?? "—",
 dayOut: row.endReading ?? "—",
 kms: Number.isFinite(kms) ? kms : 0,
 assignedKms,
+petrolRate,
 petrolExpense,
 transport,
 nightStay,
@@ -414,7 +416,8 @@ const data = rows.map((row) => ({
 "Day In Reading": row.dayIn,
 "Day Out Reading": row.dayOut,
 "Calculated KMs": Number(row.kms.toFixed(1)),
-"Assigned KMs / Litre": Number(row.assignedKms.toFixed(1)),
+"Assigned KMs": Number(row.assignedKms.toFixed(1)),
+"Rate / L": row.petrolRate === null ? "" : Number(row.petrolRate.toFixed(2)),
 "Petrol Expense": Number(row.petrolExpense.toFixed(2)),
 "Transport": Number(row.transport.toFixed(2)),
 "Night Stay": Number(row.nightStay.toFixed(2)),
@@ -430,7 +433,8 @@ data.push({
 "Day In Reading": "",
 "Day Out Reading": "",
 "Calculated KMs": Number(totalKms.toFixed(1)),
-"Assigned KMs / Litre": "",
+"Assigned KMs": "",
+"Rate / L": "",
 "Petrol Expense": Number(totalPetrol.toFixed(2)),
 "Transport": Number(totalTransport.toFixed(2)),
 "Night Stay": Number(totalNight.toFixed(2)),
@@ -441,7 +445,7 @@ data.push({
 const worksheet = window.XLSX.utils.json_to_sheet(data);
 worksheet["!cols"] = [
 { wch: 6 }, { wch: 28 }, { wch: 15 }, { wch: 24 }, { wch: 16 }, { wch: 16 },
-{ wch: 16 }, { wch: 19 }, { wch: 17 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 20 }
+{ wch: 16 }, { wch: 16 }, { wch: 13 }, { wch: 17 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 20 }
 ];
 const workbook = window.XLSX.utils.book_new();
 window.XLSX.utils.book_append_sheet(workbook, worksheet, "Expense Report");
@@ -459,8 +463,8 @@ const PAGE_W = 841.89, PAGE_H = 595.28, MM = 72 / 25.4;
 const LEFT = 7, RIGHT = 290, TABLE_TOP = 38, CONTENT_BOTTOM = 193;
 const columns = [
 ["Sr.", 7], ["Marketer", 23], ["Date", 19], ["Sr#", 7], ["Time", 23], ["Day In", 18], ["Day Out", 18],
-["KMs", 14], ["Petrol Expense", 18], ["Assigned KMs", 17], ["Transport", 22],
-["Night Stay", 22], ["Food", 22], ["Other", 22], ["Total Other", 31]
+["KMs", 14], ["Assigned KMs", 17], ["Rate / L", 15], ["Petrol Expense", 18], ["Transport", 20],
+["Night Stay", 20], ["Food", 20], ["Other", 20], ["Total Other", 24]
 ];
 const esc = (v) => ascii(v).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 const textWidth = (txt, size) => ascii(txt).length * size * .50;
@@ -524,7 +528,7 @@ if(available<8){page=newPage();pages.push(page);available=CONTENT_BOTTOM-page.y;
 const chunk=[];let used=0;
 for(let index=offset;index<flat.length;index++){
 const entry=flat[index],row=entry.row;
-const values=[entry.itemIndex+1,row.time,row.dayIn,row.dayOut,Number(row.kms).toFixed(1).replace(/\.0$/, ""),`Rs. ${Number(row.petrolExpense).toFixed(2)}`,Number(row.assignedKms).toFixed(1).replace(/\.0$/, ""),`Rs. ${Number(row.transport).toFixed(2)}`,`Rs. ${Number(row.nightStay).toFixed(2)}`,`Rs. ${Number(row.food).toFixed(2)}`,`Rs. ${Number(row.other).toFixed(2)}`,`Rs. ${Number(row.totalOtherExpense).toFixed(2)}`];
+const values=[entry.itemIndex+1,row.time,row.dayIn,row.dayOut,Number(row.kms).toFixed(1).replace(/\.0$/, ""),Number(row.assignedKms).toFixed(1).replace(/\.0$/, ""),row.petrolRate === null ? "-" : `Rs. ${Number(row.petrolRate).toFixed(2)}`,`Rs. ${Number(row.petrolExpense).toFixed(2)}`,`Rs. ${Number(row.transport).toFixed(2)}`,`Rs. ${Number(row.nightStay).toFixed(2)}`,`Rs. ${Number(row.food).toFixed(2)}`,`Rs. ${Number(row.other).toFixed(2)}`,`Rs. ${Number(row.totalOtherExpense).toFixed(2)}`];
 const height=Math.min(18,Math.max(8,2.8+Math.max(...values.map((value,column)=>wrapText(value,columns[column+3][1]*MM-4*MM,5.5).length))*3.05));
 if(chunk.length&&used+height>available)break;
 if(!chunk.length&&height>available)break;
@@ -549,7 +553,7 @@ page.y+=used;offset+=chunk.length;
 }
 });
 const totalKms=rows.reduce((s,r)=>s+Number(r.kms||0),0), totalPetrol=rows.reduce((s,r)=>s+Number(r.petrolExpense||0),0), totalTransport=rows.reduce((s,r)=>s+Number(r.transport||0),0), totalNight=rows.reduce((s,r)=>s+Number(r.nightStay||0),0), totalFood=rows.reduce((s,r)=>s+Number(r.food||0),0), totalOther=rows.reduce((s,r)=>s+Number(r.other||0),0), totalAll=rows.reduce((s,r)=>s+Number(r.totalOtherExpense||0),0);
-drawRow(["","","TOTAL","","","","",`${totalKms.toFixed(1)} KMs`,`Rs. ${totalPetrol.toFixed(2)}`,"",`Rs. ${totalTransport.toFixed(2)}`,`Rs. ${totalNight.toFixed(2)}`,`Rs. ${totalFood.toFixed(2)}`,`Rs. ${totalOther.toFixed(2)}`,`Rs. ${totalAll.toFixed(2)}`],true);
+drawRow(["","","TOTAL","","","","",`${totalKms.toFixed(1)} KMs`,"","",`Rs. ${totalPetrol.toFixed(2)}`,`Rs. ${totalTransport.toFixed(2)}`,`Rs. ${totalNight.toFixed(2)}`,`Rs. ${totalFood.toFixed(2)}`,`Rs. ${totalOther.toFixed(2)}`,`Rs. ${totalAll.toFixed(2)}`],true);
 pages.forEach((pg,idx)=>{pg.content.push(rectCmd(LEFT,197,RIGHT-LEFT,10,.45,[.995,.958,.968]));pg.content.push(drawText(148.5,203,"Created by Ali Ashfaq",7.5,"center",true));pg.content.push(drawText(10,203,"Admin Expense Report",6.3,"left"));pg.content.push(drawText(287,203,`Page ${idx+1} of ${pages.length}`,6.3,"right"));});
 const objects=[]; const addObject=(body)=>{objects.push(body);return objects.length;}; const f1=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"), f2=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"); const contentIds=[],pageIds=[];
 pages.forEach((pg)=>{const stream=pg.content.join("\n")+"\n";contentIds.push(addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`));pageIds.push(0);}); const pagesId=addObject("");

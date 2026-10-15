@@ -12,12 +12,17 @@ export function dailyAssignedKms(row, marketer) {
   return Number.isFinite(value) && value > 0 ? value : 0;
 }
 
-export function dailyPetrolExpense(row, marketer, petrolRates) {
+export function dailyPetrolRate(row, petrolRates = {}) {
   const date = String(row?.date || "").trim();
   const savedRate = date && Object.prototype.hasOwnProperty.call(petrolRates, date) ? Number(petrolRates[date]) : null;
   const rowRate = row?.petrolRate === "" || row?.petrolRate == null ? null : Number(row.petrolRate);
   const rate = savedRate !== null ? savedRate : rowRate;
+  return rate !== null && Number.isFinite(rate) && rate >= 0 ? rate : null;
+}
+
+export function dailyPetrolExpense(row, marketer, petrolRates) {
+  const rate = dailyPetrolRate(row, petrolRates);
   const assigned = dailyAssignedKms(row, marketer);
-  if (rate === null || !Number.isFinite(rate) || rate < 0 || !assigned) return 0;
+  if (rate === null || !assigned) return 0;
   return (calculatedKms(row) / assigned) * rate;
 }
