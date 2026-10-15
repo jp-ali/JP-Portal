@@ -5,6 +5,11 @@ import { globalStyle, containerStyle, cardStyle, inputStyle, btnPrimary, footerS
 import PortalLoading from "./ui/PortalLoading.jsx";
 
 const loadPortalApp = () => import("./PortalApp.jsx");
+const preloadPortal = () => Promise.all([
+  loadPortalApp(),
+  import("./pages/AdminPortal.jsx"),
+  import("./pages/MarketerPortal.jsx")
+]);
 const PortalApp = lazy(loadPortalApp);
 
 export default function App() {
@@ -28,7 +33,8 @@ export default function App() {
     try {
       const user = await login(identifier, password);
       setPassword("");
-      setSession({ loading: false, user });
+    setSession({ loading: false, user });
+    preloadPortal().catch(() => {});
     } catch (failure) {
       setError(failure.message || "Login failed");
     }
@@ -50,7 +56,7 @@ export default function App() {
 
   return <LoginPage context={{
     btnPrimary, cardStyle, containerStyle, error, footerStyle, globalStyle,
-    handleLogin, identifier, inputStyle, password, preloadPortal: loadPortalApp,
+    handleLogin, identifier, inputStyle, password, preloadPortal,
     renderBackgroundStationary, renderResponsiveStyles,
     setIdentifier, setPassword, setShowPassword, showPassword
   }} />;

@@ -52,6 +52,7 @@ return;
 if (key === "visits") {
 setAdminView("visits");
 fetchAllReports();
+fetchMarketers();
 setSelectedAdminAllBoxKey(null);
 setSelectedAdminAllSchoolBox(null);
 setAllVisitsFromDate("");

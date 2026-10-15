@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 export default function LoginPage({ context }) {
   const { btnPrimary, cardStyle, containerStyle, error, footerStyle, globalStyle, handleLogin, identifier, inputStyle, password, preloadPortal, renderBackgroundStationary, renderResponsiveStyles, setIdentifier, setPassword, setShowPassword, showPassword } = context;
+  useEffect(() => { preloadPortal().catch(() => {}); }, [preloadPortal]);
 
 return (
 <div style={globalStyle}>

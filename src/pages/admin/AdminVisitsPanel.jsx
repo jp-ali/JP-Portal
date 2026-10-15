@@ -1,5 +1,6 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
 
 export default function AdminVisitsPanel() {
   const { allVisitsFromDate, allVisitsToDate, cardStyle, downloadExcel, downloadPDF, getDateKey, getMarketerName, handleDeletePicture, handleDeleteVisit, inputStyle, isDateInRange, marketersList, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, reports, selectedAdminAllSchoolBox, selectedMarketersFilter, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setFullScreenImage, setSelectedAdminAllSchoolBox, setSelectedMarketersFilter } = usePortalContext();
@@ -76,30 +77,15 @@ style={{ padding: "4px 10px", background: "#ffffff", color: "#7a0f2b", border: "
                           <span style={{ fontSize: "11px", color: "#78686d" }}>To Date:</span>
                           <input type="date" lang="en-GB" value={allVisitsToDate} onChange={(e) => setAllVisitsToDate(e.target.value)} style={{ ...inputStyle, padding: "8px", colorScheme: "light" }} />
                         </div>
-                      </div>
-                    </div>
-                    <div style={{ background: "rgba(255,255,255,0.96)", padding: "14px", borderRadius: "12px", marginBottom: "16px", border: "1px solid rgba(143,21,50,.22)" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                        <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#b6405b" }}>2. Select Marketer(s)</label>
-                        <button onClick={() => setSelectedMarketersFilter(selectedMarketersFilter.length === marketersList.length ? [] : marketersList.map(m => m.email))} style={{ padding: "5px 9px", background: "#a42243", color: "white", border: "none", borderRadius: "7px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>{selectedMarketersFilter.length === marketersList.length && marketersList.length ? "☑ Clear All" : "☑ Select All"}</button>
-                      </div>
-                      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", maxHeight: "120px", overflowY: "auto" }}>
-                        {marketersList.map(m => {
-const isSelected = selectedMarketersFilter.includes(m.email);
-return (
-<button key={m.id} type="button" onClick={() => setSelectedMarketersFilter(prev => isSelected ? prev.filter(email => email !== m.email) : [...prev, m.email])} style={{ padding: "8px 13px", borderRadius: "9px", cursor: "pointer", fontSize: "13px", fontWeight: isSelected ? "700" : "500", color: isSelected ? "#fff" : "#5c484e", background: isSelected ? "#5e4b50" : "rgba(250,246,247,.98)", border: isSelected ? "1px solid #756369" : "1px solid rgba(123,16,43,.10)", boxShadow: isSelected ? "inset 0 0 0 1px rgba(123,16,43,.09)" : "none" }}>
-                              {isSelected ? "✓ " : ""}{m.name || m.email}
-                            </button>
-);
-})}
+                        <MarketerMultiSelect marketers={marketersList} selected={selectedMarketersFilter} onChange={setSelectedMarketersFilter} inputStyle={inputStyle} />
                       </div>
                     </div>
                     <h4 style={{ color: "#5c484e", fontSize: "15px", marginBottom: "10px" }}>Filtered Visits List:</h4>
                     {allVisitsFromDate && allVisitsToDate ? (
-<div style={{ marginBottom: "10px", padding: "10px 12px", borderRadius: "10px", background: "rgba(143,21,50,.08)", border: "1px solid rgba(143,21,50,.18)", color: "#d5a4af", fontSize: "13px" }}>Selected marketer(s): <strong>{selectedMarketersFilter.length}</strong> &nbsp;•&nbsp; Visits in selected range: <strong>{reports.filter(r => r.createdAt && isDateInRange(r.createdAt, allVisitsFromDate, allVisitsToDate) && selectedMarketersFilter.includes(r.marketerEmail)).length}</strong></div>
+<div style={{ marginBottom: "10px", padding: "10px 12px", borderRadius: "10px", background: "rgba(143,21,50,.08)", border: "1px solid rgba(143,21,50,.18)", color: "#7a0f2b", fontSize: "13px" }}>Marketers: <strong>{selectedMarketersFilter.length ? `${selectedMarketersFilter.length} selected` : "All"}</strong> &nbsp;•&nbsp; Visits in selected range: <strong>{reports.filter(r => r.createdAt && isDateInRange(r.createdAt, allVisitsFromDate, allVisitsToDate) && (!selectedMarketersFilter.length || selectedMarketersFilter.includes(r.marketerEmail))).length}</strong></div>
 ) : null}
-                    {(!allVisitsFromDate || !allVisitsToDate) || selectedMarketersFilter.length === 0 ? (
-<div style={{ padding: "16px", borderRadius: "12px", background: "rgba(250,246,247,.94)", color: "#78686d", fontSize: "13px", textAlign: "center" }}>Select at least one marketer and a date range to view visits.</div>
+                    {(!allVisitsFromDate || !allVisitsToDate) ? (
+<div style={{ padding: "16px", borderRadius: "12px", background: "rgba(250,246,247,.94)", color: "#78686d", fontSize: "13px", textAlign: "center" }}>Select a date range to view visits.</div>
 ) : reports.filter(r => {
 if (!r.createdAt) return false;
 const rDateStr = getDateKey(r.createdAt);

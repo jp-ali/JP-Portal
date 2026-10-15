@@ -1,5 +1,6 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
 
 export default function AdminSampleDetailsPanel() {
   const { adminSampleFromDate, adminSampleMarketersFilter, adminSampleToDate, cardStyle, downloadExcel, downloadPDF, downloadSingleSample, getDateKey, getMarketerName, handleDeleteSample, inputStyle, isDateInRange, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, renderSampleReportTable, reportViewClass, samples, selectedAdminSampleMarketerBox, selectedAdminSampleSchoolBox, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminView, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox } = usePortalContext();
@@ -79,37 +80,7 @@ style={{ padding: "4px 10px", background: "#ffffff", color: "#7a0f2b", border: "
                           <span style={{ fontSize: "11px", color: "#78686d" }}>To Date:</span>
                           <input type="date" lang="en-GB" value={adminSampleToDate} onChange={(e) => setAdminSampleToDate(e.target.value)} style={{ ...inputStyle, padding: "8px", colorScheme: "light" }} />
                         </div>
-                      </div>
-                    </div>
-                    <div style={{ background: "rgba(255,255,255,0.96)", padding: "14px", borderRadius: "12px", marginBottom: "16px", border: "1px solid rgba(143,21,50,.25)" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                        <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#b6405b" }}>2. Select Marketer(s)</label>
-                        <button onClick={() => setAdminSampleMarketersFilter(adminSampleMarketersFilter.length === marketersList.length ? [] : marketersList.map(m => m.email))} style={{ padding: "5px 9px", background: "#a42243", color: "white", border: "none", borderRadius: "7px", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>{adminSampleMarketersFilter.length === marketersList.length && marketersList.length ? "☑ Clear All" : "☑ Select All"}</button>
-                      </div>
-                      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", maxHeight: "120px", overflowY: "auto" }}>
-                        {marketersList.map(m => {
-const isSelected = adminSampleMarketersFilter.includes(m.email);
-return (
-<button
-key={m.id}
-type="button"
-onClick={() => setAdminSampleMarketersFilter(prev => isSelected ? prev.filter(email => email !== m.email) : [...prev, m.email])}
-style={{
-padding: "8px 13px",
-borderRadius: "9px",
-cursor: "pointer",
-fontSize: "13px",
-fontWeight: isSelected ? "700" : "500",
-color: isSelected ? "#fff" : "#5c484e",
-background: isSelected ? "#5e4b50" : "rgba(250,246,247,.98)",
-border: isSelected ? "1px solid #756369" : "1px solid rgba(123,16,43,.10)",
-boxShadow: isSelected ? "inset 0 0 0 1px rgba(123,16,43,.09)" : "none"
-}}
->
-                              {isSelected ? "✓ " : ""}{m.name || m.email}
-                            </button>
-);
-})}
+                        <MarketerMultiSelect marketers={marketersList} selected={adminSampleMarketersFilter} onChange={setAdminSampleMarketersFilter} inputStyle={inputStyle} />
                       </div>
                     </div>
                     <h4 style={{ color: "#5c484e", fontSize: "15px", marginBottom: "10px" }}>Marketers Sample Summary:</h4>

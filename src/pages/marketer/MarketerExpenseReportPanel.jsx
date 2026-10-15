@@ -1,5 +1,6 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import { calculatedKms } from "../../features/expenses/expenseCalculations.js";
 
 export default function MarketerExpenseReportPanel() {
   const { cardStyle, downloadExpenseReportExcel, downloadExpenseReportPDF, expenseReportFromDate, expenseReportLoading, expenseReportToDate, fetchMarketerExpenseReport, formatActionPlanDate, formatTime12, getDateKey, getFilteredExpenseReportRows, inputStyle, renderExpandedReportChrome, renderReportExpandButton, reportViewClass, setExpenseReportFromDate, setExpenseReportToDate, setMarketerview } = usePortalContext();
@@ -36,7 +37,7 @@ export default function MarketerExpenseReportPanel() {
 <div style={{ padding:"18px", borderRadius:"12px", background:"#fffafa", border:"1px solid #eadde0", color:"#78686d", textAlign:"center", fontSize:"12px" }}>Select From Date and To Date to view the report.</div>
 ) : (() => {
 const rows = getFilteredExpenseReportRows();
-const totalKms = rows.reduce((sum,row)=>sum + Number((row?.totalKms ?? (Number(row?.endReading || 0) - Number(row?.startReading || 0))) || 0), 0);
+const totalKms = rows.reduce((sum,row)=>sum + calculatedKms(row), 0);
 const totalTransport = rows.reduce((sum,row)=>sum + Number(row?.transportExpense || 0),0);
 const totalNight = rows.reduce((sum,row)=>sum + Number(row?.nightStayExpense || 0),0);
 const totalFood = rows.reduce((sum,row)=>sum + Number(row?.foodExpense || 0),0);
@@ -55,7 +56,7 @@ return (
                       </thead>
                       <tbody>
                         {rows.map((row)=>{
-const kms = Number((row?.totalKms ?? (Number(row?.endReading || 0) - Number(row?.startReading || 0))) || 0);
+const kms = calculatedKms(row);
 const totalExpense = Number(row?.transportExpense || 0)+Number(row?.nightStayExpense || 0)+Number(row?.foodExpense || 0)+Number(row?.otherExpense || 0);
 return (
 <tr key={row.id}>

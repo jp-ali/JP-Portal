@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { listMarketers, listDeletedMarketers, listAccessibleMarketers, createMarketer, updateMarketer, archiveMarketer, restoreMarketer, removeDeletedMarketer } from "../../services/marketerApi.js";
 
 export function useMarketers({ user, fetchCitiesByIds, fetchAreasForCities, fetchLocationCatalog, getValidMarketerAssignments, resetMarketerAssignmentForm, setAdminView, setAssignedAreaIds, setAssignedCityIds, setAssignedSchoolIds, setAssignmentAreaFocusId, setAssignmentCityFocusId, setAdminAreaAssignOpen, setAdminAreaSearch, setAdminCityAssignOpen, setAdminCitySearch, setAdminSchoolSearch, setNewAreaName, setNewCityName, setNewSchoolName }) {
@@ -14,12 +14,19 @@ const [subordinateSearch, setSubordinateSearch] = useState("");
 const [marketerWhatsappGroupName, setMarketerWhatsappGroupName] = useState("");
 const [marketerWhatsappGroupLink, setMarketerWhatsappGroupLink] = useState("");
 const [marketersList, setMarketersList] = useState([]);
+const marketersCache = useRef({ rows: null, loadedAt: 0, pending: null });
 const [deletedMarketersList, setDeletedMarketersList] = useState([]);
 const [editingId, setEditingId] = useState(null);
 const [editingReturnToMarketerDetails, setEditingReturnToMarketerDetails] = useState(false);
-const fetchMarketers = async () => {
+const fetchMarketers = (force = false) => {
+const cache = marketersCache.current;
+if (!force && cache.rows && Date.now() - cache.loadedAt < 60000) return Promise.resolve(cache.rows);
+if (cache.pending) return cache.pending;
+cache.pending = (async () => {
 try {
 const list = await listMarketers();
+cache.rows = list;
+cache.loadedAt = Date.now();
 setMarketersList(list);
 const assignedCityIdsFromMarketers = [...new Set(
 list.flatMap((m) => Array.isArray(m.assignedCityIds) ? m.assignedCityIds : [])
@@ -27,9 +34,15 @@ list.flatMap((m) => Array.isArray(m.assignedCityIds) ? m.assignedCityIds : [])
 if (assignedCityIdsFromMarketers.length) {
 fetchCitiesByIds(assignedCityIdsFromMarketers).catch(() => {});
 }
+return list;
 } catch (err) {
 console.error(err);
+return cache.rows || [];
+} finally {
+cache.pending = null;
 }
+})();
+return cache.pending;
 };
 const fetchMarketersByIds = async (ids = []) => {
 const uniqueIds = [...new Set((ids || []).filter(Boolean))];
@@ -116,7 +129,7 @@ setSubordinateSearch("");
 setMarketerWhatsappGroupName("");
 setMarketerWhatsappGroupLink("");
 resetMarketerAssignmentForm();
-await fetchMarketers();
+await fetchMarketers(true);
 if (editingReturnToMarketerDetails) {
 setEditingReturnToMarketerDetails(false);
 setAdminView("marketers-detail");
@@ -163,7 +176,7 @@ const handleDeleteMarketer = async (m) => {
 if (window.confirm(`Are you sure you want to delete ${m.name}?`)) {
 try {
 await archiveMarketer(m.id);
-fetchMarketers();
+fetchMarketers(true);
 fetchDeletedMarketers();
 alert("Marketer moved to Old Marketers list.");
 } catch (err) {
@@ -186,7 +199,7 @@ const handleRestoreMarketer = async (m) => {
 if (window.confirm(`Are you sure you want to restore ${m.name}?`)) {
 try {
 await restoreMarketer(m.id);
-fetchMarketers();
+fetchMarketers(true);
 fetchDeletedMarketers();
 alert("Marketer restored successfully!");
 } catch (err) {

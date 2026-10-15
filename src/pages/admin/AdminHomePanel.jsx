@@ -33,7 +33,7 @@ style={{ borderTop: "4px solid #b6405b", animationDelay: "0.2s" }}
               </div>
               <div 
 className="square-card shaking-card"
-onClick={() => { setAdminView("visits"); fetchAllReports(); setSelectedAdminAllBoxKey(null); setSelectedAdminAllSchoolBox(null); setAllVisitsFromDate(""); setAllVisitsToDate(""); setSelectedMarketersFilter([]); }} 
+onClick={() => { setAdminView("visits"); fetchAllReports(); fetchMarketers(); setSelectedAdminAllBoxKey(null); setSelectedAdminAllSchoolBox(null); setAllVisitsFromDate(""); setAllVisitsToDate(""); setSelectedMarketersFilter([]); }}
 style={{ borderTop: "4px solid #8f1532", animationDelay: "0.4s" }}
 >
                 <div style={{ fontSize: "32px", marginBottom: "10px" }}>📊</div>

@@ -1,5 +1,6 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
 
 export default function MarketerRangeVisitsPanel() {
   const { cardStyle, downloadExcel, downloadPDF, getAccessibleVisitMarketers, getVisitHistoryFilteredReports, handleDeleteVisit, inputStyle, marketerFromDate, marketerToDate, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, renderVisitReportTable, reportViewClass, selectedVisitHistoryMarketerIds, setMarketerFromDate, setMarketerToDate, setMarketerview, setSelectedVisitHistoryMarketerIds, setVisitHistoryPickerOpen, user, visitHistoryPickerOpen } = usePortalContext();
@@ -21,47 +22,9 @@ export default function MarketerRangeVisitsPanel() {
                 </div>
                 {(marketerFromDate || marketerToDate) && <button className="white-range-btn" onClick={()=>{setMarketerFromDate("");setMarketerToDate("");}} style={{ padding:"5px 10px", background:"#fff", color:"#7a0f2b", border:"1px solid #d8c8cd", borderRadius:"7px", fontSize:"11px", fontWeight:800, cursor:"pointer" }}>Clear Range</button>}
               </div>
-              {(() => {
-const accessible = getAccessibleVisitMarketers();
-const teamMembers = accessible.filter((m) => m.id !== user?.marketerId);
-if (!teamMembers.length) return null;
-const allTeamSelected = teamMembers.every((m) => selectedVisitHistoryMarketerIds.includes(m.id));
-return (
-<div style={{ marginBottom:"14px" }}>
-                    <button
-type="button"
-onClick={() => setVisitHistoryPickerOpen((prev) => !prev)}
-style={{ width:"100%", padding:"10px 12px", background:"#fff", color:"#7a0f2b", border:"1px solid #dfcbd0", borderRadius:"10px", fontSize:"12px", fontWeight:900, cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center", boxShadow:"0 4px 12px rgba(122,15,43,.06)" }}
->
-                      <span>👥 Select Marketer</span>
-                      <span style={{ fontSize:"15px", transform:visitHistoryPickerOpen?"rotate(180deg)":"rotate(0deg)", transition:"transform .2s ease" }}>⌄</span>
-                    </button>
-                    {visitHistoryPickerOpen && (
-<div style={{ marginTop:"7px", padding:"11px", border:"1px solid #eadde0", borderRadius:"12px", background:"#fff", animation:"pageReveal .24s ease both" }}>
-                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:"8px", flexWrap:"wrap", marginBottom:"8px" }}>
-                          <div style={{ color:"#6f0b24", fontWeight:900, fontSize:"11.5px" }}>Choose whose visits you want to include</div>
-                          <button
-type="button"
-onClick={() => setSelectedVisitHistoryMarketerIds(allTeamSelected ? (user?.marketerId ? [user.marketerId] : []) : [...new Set([user?.marketerId, ...teamMembers.map((m)=>m.id)].filter(Boolean))])}
-style={{ padding:"5px 9px", background:"#fff5f7", color:"#7a0f2b", border:"1px solid #e4cdd3", borderRadius:"7px", fontSize:"10.5px", fontWeight:800, cursor:"pointer" }}
->
-                            {allTeamSelected ? "Clear Team" : "Select All"}
-                          </button>
-                        </div>
-                        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))", gap:"7px" }}>
-                          {accessible.map((m)=>(
-<label key={m.id} style={{ display:"flex", alignItems:"center", gap:"7px", padding:"8px 9px", borderRadius:"9px", cursor:"pointer", background:selectedVisitHistoryMarketerIds.includes(m.id)?"#f9ecef":"#fff", border:selectedVisitHistoryMarketerIds.includes(m.id)?"1px solid #e5cbd2":"1px solid #eee3e6" }}>
-                              <input type="checkbox" checked={selectedVisitHistoryMarketerIds.includes(m.id)} onChange={()=>setSelectedVisitHistoryMarketerIds((prev)=>prev.includes(m.id)?prev.filter((id)=>id!==m.id):[...prev,m.id])} />
-                              <span style={{ display:"inline-flex", color:"#8f1532" }}>{renderMarketerPersonIcon(15)}</span>
-                              <span style={{ minWidth:0 }}><strong style={{ display:"block", color:"#3b2329", fontSize:"11.5px" }}>{m.id===user?.marketerId?`${m.name || "My Account"} (Me)`:(m.name || m.email)}</strong><span style={{ display:"block", color:"#78686d", fontSize:"9.5px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{m.email || ""}</span></span>
-                            </label>
-))}
-                        </div>
-                      </div>
-)}
-                  </div>
-);
-})()}
+              {getAccessibleVisitMarketers().length > 1 && <div style={{ marginBottom: "14px" }}>
+                <MarketerMultiSelect marketers={getAccessibleVisitMarketers()} selected={selectedVisitHistoryMarketerIds} onChange={setSelectedVisitHistoryMarketerIds} inputStyle={inputStyle} valueKey="id" emptyLabel="My Visits" />
+              </div>}
               <div style={{ display:"grid", gridTemplateColumns:"repeat(2,minmax(0,1fr))", gap:"10px", marginBottom:"16px" }}>
                 <div><label style={{ display:"block", fontSize:"11px", color:"#5c484e", fontWeight:700, marginBottom:"4px" }}>From Date</label><input type="date" lang="en-GB" value={marketerFromDate} onChange={(e)=>setMarketerFromDate(e.target.value)} style={{ ...inputStyle, padding:"10px", background:"#fff", colorScheme:"light" }} /></div>
                 <div><label style={{ display:"block", fontSize:"11px", color:"#5c484e", fontWeight:700, marginBottom:"4px" }}>To Date</label><input type="date" lang="en-GB" value={marketerToDate} onChange={(e)=>setMarketerToDate(e.target.value)} style={{ ...inputStyle, padding:"10px", background:"#fff", colorScheme:"light" }} /></div>

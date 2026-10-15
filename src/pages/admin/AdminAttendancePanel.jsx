@@ -1,5 +1,6 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import MarketerSingleSelect from "../../ui/MarketerSingleSelect.jsx";
 
 export default function AdminAttendancePanel() {
   const { adminAttendanceFromDate, adminAttendanceMarketerFilter, adminAttendancePetrolRate, adminAttendanceToDate, cardStyle, downloadAttendanceExcel, downloadAttendancePDF, fetchAttendanceRecords, getFilteredAttendance, getTodayInputDate, inputStyle, marketersList, renderAttendanceReportTable, renderExpandedReportChrome, renderReportExpandButton, reportViewClass, saveAttendancePetrolRate, setAdminAttendanceFromDate, setAdminAttendanceMarketerFilter, setAdminAttendancePetrolRate, setAdminAttendanceToDate, setAdminView, setAttendanceMediaFromDate, setAttendanceMediaMarketer, setAttendanceMediaToDate, setAttendancePetrolRates, setSelectedAttendanceMediaIds } = usePortalContext();
@@ -33,12 +34,7 @@ setAdminView("attendance-media");
                   <button className="attendance-clear-range-btn" type="button" title="Clear date range" onClick={()=>{ setAdminAttendanceFromDate(""); setAdminAttendanceToDate(""); }} style={{height:"38px",padding:"0 8px",border:"1px solid rgba(148,163,184,.30)",borderRadius:"9px",background:"#ffffff",color:"#7a0f2b",fontSize:"10px",fontWeight:800,cursor:"pointer",whiteSpace:"nowrap"}}>Clear</button>
                   <div className="attendance-marketer-field">
                     <label style={{ fontSize: "9.5px", color: "#78686d", display: "block", marginBottom: "3px" }}>Select Marketer</label>
-                    <select value={adminAttendanceMarketerFilter} onChange={(e)=>setAdminAttendanceMarketerFilter(e.target.value)} style={{...inputStyle,height:"38px",padding:"6px 8px",fontSize:"10.5px"}}>
-                      <option value="">All Marketers</option>
-                      {[...marketersList].sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""))).map((m)=>(
-<option key={m.id} value={m.email || ""}>{m.name || m.email || "Marketer"}</option>
-))}
-                    </select>
+                    <MarketerSingleSelect marketers={marketersList} selected={adminAttendanceMarketerFilter} onChange={setAdminAttendanceMarketerFilter} inputStyle={inputStyle} valueKey="email" allowAll height={38} />
                   </div>
                   <div className="attendance-petrol-field"><label style={{ fontSize: "9.5px", color: "#78686d", display: "block", marginBottom: "3px" }}>Petrol / L</label><input type="number" min="0" step="0.01" value={adminAttendancePetrolRate} onChange={(e)=>{ const value=e.target.value; setAdminAttendancePetrolRate(value); const dateKey=adminAttendanceToDate||getTodayInputDate(); setAttendancePetrolRates(prev=>({...prev,[dateKey]:value})); }} onBlur={saveAttendancePetrolRate} onKeyDown={(e)=>{ if(e.key==="Enter"){ e.preventDefault(); saveAttendancePetrolRate(); e.currentTarget.blur(); } }} placeholder="Rate" title="Petrol rate per litre used in Petrol Expense calculation" style={{...inputStyle,height:"38px",padding:"6px 7px",fontSize:"10.5px",textAlign:"center"}} /></div>
                   <button className="attendance-refresh-btn" type="button" title="Refresh" onClick={()=>fetchAttendanceRecords()} style={{ height:"38px", width:"40px", border:"1px solid rgba(143,21,50,.28)", borderRadius:"9px", background:"#ffffff", color:"#7a0f2b", fontSize:"18px", cursor:"pointer" }}>↻</button>

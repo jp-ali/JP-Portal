@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../services/firebase";
+import { calculatedKms, dailyAssignedKms, dailyPetrolExpense } from "./expenseCalculations.js";
 
 export function useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12 }) {
 const [expenseReportFromDate, setExpenseReportFromDate] = useState("");
@@ -12,6 +13,7 @@ const [adminExpenseToDate, setAdminExpenseToDate] = useState("");
 const [adminExpenseMarketerId, setAdminExpenseMarketerId] = useState("");
 const [adminExpenseRows, setAdminExpenseRows] = useState([]);
 const [adminExpenseLoading, setAdminExpenseLoading] = useState(false);
+const [adminExpensePetrolRates, setAdminExpensePetrolRates] = useState({});
 const fetchMarketerExpenseReport = async () => {
 if (!user?.email) return [];
 setExpenseReportLoading(true);
@@ -45,7 +47,7 @@ return true;
 const buildExpenseReportExportRows = () => {
 const rows = getFilteredExpenseReportRows();
 return rows.map((row, index) => {
-const kms = Number((row?.totalKms ?? (Number(row?.endReading || 0) - Number(row?.startReading || 0))) || 0);
+const kms = calculatedKms(row);
 const transport = Number(row?.transportExpense || 0);
 const nightStay = Number(row?.nightStayExpense || 0);
 const food = Number(row?.foodExpense || 0);
@@ -297,7 +299,16 @@ return [];
 }
 setAdminExpenseLoading(true);
 try {
-const snap = await getDocs(query(collection(db, "attendance"), where("marketerEmail", "==", marketer.email)));
+const [snap, ratesSnap] = await Promise.all([
+getDocs(query(collection(db, "attendance"), where("marketerEmail", "==", marketer.email))),
+getDocs(collection(db, "petrol_rates"))
+]);
+const rates = {};
+ratesSnap.docs.forEach((doc) => {
+const value = Number(doc.data().rate);
+if (Number.isFinite(value) && value >= 0) rates[String(doc.data().date || doc.id)] = value;
+});
+setAdminExpensePetrolRates(rates);
 const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 rows.sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
 setAdminExpenseRows(rows);
@@ -325,8 +336,16 @@ if (adminExpenseFromDate && dateKey < adminExpenseFromDate) return false;
 if (adminExpenseToDate && dateKey > adminExpenseToDate) return false;
 return true;
 });
+const getAdminExpenseValues = (row) => {
+const marketer = getAdminExpenseSelectedMarketer();
+return {
+kms: calculatedKms(row),
+assignedKms: dailyAssignedKms(row, marketer),
+petrolExpense: dailyPetrolExpense(row, marketer, adminExpensePetrolRates)
+};
+};
 const buildAdminExpenseExportRows = () => getFilteredAdminExpenseRows().map((row, index) => {
-const kms = Number((row?.totalKms ?? (Number(row?.endReading || 0) - Number(row?.startReading || 0))) || 0);
+const { kms, assignedKms, petrolExpense } = getAdminExpenseValues(row);
 const transport = Number(row?.transportExpense || 0);
 const nightStay = Number(row?.nightStayExpense || 0);
 const food = Number(row?.foodExpense || 0);
@@ -338,6 +357,8 @@ time: `${formatTime12(row.startTime, "—")} - ${formatTime12(row.endTime, "—"
 dayIn: row.startReading ?? "—",
 dayOut: row.endReading ?? "—",
 kms: Number.isFinite(kms) ? kms : 0,
+assignedKms,
+petrolExpense,
 transport,
 nightStay,
 food,
@@ -365,6 +386,7 @@ alert("Excel library is still loading. Please try again in a moment.");
 return;
 }
 const totalKms = rows.reduce((sum, row) => sum + Number(row.kms || 0), 0);
+const totalPetrol = rows.reduce((sum, row) => sum + Number(row.petrolExpense || 0), 0);
 const totalTransport = rows.reduce((sum, row) => sum + Number(row.transport || 0), 0);
 const totalNight = rows.reduce((sum, row) => sum + Number(row.nightStay || 0), 0);
 const totalFood = rows.reduce((sum, row) => sum + Number(row.food || 0), 0);
@@ -378,6 +400,8 @@ const data = rows.map((row) => ({
 "Day In Reading": row.dayIn,
 "Day Out Reading": row.dayOut,
 "Calculated KMs": Number(row.kms.toFixed(1)),
+"Assigned KMs / Litre": Number(row.assignedKms.toFixed(1)),
+"Petrol Expense": Number(row.petrolExpense.toFixed(2)),
 "Transport": Number(row.transport.toFixed(2)),
 "Night Stay": Number(row.nightStay.toFixed(2)),
 "Food": Number(row.food.toFixed(2)),
@@ -392,6 +416,8 @@ data.push({
 "Day In Reading": "",
 "Day Out Reading": "",
 "Calculated KMs": Number(totalKms.toFixed(1)),
+"Assigned KMs / Litre": "",
+"Petrol Expense": Number(totalPetrol.toFixed(2)),
 "Transport": Number(totalTransport.toFixed(2)),
 "Night Stay": Number(totalNight.toFixed(2)),
 "Food": Number(totalFood.toFixed(2)),
@@ -401,7 +427,7 @@ data.push({
 const worksheet = window.XLSX.utils.json_to_sheet(data);
 worksheet["!cols"] = [
 { wch: 6 }, { wch: 28 }, { wch: 15 }, { wch: 24 }, { wch: 16 }, { wch: 16 },
-{ wch: 16 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 20 }
+{ wch: 16 }, { wch: 19 }, { wch: 17 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 20 }
 ];
 const workbook = window.XLSX.utils.book_new();
 window.XLSX.utils.book_append_sheet(workbook, worksheet, "Expense Report");
@@ -420,8 +446,9 @@ const ascii = (v) => clean(v).replace(/[^\x20-\x7E]/g, "?");
 const PAGE_W = 841.89, PAGE_H = 595.28, MM = 72 / 25.4;
 const LEFT = 7, RIGHT = 290, TABLE_TOP = 38, CONTENT_BOTTOM = 193;
 const columns = [
-["Sr.", 9], ["Date", 22], ["Time", 32], ["Day In", 24], ["Day Out", 24],
-["KMs", 18], ["Transport", 26], ["Night Stay", 26], ["Food", 22], ["Other", 22], ["Total Other", 58]
+["Sr.", 9], ["Date", 22], ["Time", 30], ["Day In", 21], ["Day Out", 21],
+["KMs", 16], ["Assigned KMs", 19], ["Petrol Expense", 19], ["Transport", 24],
+["Night Stay", 24], ["Food", 24], ["Other", 24], ["Total Other", 30]
 ];
 const esc = (v) => ascii(v).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 const textWidth = (txt, size) => ascii(txt).length * size * .50;
@@ -470,9 +497,9 @@ if(page.y+h>CONTENT_BOTTOM){page=newPage();pages.push(page);} let x=LEFT;
 values.forEach((value,i)=>{const fill=isTotal?[.995,.945,.955]:null;page.content.push(rectCmd(x,page.y,columns[i][1],h,.42,fill));page.content.push(drawWrapped(x,page.y,columns[i][1],h,value,isTotal?5.9:5.7,isTotal));x+=columns[i][1];});
 page.y+=h;
 };
-rows.forEach((row)=>drawRow([row.sr,row.date,row.time,row.dayIn,row.dayOut,Number(row.kms).toFixed(1).replace(/\.0$/, ""),`Rs. ${Number(row.transport).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.nightStay).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.food).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.other).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.totalOtherExpense).toFixed(2).replace(/\.00$/, "")}`]));
-const totalKms=rows.reduce((s,r)=>s+Number(r.kms||0),0), totalTransport=rows.reduce((s,r)=>s+Number(r.transport||0),0), totalNight=rows.reduce((s,r)=>s+Number(r.nightStay||0),0), totalFood=rows.reduce((s,r)=>s+Number(r.food||0),0), totalOther=rows.reduce((s,r)=>s+Number(r.other||0),0), totalAll=rows.reduce((s,r)=>s+Number(r.totalOtherExpense||0),0);
-drawRow(["","TOTAL","","","",`${totalKms.toFixed(1).replace(/\.0$/,"")} KMs`,`Rs. ${totalTransport.toFixed(2)}`,`Rs. ${totalNight.toFixed(2)}`,`Rs. ${totalFood.toFixed(2)}`,`Rs. ${totalOther.toFixed(2)}`,`Rs. ${totalAll.toFixed(2)}`],true);
+rows.forEach((row)=>drawRow([row.sr,row.date,row.time,row.dayIn,row.dayOut,Number(row.kms).toFixed(1).replace(/\.0$/, ""),Number(row.assignedKms).toFixed(1).replace(/\.0$/, ""),`Rs. ${Number(row.petrolExpense).toFixed(2)}`,`Rs. ${Number(row.transport).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.nightStay).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.food).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.other).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.totalOtherExpense).toFixed(2).replace(/\.00$/, "")}`]));
+const totalKms=rows.reduce((s,r)=>s+Number(r.kms||0),0), totalPetrol=rows.reduce((s,r)=>s+Number(r.petrolExpense||0),0), totalTransport=rows.reduce((s,r)=>s+Number(r.transport||0),0), totalNight=rows.reduce((s,r)=>s+Number(r.nightStay||0),0), totalFood=rows.reduce((s,r)=>s+Number(r.food||0),0), totalOther=rows.reduce((s,r)=>s+Number(r.other||0),0), totalAll=rows.reduce((s,r)=>s+Number(r.totalOtherExpense||0),0);
+drawRow(["","TOTAL","","","",`${totalKms.toFixed(1).replace(/\.0$/,"")} KMs`,``, `Rs. ${totalPetrol.toFixed(2)}`,`Rs. ${totalTransport.toFixed(2)}`,`Rs. ${totalNight.toFixed(2)}`,`Rs. ${totalFood.toFixed(2)}`,`Rs. ${totalOther.toFixed(2)}`,`Rs. ${totalAll.toFixed(2)}`],true);
 pages.forEach((pg,idx)=>{pg.content.push(rectCmd(LEFT,197,RIGHT-LEFT,10,.45,[.995,.958,.968]));pg.content.push(drawText(148.5,203,"Created by Ali Ashfaq",7.5,"center",true));pg.content.push(drawText(10,203,"Admin Expense Report",6.3,"left"));pg.content.push(drawText(287,203,`Page ${idx+1} of ${pages.length}`,6.3,"right"));});
 const objects=[]; const addObject=(body)=>{objects.push(body);return objects.length;}; const f1=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"), f2=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"); const contentIds=[],pageIds=[];
 pages.forEach((pg)=>{const stream=pg.content.join("\n")+"\n";contentIds.push(addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`));pageIds.push(0);}); const pagesId=addObject("");
@@ -481,5 +508,5 @@ let pdf="%PDF-1.4\n%\xE2\xE3\xCF\xD3\n"; const offsets=[0]; objects.forEach((obj
 const bytes=new Uint8Array(pdf.length);for(let i=0;i<pdf.length;i++)bytes[i]=pdf.charCodeAt(i)&0xff;const blob=new Blob([bytes],{type:"application/pdf"}),url=URL.createObjectURL(blob);const safeName=String(marketer.name||"Marketer").replace(/[^a-z0-9_-]+/gi,"_");const a=document.createElement("a");a.href=url;a.download=`Expense_Report_${safeName}_${adminExpenseFromDate}_to_${adminExpenseToDate}.pdf`;a.style.display="none";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
 } catch (err) { console.error("Admin expense PDF error:", err); alert("Expense PDF could not be downloaded. Please try again."); }
 };
-return { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerId, setAdminExpenseMarketerId, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, downloadAdminExpenseExcel, downloadAdminExpensePDF };
+return { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerId, setAdminExpenseMarketerId, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, downloadAdminExpenseExcel, downloadAdminExpensePDF };
 }
