@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 
 export default function LoginPage({ context }) {
-  const { btnPrimary, cardStyle, containerStyle, error, footerStyle, globalStyle, handleLogin, identifier, inputStyle, password, preloadPortal, renderBackgroundStationary, renderResponsiveStyles, setIdentifier, setPassword, setShowPassword, showPassword } = context;
+  const { btnPrimary, cardStyle, containerStyle, error, footerStyle, globalStyle, handleLogin, identifier, inputStyle, loginPending, password, preloadPortal, renderBackgroundStationary, renderResponsiveStyles, setIdentifier, setPassword, setShowPassword, showPassword } = context;
   useEffect(() => { preloadPortal().catch(() => {}); }, [preloadPortal]);
 
 return (
@@ -63,8 +63,8 @@ style={{ position: "absolute", right: "12px", background: "none", border: "none"
                   </button>
                 </div>
               </div>
-              <button type="submit" style={{ ...btnPrimary, marginTop: "6px" }}>
-                Sign In
+              <button type="submit" disabled={loginPending} style={{ ...btnPrimary, marginTop: "6px", opacity: loginPending ? 0.7 : 1 }}>
+                {loginPending ? "Signing In..." : "Sign In"}
               </button>
               {error && <p style={{ color: "#f43f5e", textAlign: "center", fontWeight: "600", fontSize: "14px", margin: "4px 0 0 0" }}>{error}</p>}
             </form>

@@ -10,6 +10,22 @@ const preloadPortal = () => Promise.all([
   import("./pages/AdminPortal.jsx"),
   import("./pages/MarketerPortal.jsx")
 ]);
+const loadPortalForRole = async (role) => {
+  let timeout;
+  try {
+    await Promise.race([
+      Promise.all([
+        loadPortalApp(),
+        role === "admin" ? import("./pages/AdminPortal.jsx") : import("./pages/MarketerPortal.jsx")
+      ]),
+      new Promise((_, reject) => {
+        timeout = setTimeout(() => reject(new Error("Portal load timed out")), 30000);
+      })
+    ]);
+  } finally {
+    clearTimeout(timeout);
+  }
+};
 const PortalApp = lazy(loadPortalApp);
 
 export default function App() {
@@ -18,6 +34,7 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loginPending, setLoginPending] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -29,14 +46,22 @@ export default function App() {
 
   const handleLogin = async (event) => {
     event.preventDefault();
+    if (loginPending) return;
     setError("");
+    setLoginPending(true);
     try {
       const user = await login(identifier, password);
+      try {
+        await loadPortalForRole(user.role);
+      } catch {
+        throw new Error("Login succeeded, but portal files could not load. Refresh the page and try again.");
+      }
       setPassword("");
-    setSession({ loading: false, user });
-    preloadPortal().catch(() => {});
+      setSession({ loading: false, user });
     } catch (failure) {
       setError(failure.message || "Login failed");
+    } finally {
+      setLoginPending(false);
     }
   };
 
@@ -56,7 +81,7 @@ export default function App() {
 
   return <LoginPage context={{
     btnPrimary, cardStyle, containerStyle, error, footerStyle, globalStyle,
-    handleLogin, identifier, inputStyle, password, preloadPortal,
+    handleLogin, identifier, inputStyle, loginPending, password, preloadPortal,
     renderBackgroundStationary, renderResponsiveStyles,
     setIdentifier, setPassword, setShowPassword, showPassword
   }} />;
