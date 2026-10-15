@@ -30,6 +30,8 @@ const [marketerSidebarOpen, setMarketerSidebarOpen] = useState(false);
 const [selectedMarketerForVisits, setSelectedMarketerForVisits] = useState(null);
 const [marketerView, setMarketerview] = useState("home");
 const [expandedReportKey, setExpandedReportKey] = useState("");
+const homeEscapeCountRef = useRef({ count: 0, lastAt: 0 });
+useEffect(() => { homeEscapeCountRef.current = { count: 0, lastAt: 0 }; }, [adminView, marketerView, expandedReportKey]);
 const nativeFullscreenReportRef = useRef(null);
 const closePhotoOnFullscreenExitRef = useRef(null);
 useEffect(() => {
@@ -308,15 +310,19 @@ useLayoutEffect(() => {
 closePhotoOnFullscreenExitRef.current = () => { setFullScreenImage(null); setFullScreenMediaRecord(null); };
 useEffect(() => {
   const onKeyDown = (event) => {
-    if (event.key !== "Escape" || event.repeat) return;
+    if (event.key !== "Escape") { homeEscapeCountRef.current = { count: 0, lastAt: 0 }; return; }
+    if (event.repeat) return;
     const activeView = user?.role === "admin" ? adminView : marketerView;
-    if (fullScreenImage || expandedReportKey || activeView !== "home") event.preventDefault();
+    event.preventDefault();
     if (fullScreenImage) {
+      homeEscapeCountRef.current = { count: 0, lastAt: 0 };
       setFullScreenImage(null);
       setFullScreenMediaRecord(null);
     } else if (expandedReportKey) {
+      homeEscapeCountRef.current = { count: 0, lastAt: 0 };
       setExpandedReportKey("");
     } else if (activeView !== "home") {
+      homeEscapeCountRef.current = { count: 0, lastAt: 0 };
       if (user?.role !== "admin") {
         if (marketerView === "attendance") stopAttendanceCamera();
         if (marketerView === "add-visit") stopCamera();
@@ -324,13 +330,22 @@ useEffect(() => {
       } else {
         setAdminView("home");
       }
+    } else {
+      const now = Date.now();
+      const previous = homeEscapeCountRef.current;
+      const count = now - previous.lastAt <= 2500 ? previous.count + 1 : 1;
+      homeEscapeCountRef.current = { count, lastAt: now };
+      if (count >= 3) {
+        homeEscapeCountRef.current = { count: 0, lastAt: 0 };
+        onLogout();
+      }
     }
   };
   window.addEventListener("keydown", onKeyDown, true);
   return () => window.removeEventListener("keydown", onKeyDown, true);
-}, [fullScreenImage, expandedReportKey, user?.role, adminView, marketerView, setFullScreenImage, setFullScreenMediaRecord, stopAttendanceCamera, stopCamera]);
+}, [fullScreenImage, expandedReportKey, user?.role, adminView, marketerView, setFullScreenImage, setFullScreenMediaRecord, stopAttendanceCamera, stopCamera, onLogout]);
 const { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanSearch, setAdminActionPlanSearch, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan } = useActionPlans({ user, setUser, setMarketerview, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId });
-const { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerIds, setAdminExpenseMarketerIds, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, getAdminExpenseMarketerName, downloadAdminExpenseExcel, downloadAdminExpensePDF } = useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12 });
+const { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, getMarketerExpensePetrol, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerIds, setAdminExpenseMarketerIds, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, getAdminExpenseMarketerName, downloadAdminExpenseExcel, downloadAdminExpensePDF } = useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12, groupRowsByMarketerAndDate });
 const { renderVisitReportTable, renderSampleReportTable, renderActionPlanReportTable, renderVerificationReportTable, renderAttendanceReportTable } = createReportTables({ formatActionPlanDate, formatTime12, getAttendanceAssignedKms, getAttendancePetrolExpense, getAttendanceTotalKms, getAttendanceTotalOtherExpense, getTodayInputDate, groupRowsByMarketerAndDate, handleDeleteActionPlan, inputStyle, saveAttendanceAssignedKms, saveVerificationRemark, setFullScreenImage, setReports, verificationRemarkOptions, verificationSavingId });
 const reportViewClass = (key) => expandedReportKey === key ? "admin-report-view admin-report-expanded" : "admin-report-view";
 const renderReportExpandButton = (key, title = "Expand report") => expandedReportKey === key ? null : (
@@ -508,6 +523,7 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     getFilteredCatalogues,
     getFilteredVerificationRows,
     getMarketerName,
+    groupRowsByMarketerAndDate,
     getTodayInputDate,
     globalStyle,
     handleAddArea,
@@ -719,6 +735,7 @@ return <Suspense fallback={<PortalLoading />}><MarketerPortal context={{
     getDateKey,
     getFilteredCatalogues,
     getFilteredExpenseReportRows,
+    getMarketerExpensePetrol,
     getMarketerName,
     getTodayInputDate,
     getVisitHistoryFilteredReports,

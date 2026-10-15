@@ -3,7 +3,7 @@ import React from "react";
 import { calculatedKms } from "../../features/expenses/expenseCalculations.js";
 
 export default function MarketerExpenseReportPanel() {
-  const { cardStyle, downloadExpenseReportExcel, downloadExpenseReportPDF, expenseReportFromDate, expenseReportLoading, expenseReportToDate, fetchMarketerExpenseReport, formatActionPlanDate, formatTime12, getDateKey, getFilteredExpenseReportRows, inputStyle, renderExpandedReportChrome, renderReportExpandButton, reportViewClass, setExpenseReportFromDate, setExpenseReportToDate, setMarketerview } = usePortalContext();
+  const { cardStyle, downloadExpenseReportExcel, downloadExpenseReportPDF, expenseReportFromDate, expenseReportLoading, expenseReportToDate, fetchMarketerExpenseReport, formatActionPlanDate, formatTime12, getDateKey, getFilteredExpenseReportRows, getMarketerExpensePetrol, inputStyle, renderExpandedReportChrome, renderReportExpandButton, reportViewClass, setExpenseReportFromDate, setExpenseReportToDate, setMarketerview } = usePortalContext();
   return (<div className={reportViewClass("marketer-expense")}>
             {renderExpandedReportChrome("marketer-expense")}
             <div className="report-normal-toolbar" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:"8px", flexWrap:"wrap", marginBottom:"14px" }}>
@@ -38,6 +38,7 @@ export default function MarketerExpenseReportPanel() {
 ) : (() => {
 const rows = getFilteredExpenseReportRows();
 const totalKms = rows.reduce((sum,row)=>sum + calculatedKms(row), 0);
+const totalPetrol = rows.reduce((sum,row)=>sum + getMarketerExpensePetrol(row), 0);
 const totalTransport = rows.reduce((sum,row)=>sum + Number(row?.transportExpense || 0),0);
 const totalNight = rows.reduce((sum,row)=>sum + Number(row?.nightStayExpense || 0),0);
 const totalFood = rows.reduce((sum,row)=>sum + Number(row?.foodExpense || 0),0);
@@ -45,18 +46,21 @@ const totalOther = rows.reduce((sum,row)=>sum + Number(row?.otherExpense || 0),0
 const totalOtherExpenses = totalTransport + totalNight + totalFood + totalOther;
 if (!rows.length) return <div style={{ padding:"18px", textAlign:"center", color:"#78686d", fontSize:"12px" }}>No attendance / expense data found for this range.</div>;
 return (
+<>
+<div className="expense-report-totals"><div><span>Calculated KMs</span><strong>{totalKms.toFixed(1).replace(/\.0$/,'')} KMs</strong></div><div><span>Petrol Expense</span><strong>Rs. {totalPetrol.toFixed(2)}</strong></div></div>
 <div className="table-scroll" style={{ overflowX:"auto", border:"1px solid #e4d7da", borderRadius:"12px", background:"#fff" }}>
-                    <table style={{ width:"100%", minWidth:"1020px", borderCollapse:"collapse", background:"#fff", fontSize:"11px" }}>
+                    <table style={{ width:"100%", minWidth:"1120px", borderCollapse:"collapse", background:"#fff", fontSize:"11px" }}>
                       <thead>
                         <tr>
                           {[
-"Date","Time","Day In Reading","Day Out Reading","Calculated KMs","Transport","Night Stay","Food","Other","Total Other Expense"
+"Date","Time","Day In Reading","Day Out Reading","Calculated KMs","Petrol Expense","Transport","Night Stay","Food","Other","Total Other Expense"
 ].map((head)=><th key={head} style={{ padding:"10px 8px", border:"1px solid #e5d6da", background:"#f9ecef", color:"#6f0b24", textAlign:"center", fontWeight:900, whiteSpace:"nowrap" }}>{head}</th>)}
                         </tr>
                       </thead>
                       <tbody>
                         {rows.map((row)=>{
 const kms = calculatedKms(row);
+const petrolExpense = getMarketerExpensePetrol(row);
 const totalExpense = Number(row?.transportExpense || 0)+Number(row?.nightStayExpense || 0)+Number(row?.foodExpense || 0)+Number(row?.otherExpense || 0);
 return (
 <tr key={row.id}>
@@ -65,6 +69,7 @@ return (
                               <td style={{ padding:"9px 8px", border:"1px solid #eee3e6", textAlign:"center", color:"#111" }}>{row.startReading ?? "—"}</td>
                               <td style={{ padding:"9px 8px", border:"1px solid #eee3e6", textAlign:"center", color:"#111" }}>{row.endReading ?? "—"}</td>
                               <td style={{ padding:"9px 8px", border:"1px solid #eee3e6", textAlign:"center", color:"#7a0f2b", fontWeight:900 }}>{Number.isFinite(kms)?kms.toFixed(1).replace(/\.0$/,''):"0"}</td>
+                              <td style={{ padding:"9px 8px", border:"1px solid #eee3e6", textAlign:"center", color:"#111" }}>Rs. {petrolExpense.toFixed(2)}</td>
                               <td style={{ padding:"9px 8px", border:"1px solid #eee3e6", textAlign:"center", color:"#111" }}>Rs. {Number(row.transportExpense || 0).toFixed(2).replace(/\.00$/,'')}</td>
                               <td style={{ padding:"9px 8px", border:"1px solid #eee3e6", textAlign:"center", color:"#111" }}>Rs. {Number(row.nightStayExpense || 0).toFixed(2).replace(/\.00$/,'')}</td>
                               <td style={{ padding:"9px 8px", border:"1px solid #eee3e6", textAlign:"center", color:"#111" }}>Rs. {Number(row.foodExpense || 0).toFixed(2).replace(/\.00$/,'')}</td>
@@ -76,6 +81,7 @@ return (
                         <tr>
                           <td colSpan={4} style={{ padding:"11px 9px", border:"1px solid #e1cdd2", background:"#fff5f7", color:"#6f0b24", fontWeight:900, textAlign:"right" }}>TOTAL</td>
                           <td style={{ padding:"11px 9px", border:"1px solid #e1cdd2", background:"#fff5f7", color:"#6f0b24", fontWeight:900, textAlign:"center" }}>{totalKms.toFixed(1).replace(/\.0$/,'')} KMs</td>
+                          <td style={{ padding:"11px 9px", border:"1px solid #e1cdd2", background:"#fff5f7", color:"#6f0b24", fontWeight:900, textAlign:"center" }}>Rs. {totalPetrol.toFixed(2)}</td>
                           <td style={{ padding:"11px 9px", border:"1px solid #e1cdd2", background:"#fff5f7", color:"#111", fontWeight:800, textAlign:"center" }}>Rs. {totalTransport.toFixed(2).replace(/\.00$/,'')}</td>
                           <td style={{ padding:"11px 9px", border:"1px solid #e1cdd2", background:"#fff5f7", color:"#111", fontWeight:800, textAlign:"center" }}>Rs. {totalNight.toFixed(2).replace(/\.00$/,'')}</td>
                           <td style={{ padding:"11px 9px", border:"1px solid #e1cdd2", background:"#fff5f7", color:"#111", fontWeight:800, textAlign:"center" }}>Rs. {totalFood.toFixed(2).replace(/\.00$/,'')}</td>
@@ -85,6 +91,7 @@ return (
                       </tbody>
                     </table>
                   </div>
+</>
 );
 })()}
             </div>
