@@ -24,6 +24,6 @@ export default function PhotoViewer({ image, mediaRecord, onClose, onDelete, onR
         <button type="button" onClick={onClose}>Close</button>
       </div>
     </div>,
-    document.body
+    document.fullscreenElement || document.body
   );
 }

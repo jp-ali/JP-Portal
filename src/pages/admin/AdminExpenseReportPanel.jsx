@@ -1,6 +1,6 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
-import MarketerSingleSelect from "../../ui/MarketerSingleSelect.jsx";
+import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
 
 export default function AdminExpenseReportPanel() {
   const { adminExpenseFromDate, adminExpenseLoading, adminExpenseMarketerId, adminExpenseToDate, cardStyle, downloadAdminExpenseExcel, downloadAdminExpensePDF, fetchAdminExpenseReport, formatActionPlanDate, formatTime12, getDateKey, getFilteredAdminExpenseRows, getAdminExpenseValues, inputStyle, marketersList, renderExpandedReportChrome, renderReportExpandButton, reportViewClass, setAdminExpenseFromDate, setAdminExpenseMarketerId, setAdminExpenseRows, setAdminExpenseToDate, setAdminView } = usePortalContext();
@@ -21,8 +21,7 @@ export default function AdminExpenseReportPanel() {
                 </div>
                 <div className="admin-expense-filter-grid" style={{ display:"grid", gridTemplateColumns:"minmax(160px,1.25fr) minmax(120px,1fr) minmax(120px,1fr) 88px 42px", gap:"7px", alignItems:"end", marginBottom:"14px" }}>
                   <div>
-                    <label style={{ display:"block", fontSize:"11px", color:"#5c484e", fontWeight:700, marginBottom:"4px" }}>Select Marketer</label>
-                    <MarketerSingleSelect marketers={marketersList} selected={adminExpenseMarketerId} onChange={(id) => { setAdminExpenseMarketerId(id); setAdminExpenseRows([]); if (id) fetchAdminExpenseReport(id); }} inputStyle={inputStyle} />
+                    <MarketerMultiSelect marketers={marketersList} selected={adminExpenseMarketerId ? [adminExpenseMarketerId] : []} onChange={(ids) => { const id = ids[0] || ""; setAdminExpenseMarketerId(id); setAdminExpenseRows([]); if (id) fetchAdminExpenseReport(id); }} inputStyle={inputStyle} valueKey="id" emptyLabel="Select Marketer" single />
                   </div>
                   <div>
                     <label style={{ display:"block", fontSize:"11px", color:"#5c484e", fontWeight:700, marginBottom:"4px" }}>From Date</label>

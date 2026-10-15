@@ -1,6 +1,6 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
-import MarketerSingleSelect from "../../ui/MarketerSingleSelect.jsx";
+import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
 
 export default function AdminAttendancePanel() {
   const { adminAttendanceFromDate, adminAttendanceMarketerFilter, adminAttendancePetrolRate, adminAttendanceToDate, cardStyle, downloadAttendanceExcel, downloadAttendancePDF, fetchAttendanceRecords, getFilteredAttendance, getTodayInputDate, inputStyle, marketersList, renderAttendanceReportTable, renderExpandedReportChrome, renderReportExpandButton, reportViewClass, saveAttendancePetrolRate, setAdminAttendanceFromDate, setAdminAttendanceMarketerFilter, setAdminAttendancePetrolRate, setAdminAttendanceToDate, setAdminView, setAttendanceMediaFromDate, setAttendanceMediaMarketer, setAttendanceMediaToDate, setAttendancePetrolRates, setSelectedAttendanceMediaIds } = usePortalContext();
@@ -18,8 +18,8 @@ export default function AdminAttendancePanel() {
 setAttendanceMediaFromDate(adminAttendanceFromDate);
 setAttendanceMediaToDate(adminAttendanceToDate);
 setSelectedAttendanceMediaIds([]);
-const selectedMarketer = marketersList.find((m) => String(m.email || "").toLowerCase() === String(adminAttendanceMarketerFilter || "").toLowerCase());
-setAttendanceMediaMarketer(adminAttendanceMarketerFilter ? (selectedMarketer?.id || adminAttendanceMarketerFilter) : null);
+const selectedMarketer = adminAttendanceMarketerFilter.length === 1 ? marketersList.find((m) => String(m.email || "").toLowerCase() === String(adminAttendanceMarketerFilter[0]).toLowerCase()) : null;
+setAttendanceMediaMarketer(selectedMarketer?.id || null);
 fetchAttendanceRecords();
 setAdminView("attendance-media");
 }} style={{ padding: "8px 11px", background: "#a42243", color: "white", border: "none", borderRadius: "8px", fontWeight: 700, cursor: "pointer", fontSize: "11px" }}>🖼️ Media</button>
@@ -33,8 +33,7 @@ setAdminView("attendance-media");
                   <div className="attendance-to-field"><label style={{ fontSize: "9.5px", color: "#78686d", display: "block", marginBottom: "3px" }}>To Date</label><input type="date" lang="en-GB" value={adminAttendanceToDate} onChange={(e)=>setAdminAttendanceToDate(e.target.value)} style={{...inputStyle,height:"38px",padding:"6px 7px",fontSize:"10.5px"}} /></div>
                   <button className="attendance-clear-range-btn" type="button" title="Clear date range" onClick={()=>{ setAdminAttendanceFromDate(""); setAdminAttendanceToDate(""); }} style={{height:"38px",padding:"0 8px",border:"1px solid rgba(148,163,184,.30)",borderRadius:"9px",background:"#ffffff",color:"#7a0f2b",fontSize:"10px",fontWeight:800,cursor:"pointer",whiteSpace:"nowrap"}}>Clear</button>
                   <div className="attendance-marketer-field">
-                    <label style={{ fontSize: "9.5px", color: "#78686d", display: "block", marginBottom: "3px" }}>Select Marketer</label>
-                    <MarketerSingleSelect marketers={marketersList} selected={adminAttendanceMarketerFilter} onChange={setAdminAttendanceMarketerFilter} inputStyle={inputStyle} valueKey="email" allowAll height={38} />
+                    <MarketerMultiSelect marketers={marketersList} selected={adminAttendanceMarketerFilter} onChange={setAdminAttendanceMarketerFilter} inputStyle={inputStyle} height={38} />
                   </div>
                   <div className="attendance-petrol-field"><label style={{ fontSize: "9.5px", color: "#78686d", display: "block", marginBottom: "3px" }}>Petrol / L</label><input type="number" min="0" step="0.01" value={adminAttendancePetrolRate} onChange={(e)=>{ const value=e.target.value; setAdminAttendancePetrolRate(value); const dateKey=adminAttendanceToDate||getTodayInputDate(); setAttendancePetrolRates(prev=>({...prev,[dateKey]:value})); }} onBlur={saveAttendancePetrolRate} onKeyDown={(e)=>{ if(e.key==="Enter"){ e.preventDefault(); saveAttendancePetrolRate(); e.currentTarget.blur(); } }} placeholder="Rate" title="Petrol rate per litre used in Petrol Expense calculation" style={{...inputStyle,height:"38px",padding:"6px 7px",fontSize:"10.5px",textAlign:"center"}} /></div>
                   <button className="attendance-refresh-btn" type="button" title="Refresh" onClick={()=>fetchAttendanceRecords()} style={{ height:"38px", width:"40px", border:"1px solid rgba(143,21,50,.28)", borderRadius:"9px", background:"#ffffff", color:"#7a0f2b", fontSize:"18px", cursor:"pointer" }}>↻</button>

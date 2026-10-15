@@ -30,6 +30,24 @@ const [marketerSidebarOpen, setMarketerSidebarOpen] = useState(false);
 const [selectedMarketerForVisits, setSelectedMarketerForVisits] = useState(null);
 const [marketerView, setMarketerview] = useState("home");
 const [expandedReportKey, setExpandedReportKey] = useState("");
+const nativeFullscreenReportRef = useRef(null);
+useEffect(() => {
+  const onFullscreenChange = () => {
+    if (!document.fullscreenElement && nativeFullscreenReportRef.current) {
+      nativeFullscreenReportRef.current = null;
+      setExpandedReportKey("");
+    }
+  };
+  document.addEventListener("fullscreenchange", onFullscreenChange);
+  return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+}, []);
+useEffect(() => {
+  if (!expandedReportKey && nativeFullscreenReportRef.current) {
+    const report = nativeFullscreenReportRef.current;
+    nativeFullscreenReportRef.current = null;
+    if (document.fullscreenElement === report) document.exitFullscreen().catch(() => {});
+  }
+}, [expandedReportKey]);
 useEffect(() => {
 if (!expandedReportKey) { document.body.classList.remove("report-fullscreen-active"); return; }
 const previousOverflow = document.body.style.overflow;
@@ -254,7 +272,16 @@ const { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, se
 const { renderVisitReportTable, renderSampleReportTable, renderActionPlanReportTable, renderVerificationReportTable, renderAttendanceReportTable } = createReportTables({ formatActionPlanDate, formatTime12, getAttendanceAssignedKms, getAttendancePetrolExpense, getAttendanceTotalKms, getAttendanceTotalOtherExpense, getTodayInputDate, groupRowsByMarketerAndDate, handleDeleteActionPlan, inputStyle, saveAttendanceAssignedKms, saveVerificationRemark, setFullScreenImage, setReports, verificationRemarkOptions, verificationSavingId });
 const reportViewClass = (key) => expandedReportKey === key ? "admin-report-view admin-report-expanded" : "admin-report-view";
 const renderReportExpandButton = (key, title = "Expand report") => expandedReportKey === key ? null : (
-<button type="button" className="report-expand-btn" title={title} aria-label={title} onClick={() => { setAdminSidebarOpen(false); setMarketerSidebarOpen(false); setExpandedReportKey(key); }}>
+<button type="button" className="report-expand-btn" title={title} aria-label={title} onClick={(event) => {
+  const report = event.currentTarget.closest(".admin-report-view");
+  if (report?.requestFullscreen) {
+    nativeFullscreenReportRef.current = report;
+    report.requestFullscreen().catch(() => { nativeFullscreenReportRef.current = null; });
+  }
+  setAdminSidebarOpen(false);
+  setMarketerSidebarOpen(false);
+  setExpandedReportKey(key);
+}}>
 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
 </button>
 );

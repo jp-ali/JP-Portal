@@ -30,7 +30,7 @@ const [attendanceRecords, setAttendanceRecords] = useState([]);
 const [adminAttendanceFromDate, setAdminAttendanceFromDate] = useState("");
 const [adminAttendanceToDate, setAdminAttendanceToDate] = useState("");
 const [adminAttendanceSearch, setAdminAttendanceSearch] = useState("");
-const [adminAttendanceMarketerFilter, setAdminAttendanceMarketerFilter] = useState("");
+const [adminAttendanceMarketerFilter, setAdminAttendanceMarketerFilter] = useState([]);
 const [attendancePetrolRates, setAttendancePetrolRates] = useState({});
 const [adminAttendancePetrolRate, setAdminAttendancePetrolRate] = useState("");
 const [attendanceMediaFromDate, setAttendanceMediaFromDate] = useState(getTodayInputDate());
@@ -157,8 +157,8 @@ return attendanceRecords.filter((r) => {
 const d = String(r.date || "");
 const inRange = (!adminAttendanceFromDate || d >= adminAttendanceFromDate) &&
 (!adminAttendanceToDate || d <= adminAttendanceToDate);
-const matchesMarketer = !adminAttendanceMarketerFilter ||
-String(r.marketerEmail || "").toLowerCase() === String(adminAttendanceMarketerFilter).toLowerCase();
+const matchesMarketer = !adminAttendanceMarketerFilter.length ||
+adminAttendanceMarketerFilter.some((email) => String(r.marketerEmail || "").toLowerCase() === String(email).toLowerCase());
 return inRange && matchesMarketer;
 });
 };
@@ -201,8 +201,8 @@ const getFilteredAttendanceMedia = () => getAttendanceMediaItems().filter((item)
 const d = String(item.date || "");
 const matchesDate = (!attendanceMediaFromDate || d >= attendanceMediaFromDate) &&
 (!attendanceMediaToDate || d <= attendanceMediaToDate);
-const matchesMarketer = !adminAttendanceMarketerFilter ||
-String(item.marketerEmail || "").toLowerCase() === String(adminAttendanceMarketerFilter).toLowerCase();
+const matchesMarketer = !adminAttendanceMarketerFilter.length ||
+adminAttendanceMarketerFilter.some((email) => String(item.marketerEmail || "").toLowerCase() === String(email).toLowerCase());
 return matchesDate && matchesMarketer;
 });
 const softDeleteAttendanceMedia = async (item, skipConfirm = false) => {
