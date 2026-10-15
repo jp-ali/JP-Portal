@@ -17,7 +17,7 @@ import { useCatalogues } from "./features/catalogues/useCatalogues.js";
 import { createReportExporters } from "./services/reportExports.js";
 import adminCss from "./styles/admin.css?raw";
 import marketerCss from "./styles/marketer.css?raw";
-import React, { lazy, Suspense, useState, useRef, useEffect } from "react";
+import React, { lazy, Suspense, useState, useRef, useEffect, useLayoutEffect } from "react";
 import { db } from "./services/firebase";
 import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 const AdminPortal = lazy(() => import("./pages/AdminPortal.jsx"));
@@ -266,21 +266,69 @@ const { verificationFromDate, setVerificationFromDate, verificationToDate, setVe
 const { attendanceType, setAttendanceType, attendanceStartReading, setAttendanceStartReading, attendanceEndReading, setAttendanceEndReading, attendanceLeaveReason, setAttendanceLeaveReason, attendanceOtherExpense, setAttendanceOtherExpense, attendanceTransportExpense, setAttendanceTransportExpense, attendanceFoodExpense, setAttendanceFoodExpense, attendanceNightStayExpense, setAttendanceNightStayExpense, attendanceStartPhoto, setAttendanceStartPhoto, attendanceEndPhoto, setAttendanceEndPhoto, attendanceOtherExpensePhoto, setAttendanceOtherExpensePhoto, attendanceTransportExpensePhoto, setAttendanceTransportExpensePhoto, attendanceFoodExpensePhoto, setAttendanceFoodExpensePhoto, attendanceNightStayExpensePhoto, setAttendanceNightStayExpensePhoto, attendanceCameraTarget, setAttendanceCameraTarget, attendanceCameraActive, setAttendanceCameraActive, attendanceSubmitting, setAttendanceSubmitting, todayAttendance, setTodayAttendance, attendanceRecords, setAttendanceRecords, adminAttendanceFromDate, setAdminAttendanceFromDate, adminAttendanceToDate, setAdminAttendanceToDate, adminAttendanceSearch, setAdminAttendanceSearch, adminAttendanceMarketerFilter, setAdminAttendanceMarketerFilter, attendancePetrolRates, setAttendancePetrolRates, adminAttendancePetrolRate, setAdminAttendancePetrolRate, attendanceMediaFromDate, setAttendanceMediaFromDate, attendanceMediaToDate, setAttendanceMediaToDate, selectedAttendanceMediaIds, setSelectedAttendanceMediaIds, attendanceMediaMarketer, setAttendanceMediaMarketer, attendanceVideoRef, getAttendanceDocId, fetchTodayAttendance, fetchAttendanceRecords, getFilteredAttendance, getFilteredAttendanceMedia, softDeleteAttendanceMedia, deleteSelectedAttendanceMedia, getAttendanceTotalKms, getAttendancePetrolRate, getAttendanceAssignedKms, getAttendancePetrolExpense, getAttendanceTotalOtherExpense, saveAttendancePetrolRate, saveAttendanceAssignedKms, startAttendanceCamera, stopAttendanceCamera, captureAttendancePhoto, submitAttendanceStart, submitAttendanceEnd, submitAttendanceLeave, openAttendanceForm, downloadAttendanceExcel, downloadAttendancePDF } = useAttendance({ user, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, setMarketerview, fetchDeletedMedia });
 const { openAddVisit, selectVisitArea, toggleVisitSchool, startCamera, stopCamera, capturePhoto, retakePhoto, handleSubmitVisit, handleSubmitSample } = createVisitFormActions({ form: visitForm, user, setUser, setMarketerview, fetchTodayAttendance, areasList, citiesList, schoolsList, isUsableSchoolRecord, resetVisitAssignmentForm, fetchMarketerReports, fetchMarketerSamples, fetchCitiesByIds, fetchAreasForCities, formatTime12, refreshLoggedInMarketerAssignments, setEditingVisitSchoolId, setEditingVisitSchoolName, setNewSchoolName, setSchoolSyncMessage });
 const { fullScreenImage, setFullScreenImage, mediaMarketer, setMediaMarketer, selectedMediaIds, setSelectedMediaIds, selectedDeletedMediaIds, setSelectedDeletedMediaIds, deletedMedia, setDeletedMedia, mediaView, setMediaView, fullScreenMediaRecord, setFullScreenMediaRecord, softDeleteMedia, bulkDeleteMedia, restoreMedia, restoreSelectedMedia, permanentlyDeleteMedia, permanentlyDeleteAllMedia, handleDeletePicture } = useMediaTrash({ user, reports, fetchAllReports, fetchMarketerReports, fetchAttendanceRecords, fetchDeletedMedia, getMarketerName });
+const portalSide = user?.role === "admin" ? "admin" : "marketer";
+const portalView = portalSide === "admin" ? adminView : marketerView;
+const routeParts = [portalSide, portalView];
+if (portalSide === "admin") {
+  if (adminView === "today-visits" && selectedAdminMarketerBox) routeParts.push(selectedAdminMarketerBox);
+  if (adminView === "visits" && selectedAdminAllSchoolBox) routeParts.push(selectedAdminAllSchoolBox);
+  if (adminView === "sample-details") {
+    if (selectedAdminSampleMarketerBox) routeParts.push(selectedAdminSampleMarketerBox);
+    if (selectedAdminSampleSchoolBox) routeParts.push(selectedAdminSampleSchoolBox);
+  }
+  if (adminView === "marketers-detail" && selectedMarketerDetailBox) routeParts.push(selectedMarketerDetailBox);
+  if (adminView === "media") {
+    routeParts.push(mediaView);
+    if (mediaMarketer) routeParts.push(mediaMarketer);
+  }
+  if (adminView === "attendance-media" && attendanceMediaMarketer) routeParts.push(attendanceMediaMarketer);
+}
+const routeKey = JSON.stringify(routeParts);
+const scrollPositionsRef = useRef(new Map());
+const currentRouteKeyRef = useRef(routeKey);
+const previousRouteRef = useRef(routeParts);
+useEffect(() => {
+  const rememberScroll = () => scrollPositionsRef.current.set(currentRouteKeyRef.current, window.scrollY);
+  rememberScroll();
+  window.addEventListener("scroll", rememberScroll, { passive: true });
+  return () => window.removeEventListener("scroll", rememberScroll);
+}, [routeKey]);
+useLayoutEffect(() => {
+  const previousParts = previousRouteRef.current;
+  const previousKey = JSON.stringify(previousParts);
+  currentRouteKeyRef.current = routeKey;
+  if (previousKey === routeKey) return;
+  previousRouteRef.current = routeParts;
+  const returningToParent = previousParts.length > routeParts.length && routeParts.every((part, index) => previousParts[index] === part);
+  const target = portalView === "home" || returningToParent ? scrollPositionsRef.current.get(routeKey) || 0 : 0;
+  window.scrollTo(0, target);
+  const frame = requestAnimationFrame(() => window.scrollTo(0, target));
+  return () => cancelAnimationFrame(frame);
+}, [routeKey]);
 closePhotoOnFullscreenExitRef.current = () => { setFullScreenImage(null); setFullScreenMediaRecord(null); };
 useEffect(() => {
   const onKeyDown = (event) => {
     if (event.key !== "Escape" || event.repeat) return;
-    if (fullScreenImage || expandedReportKey) event.preventDefault();
+    const activeView = user?.role === "admin" ? adminView : marketerView;
+    if (fullScreenImage || expandedReportKey || activeView !== "home") event.preventDefault();
     if (fullScreenImage) {
       setFullScreenImage(null);
       setFullScreenMediaRecord(null);
     } else if (expandedReportKey) {
       setExpandedReportKey("");
+    } else if (activeView !== "home") {
+      if (user?.role !== "admin") {
+        if (marketerView === "attendance") stopAttendanceCamera();
+        if (marketerView === "add-visit") stopCamera();
+        setMarketerview("home");
+      } else {
+        setAdminView("home");
+      }
     }
   };
   window.addEventListener("keydown", onKeyDown, true);
   return () => window.removeEventListener("keydown", onKeyDown, true);
-}, [fullScreenImage, expandedReportKey, setFullScreenImage, setFullScreenMediaRecord]);
+}, [fullScreenImage, expandedReportKey, user?.role, adminView, marketerView, setFullScreenImage, setFullScreenMediaRecord, stopAttendanceCamera, stopCamera]);
 const { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanSearch, setAdminActionPlanSearch, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan } = useActionPlans({ user, setUser, setMarketerview, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId });
 const { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerIds, setAdminExpenseMarketerIds, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, getAdminExpenseMarketerName, downloadAdminExpenseExcel, downloadAdminExpensePDF } = useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12 });
 const { renderVisitReportTable, renderSampleReportTable, renderActionPlanReportTable, renderVerificationReportTable, renderAttendanceReportTable } = createReportTables({ formatActionPlanDate, formatTime12, getAttendanceAssignedKms, getAttendancePetrolExpense, getAttendanceTotalKms, getAttendanceTotalOtherExpense, getTodayInputDate, groupRowsByMarketerAndDate, handleDeleteActionPlan, inputStyle, saveAttendanceAssignedKms, saveVerificationRemark, setFullScreenImage, setReports, verificationRemarkOptions, verificationSavingId });
