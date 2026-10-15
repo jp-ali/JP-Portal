@@ -31,15 +31,27 @@ const [selectedMarketerForVisits, setSelectedMarketerForVisits] = useState(null)
 const [marketerView, setMarketerview] = useState("home");
 const [expandedReportKey, setExpandedReportKey] = useState("");
 const nativeFullscreenReportRef = useRef(null);
+const closePhotoOnFullscreenExitRef = useRef(null);
 useEffect(() => {
   const onFullscreenChange = () => {
+    if (document.fullscreenElement === nativeFullscreenReportRef.current) {
+      // Chrome normally consumes Escape before the photo viewer can receive it.
+      // Keyboard Lock gives the report control of Escape while it is fullscreen.
+      navigator.keyboard?.lock?.(["Escape"])?.catch(() => {});
+      return;
+    }
+    navigator.keyboard?.unlock?.();
     if (!document.fullscreenElement && nativeFullscreenReportRef.current) {
       nativeFullscreenReportRef.current = null;
-      setExpandedReportKey("");
+      if (document.querySelector(".photo-viewer")) closePhotoOnFullscreenExitRef.current?.();
+      else setExpandedReportKey("");
     }
   };
   document.addEventListener("fullscreenchange", onFullscreenChange);
-  return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  return () => {
+    document.removeEventListener("fullscreenchange", onFullscreenChange);
+    navigator.keyboard?.unlock?.();
+  };
 }, []);
 useEffect(() => {
   if (!expandedReportKey && nativeFullscreenReportRef.current) {
@@ -254,9 +266,11 @@ const { verificationFromDate, setVerificationFromDate, verificationToDate, setVe
 const { attendanceType, setAttendanceType, attendanceStartReading, setAttendanceStartReading, attendanceEndReading, setAttendanceEndReading, attendanceLeaveReason, setAttendanceLeaveReason, attendanceOtherExpense, setAttendanceOtherExpense, attendanceTransportExpense, setAttendanceTransportExpense, attendanceFoodExpense, setAttendanceFoodExpense, attendanceNightStayExpense, setAttendanceNightStayExpense, attendanceStartPhoto, setAttendanceStartPhoto, attendanceEndPhoto, setAttendanceEndPhoto, attendanceOtherExpensePhoto, setAttendanceOtherExpensePhoto, attendanceTransportExpensePhoto, setAttendanceTransportExpensePhoto, attendanceFoodExpensePhoto, setAttendanceFoodExpensePhoto, attendanceNightStayExpensePhoto, setAttendanceNightStayExpensePhoto, attendanceCameraTarget, setAttendanceCameraTarget, attendanceCameraActive, setAttendanceCameraActive, attendanceSubmitting, setAttendanceSubmitting, todayAttendance, setTodayAttendance, attendanceRecords, setAttendanceRecords, adminAttendanceFromDate, setAdminAttendanceFromDate, adminAttendanceToDate, setAdminAttendanceToDate, adminAttendanceSearch, setAdminAttendanceSearch, adminAttendanceMarketerFilter, setAdminAttendanceMarketerFilter, attendancePetrolRates, setAttendancePetrolRates, adminAttendancePetrolRate, setAdminAttendancePetrolRate, attendanceMediaFromDate, setAttendanceMediaFromDate, attendanceMediaToDate, setAttendanceMediaToDate, selectedAttendanceMediaIds, setSelectedAttendanceMediaIds, attendanceMediaMarketer, setAttendanceMediaMarketer, attendanceVideoRef, getAttendanceDocId, fetchTodayAttendance, fetchAttendanceRecords, getFilteredAttendance, getFilteredAttendanceMedia, softDeleteAttendanceMedia, deleteSelectedAttendanceMedia, getAttendanceTotalKms, getAttendancePetrolRate, getAttendanceAssignedKms, getAttendancePetrolExpense, getAttendanceTotalOtherExpense, saveAttendancePetrolRate, saveAttendanceAssignedKms, startAttendanceCamera, stopAttendanceCamera, captureAttendancePhoto, submitAttendanceStart, submitAttendanceEnd, submitAttendanceLeave, openAttendanceForm, downloadAttendanceExcel, downloadAttendancePDF } = useAttendance({ user, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, setMarketerview, fetchDeletedMedia });
 const { openAddVisit, selectVisitArea, toggleVisitSchool, startCamera, stopCamera, capturePhoto, retakePhoto, handleSubmitVisit, handleSubmitSample } = createVisitFormActions({ form: visitForm, user, setUser, setMarketerview, fetchTodayAttendance, areasList, citiesList, schoolsList, isUsableSchoolRecord, resetVisitAssignmentForm, fetchMarketerReports, fetchMarketerSamples, fetchCitiesByIds, fetchAreasForCities, formatTime12, refreshLoggedInMarketerAssignments, setEditingVisitSchoolId, setEditingVisitSchoolName, setNewSchoolName, setSchoolSyncMessage });
 const { fullScreenImage, setFullScreenImage, mediaMarketer, setMediaMarketer, selectedMediaIds, setSelectedMediaIds, selectedDeletedMediaIds, setSelectedDeletedMediaIds, deletedMedia, setDeletedMedia, mediaView, setMediaView, fullScreenMediaRecord, setFullScreenMediaRecord, softDeleteMedia, bulkDeleteMedia, restoreMedia, restoreSelectedMedia, permanentlyDeleteMedia, permanentlyDeleteAllMedia, handleDeletePicture } = useMediaTrash({ user, reports, fetchAllReports, fetchMarketerReports, fetchAttendanceRecords, fetchDeletedMedia, getMarketerName });
+closePhotoOnFullscreenExitRef.current = () => { setFullScreenImage(null); setFullScreenMediaRecord(null); };
 useEffect(() => {
   const onKeyDown = (event) => {
     if (event.key !== "Escape" || event.repeat) return;
+    if (fullScreenImage || expandedReportKey) event.preventDefault();
     if (fullScreenImage) {
       setFullScreenImage(null);
       setFullScreenMediaRecord(null);
@@ -264,8 +278,8 @@ useEffect(() => {
       setExpandedReportKey("");
     }
   };
-  window.addEventListener("keydown", onKeyDown);
-  return () => window.removeEventListener("keydown", onKeyDown);
+  window.addEventListener("keydown", onKeyDown, true);
+  return () => window.removeEventListener("keydown", onKeyDown, true);
 }, [fullScreenImage, expandedReportKey, setFullScreenImage, setFullScreenMediaRecord]);
 const { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanSearch, setAdminActionPlanSearch, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan } = useActionPlans({ user, setUser, setMarketerview, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId });
 const { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerId, setAdminExpenseMarketerId, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, downloadAdminExpenseExcel, downloadAdminExpensePDF } = useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12 });
