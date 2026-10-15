@@ -657,7 +657,7 @@
         margin: 0 !important;
       }
       .admin-report-expanded .report-expanded-toolbar {
-        margin: 0 -5px 5px;
+        margin: 0 -5px 16px;
       }
       .admin-report-expanded .pdf-like-table-shell,
       .admin-report-expanded .table-scroll,
@@ -667,7 +667,7 @@
       }
       @media (max-width: 767px) {
         .admin-report-expanded { padding: 0 4px 5px !important; }
-        .admin-report-expanded .report-expanded-toolbar { margin: 0 -4px 4px; }
+        .admin-report-expanded .report-expanded-toolbar { margin: 0 -4px 12px; }
         .admin-report-expanded > div[style*="border-radius"] { padding: 5px !important; }
       }
 

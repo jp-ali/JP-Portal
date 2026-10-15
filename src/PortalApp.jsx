@@ -53,7 +53,7 @@ useEffect(() => {
       const table = report.querySelector(".pdf-like-table-shell, .table-scroll, .attendance-admin-table-wrap");
       if (!table) return false;
       const toolbar = report.querySelector(".report-expanded-toolbar");
-      report.scrollTop += table.getBoundingClientRect().top - report.getBoundingClientRect().top - (toolbar?.offsetHeight || 0) - 4;
+      report.scrollTop += table.getBoundingClientRect().top - report.getBoundingClientRect().top - (toolbar?.offsetHeight || 0) - 16;
       return true;
     };
     if (!showTable()) {

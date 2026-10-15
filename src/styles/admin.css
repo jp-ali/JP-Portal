@@ -7,7 +7,7 @@
           .admin-report-expanded { position:fixed !important; inset:0 !important; z-index:2147483000 !important; width:100vw !important; max-width:100vw !important; height:100vh !important; height:100dvh !important; margin:0 !important; padding:0 14px 22px !important; overflow:auto !important; overscroll-behavior:contain; background:#f8f4f5 !important; box-sizing:border-box !important; animation:none !important; transform:none !important; isolation:isolate; }
           .admin-report-expanded > div[style*="border-radius"] { max-width:none !important; width:100% !important; }
           .admin-report-expanded .report-normal-toolbar, .admin-report-expanded .report-normal-back, .admin-report-expanded .report-normal-actions { display:none !important; }
-          .report-expanded-toolbar { position:sticky !important; top:0 !important; z-index:20; min-height:44px; margin:0 -14px 7px; padding:5px 9px; display:flex; align-items:center; justify-content:space-between; gap:7px; background:rgba(248,244,245,.985); border-bottom:1px solid rgba(122,15,43,.14); box-shadow:0 3px 9px rgba(78,20,36,.09); backdrop-filter:blur(8px); box-sizing:border-box; }
+          .report-expanded-toolbar { position:sticky !important; top:0 !important; z-index:20; min-height:44px; margin:0 -14px 16px; padding:5px 9px; display:flex; align-items:center; justify-content:space-between; gap:7px; background:rgba(248,244,245,.985); border-bottom:1px solid rgba(122,15,43,.14); box-shadow:0 3px 9px rgba(78,20,36,.09); backdrop-filter:blur(8px); box-sizing:border-box; }
           .report-expanded-back { position:static !important; width:32px; height:32px; padding:0; border:none; border-radius:7px; background:linear-gradient(135deg,#6f0b24,#86132f); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(78,20,36,.16); flex:0 0 auto; }
           .report-expanded-back:hover { background:linear-gradient(135deg,#62081f,#77102a); transform:translateY(-1px); }
           .report-expanded-exports { position:static !important; margin-left:auto; display:flex; align-items:center; gap:7px; }
@@ -19,7 +19,7 @@
           .verification-call-link:hover { text-decoration:underline; }
           @media (max-width:767px) {
             .admin-report-expanded { padding:0 7px 14px !important; }
-            .report-expanded-toolbar { top:0 !important; min-height:42px; margin:0 -7px 6px; padding:4px 7px; }
+            .report-expanded-toolbar { top:0 !important; min-height:42px; margin:0 -7px 12px; padding:4px 7px; }
             .report-expanded-back { width:32px; height:32px; border-radius:7px; }
             .report-expanded-exports { gap:5px; }
             .report-expanded-exports button { min-height:32px; padding:0 8px; font-size:10px; }
