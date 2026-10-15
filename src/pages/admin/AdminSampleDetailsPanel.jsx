@@ -1,9 +1,9 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
-import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
+import ReportMarketerFilterBar from "../../ui/ReportMarketerFilterBar.jsx";
 
 export default function AdminSampleDetailsPanel() {
-  const { adminSampleFromDate, adminSampleMarketersFilter, adminSampleToDate, cardStyle, downloadExcel, downloadPDF, downloadSingleSample, getDateKey, getMarketerName, handleDeleteSample, inputStyle, isDateInRange, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, renderSampleReportTable, reportViewClass, samples, selectedAdminSampleMarketerBox, selectedAdminSampleSchoolBox, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminView, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox } = usePortalContext();
+  const { adminSampleFromDate, adminSampleMarketersFilter, adminSampleToDate, cardStyle, downloadExcel, downloadPDF, downloadSingleSample, fetchAllSamples, fetchMarketers, getDateKey, getMarketerName, handleDeleteSample, inputStyle, isDateInRange, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, renderSampleReportTable, reportViewClass, samples, selectedAdminSampleMarketerBox, selectedAdminSampleSchoolBox, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminView, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox } = usePortalContext();
   return (<div className={reportViewClass("sample-details")}>
               {renderExpandedReportChrome("sample-details")}
               <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px", alignItems: "center" }}>
@@ -58,31 +58,7 @@ style={{ padding: "6px 12px", background: "linear-gradient(135deg,#6f0b24,#86132
                 {!selectedAdminSampleMarketerBox && !selectedAdminSampleSchoolBox ? (
 <>
                     <h3 style={{ marginTop: 0, color: "#3b2329", fontSize: "17px", marginBottom: "14px" }}>📦 All Sample Details</h3>
-                    <div style={{ background: "rgba(255,255,255,0.96)", padding: "14px", borderRadius: "12px", marginBottom: "12px", border: "1px solid rgba(143,21,50,.25)" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                        <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#77102a" }}>1. Select Date Range</label>
-                        {(adminSampleFromDate || adminSampleToDate) && (
-<button 
-className="white-range-btn"
-onClick={() => { setAdminSampleFromDate(""); setAdminSampleToDate(""); }}
-style={{ padding: "4px 10px", background: "#ffffff", color: "#7a0f2b", border: "1px solid #d8c8cd", borderRadius: "7px", fontSize: "11px", fontWeight: "700", cursor: "pointer", boxShadow: "0 2px 7px rgba(15,23,42,.06)" }}
->
-                            Clear Range
-                          </button>
-)}
-                      </div>
-                      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                        <div style={{ flex: 1, minWidth: "130px" }}>
-                          <span style={{ fontSize: "11px", color: "#78686d" }}>From Date:</span>
-                          <input type="date" lang="en-GB" value={adminSampleFromDate} onChange={(e) => setAdminSampleFromDate(e.target.value)} style={{ ...inputStyle, padding: "8px", colorScheme: "light" }} />
-                        </div>
-                        <div style={{ flex: 1, minWidth: "130px" }}>
-                          <span style={{ fontSize: "11px", color: "#78686d" }}>To Date:</span>
-                          <input type="date" lang="en-GB" value={adminSampleToDate} onChange={(e) => setAdminSampleToDate(e.target.value)} style={{ ...inputStyle, padding: "8px", colorScheme: "light" }} />
-                        </div>
-                        <MarketerMultiSelect marketers={marketersList} selected={adminSampleMarketersFilter} onChange={setAdminSampleMarketersFilter} inputStyle={inputStyle} />
-                      </div>
-                    </div>
+                    <ReportMarketerFilterBar fromDate={adminSampleFromDate} toDate={adminSampleToDate} onFromDate={setAdminSampleFromDate} onToDate={setAdminSampleToDate} onClear={() => { setAdminSampleFromDate(""); setAdminSampleToDate(""); }} marketers={marketersList} selected={adminSampleMarketersFilter} onSelected={setAdminSampleMarketersFilter} onRefresh={() => Promise.all([fetchAllSamples(), fetchMarketers()])} inputStyle={inputStyle} />
                     <h4 style={{ color: "#5c484e", fontSize: "15px", marginBottom: "10px" }}>Marketers Sample Summary:</h4>
                     {(() => {
 const filteredSamples = samples.filter(s => {

@@ -10,7 +10,7 @@ const [expenseReportRows, setExpenseReportRows] = useState([]);
 const [expenseReportLoading, setExpenseReportLoading] = useState(false);
 const [adminExpenseFromDate, setAdminExpenseFromDate] = useState("");
 const [adminExpenseToDate, setAdminExpenseToDate] = useState("");
-const [adminExpenseMarketerId, setAdminExpenseMarketerId] = useState("");
+const [adminExpenseMarketerIds, setAdminExpenseMarketerIds] = useState([]);
 const [adminExpenseRows, setAdminExpenseRows] = useState([]);
 const [adminExpenseLoading, setAdminExpenseLoading] = useState(false);
 const [adminExpensePetrolRates, setAdminExpensePetrolRates] = useState({});
@@ -284,23 +284,15 @@ console.error("Expense PDF error:", err);
 alert("Expense PDF could not be downloaded. Please try again.");
 }
 };
-const getAdminExpenseSelectedMarketer = () =>
-marketersList.find((m) => m.id === adminExpenseMarketerId) || null;
-const fetchAdminExpenseReport = async (marketerId = adminExpenseMarketerId) => {
-const selectedId = marketerId || "";
-if (!selectedId) {
-setAdminExpenseRows([]);
-return [];
-}
-const marketer = marketersList.find((m) => m.id === selectedId);
-if (!marketer?.email) {
-setAdminExpenseRows([]);
-return [];
-}
+const getAdminExpenseMarketerName = (row) => {
+const marketer = marketersList.find((m) => String(m.email || "").toLowerCase() === String(row?.marketerEmail || "").toLowerCase());
+return marketer?.name || row?.marketerName || row?.marketerEmail || "Marketer";
+};
+const fetchAdminExpenseReport = async () => {
 setAdminExpenseLoading(true);
 try {
 const [snap, ratesSnap] = await Promise.all([
-getDocs(query(collection(db, "attendance"), where("marketerEmail", "==", marketer.email))),
+getDocs(collection(db, "attendance")),
 getDocs(collection(db, "petrol_rates"))
 ]);
 const rates = {};
@@ -325,19 +317,24 @@ const openAdminExpenseReport = async () => {
 setAdminView("expense-report");
 setAdminExpenseFromDate("");
 setAdminExpenseToDate("");
-setAdminExpenseMarketerId("");
+setAdminExpenseMarketerIds([]);
 setAdminExpenseRows([]);
 await fetchMarketers();
+await fetchAdminExpenseReport();
 };
-const getFilteredAdminExpenseRows = () => adminExpenseRows.filter((row) => {
+const getFilteredAdminExpenseRows = () => {
+const selectedEmails = adminExpenseMarketerIds.length ? new Set(marketersList.filter((m) => adminExpenseMarketerIds.includes(m.id)).map((m) => String(m.email || "").toLowerCase())) : null;
+return adminExpenseRows.filter((row) => {
 const dateKey = String(row?.date || getDateKey(row?.updatedAt || row?.startCreatedAt || row?.endCreatedAt));
 if (!dateKey) return false;
 if (adminExpenseFromDate && dateKey < adminExpenseFromDate) return false;
 if (adminExpenseToDate && dateKey > adminExpenseToDate) return false;
+if (selectedEmails && !selectedEmails.has(String(row?.marketerEmail || "").toLowerCase())) return false;
 return true;
 });
+};
 const getAdminExpenseValues = (row) => {
-const marketer = getAdminExpenseSelectedMarketer();
+const marketer = marketersList.find((m) => String(m.email || "").toLowerCase() === String(row?.marketerEmail || "").toLowerCase());
 return {
 kms: calculatedKms(row),
 assignedKms: dailyAssignedKms(row, marketer),
@@ -352,6 +349,7 @@ const food = Number(row?.foodExpense || 0);
 const other = Number(row?.otherExpense || 0);
 return {
 sr: index + 1,
+marketerName: getAdminExpenseMarketerName(row),
 date: formatActionPlanDate(row.date || getDateKey(row.updatedAt)),
 time: `${formatTime12(row.startTime, "—")} - ${formatTime12(row.endTime, "—")}`,
 dayIn: row.startReading ?? "—",
@@ -367,11 +365,6 @@ totalOtherExpense: transport + nightStay + food + other
 };
 });
 const downloadAdminExpenseExcel = () => {
-const marketer = getAdminExpenseSelectedMarketer();
-if (!marketer) {
-alert("Please select a marketer first.");
-return;
-}
 if (!adminExpenseFromDate || !adminExpenseToDate) {
 alert("Please select From Date and To Date first.");
 return;
@@ -394,7 +387,7 @@ const totalOther = rows.reduce((sum, row) => sum + Number(row.other || 0), 0);
 const totalAllOther = rows.reduce((sum, row) => sum + Number(row.totalOtherExpense || 0), 0);
 const data = rows.map((row) => ({
 "Sr.": row.sr,
-"Marketer": marketer.name || marketer.email || "N/A",
+"Marketer": row.marketerName,
 "Date": row.date,
 "Time": row.time,
 "Day In Reading": row.dayIn,
@@ -410,7 +403,7 @@ const data = rows.map((row) => ({
 }));
 data.push({
 "Sr.": "",
-"Marketer": marketer.name || marketer.email || "N/A",
+"Marketer": "",
 "Date": "TOTAL",
 "Time": "",
 "Day In Reading": "",
@@ -431,12 +424,10 @@ worksheet["!cols"] = [
 ];
 const workbook = window.XLSX.utils.book_new();
 window.XLSX.utils.book_append_sheet(workbook, worksheet, "Expense Report");
-const safeName = String(marketer.name || "Marketer").replace(/[^a-z0-9_-]+/gi, "_");
+const safeName = adminExpenseMarketerIds.length === 1 ? String(marketersList.find((m) => m.id === adminExpenseMarketerIds[0])?.name || "Marketer").replace(/[^a-z0-9_-]+/gi, "_") : adminExpenseMarketerIds.length ? "Selected_Marketers" : "All_Marketers";
 window.XLSX.writeFile(workbook, `Expense_Report_${safeName}_${adminExpenseFromDate}_to_${adminExpenseToDate}.xlsx`);
 };
 const downloadAdminExpensePDF = () => {
-const marketer = getAdminExpenseSelectedMarketer();
-if (!marketer) { alert("Please select a marketer first."); return; }
 if (!adminExpenseFromDate || !adminExpenseToDate) { alert("Please select From Date and To Date first."); return; }
 const rows = buildAdminExpenseExportRows();
 if (!rows.length) { alert("No expense report data found for the selected range."); return; }
@@ -446,9 +437,9 @@ const ascii = (v) => clean(v).replace(/[^\x20-\x7E]/g, "?");
 const PAGE_W = 841.89, PAGE_H = 595.28, MM = 72 / 25.4;
 const LEFT = 7, RIGHT = 290, TABLE_TOP = 38, CONTENT_BOTTOM = 193;
 const columns = [
-["Sr.", 9], ["Date", 22], ["Time", 30], ["Day In", 21], ["Day Out", 21],
-["KMs", 16], ["Assigned KMs", 19], ["Petrol Expense", 19], ["Transport", 24],
-["Night Stay", 24], ["Food", 24], ["Other", 24], ["Total Other", 30]
+["Sr.", 7], ["Marketer", 23], ["Date", 19], ["Time", 23], ["Day In", 18], ["Day Out", 18],
+["KMs", 14], ["Assigned KMs", 17], ["Petrol Expense", 18], ["Transport", 22],
+["Night Stay", 22], ["Food", 22], ["Other", 22], ["Total Other", 38]
 ];
 const esc = (v) => ascii(v).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 const textWidth = (txt, size) => ascii(txt).length * size * .50;
@@ -478,7 +469,7 @@ return visible.map((line,i)=>drawText(xMm+wMm/2,startTop+i*lineH/MM,line,size,"c
 };
 const pages=[];
 const rangeLabel=`${adminExpenseFromDate} to ${adminExpenseToDate}`;
-const marketerLabel=marketer.name||marketer.email||"Marketer";
+const marketerLabel=adminExpenseMarketerIds.length === 1 ? (marketersList.find((m) => m.id === adminExpenseMarketerIds[0])?.name || "Marketer") : adminExpenseMarketerIds.length ? `${adminExpenseMarketerIds.length} Marketers` : "All Marketers";
 const newPage=()=>{
 const c=[];
 c.push(rectCmd(LEFT,5,RIGHT-LEFT,24,.55,[.995,.965,.972]));
@@ -497,16 +488,16 @@ if(page.y+h>CONTENT_BOTTOM){page=newPage();pages.push(page);} let x=LEFT;
 values.forEach((value,i)=>{const fill=isTotal?[.995,.945,.955]:null;page.content.push(rectCmd(x,page.y,columns[i][1],h,.42,fill));page.content.push(drawWrapped(x,page.y,columns[i][1],h,value,isTotal?5.9:5.7,isTotal));x+=columns[i][1];});
 page.y+=h;
 };
-rows.forEach((row)=>drawRow([row.sr,row.date,row.time,row.dayIn,row.dayOut,Number(row.kms).toFixed(1).replace(/\.0$/, ""),Number(row.assignedKms).toFixed(1).replace(/\.0$/, ""),`Rs. ${Number(row.petrolExpense).toFixed(2)}`,`Rs. ${Number(row.transport).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.nightStay).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.food).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.other).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.totalOtherExpense).toFixed(2).replace(/\.00$/, "")}`]));
+rows.forEach((row)=>drawRow([row.sr,row.marketerName,row.date,row.time,row.dayIn,row.dayOut,Number(row.kms).toFixed(1).replace(/\.0$/, ""),Number(row.assignedKms).toFixed(1).replace(/\.0$/, ""),`Rs. ${Number(row.petrolExpense).toFixed(2)}`,`Rs. ${Number(row.transport).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.nightStay).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.food).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.other).toFixed(2).replace(/\.00$/, "")}`,`Rs. ${Number(row.totalOtherExpense).toFixed(2).replace(/\.00$/, "")}`]));
 const totalKms=rows.reduce((s,r)=>s+Number(r.kms||0),0), totalPetrol=rows.reduce((s,r)=>s+Number(r.petrolExpense||0),0), totalTransport=rows.reduce((s,r)=>s+Number(r.transport||0),0), totalNight=rows.reduce((s,r)=>s+Number(r.nightStay||0),0), totalFood=rows.reduce((s,r)=>s+Number(r.food||0),0), totalOther=rows.reduce((s,r)=>s+Number(r.other||0),0), totalAll=rows.reduce((s,r)=>s+Number(r.totalOtherExpense||0),0);
-drawRow(["","TOTAL","","","",`${totalKms.toFixed(1).replace(/\.0$/,"")} KMs`,``, `Rs. ${totalPetrol.toFixed(2)}`,`Rs. ${totalTransport.toFixed(2)}`,`Rs. ${totalNight.toFixed(2)}`,`Rs. ${totalFood.toFixed(2)}`,`Rs. ${totalOther.toFixed(2)}`,`Rs. ${totalAll.toFixed(2)}`],true);
+drawRow(["","","TOTAL","","","",`${totalKms.toFixed(1).replace(/\.0$/,"")} KMs`,``, `Rs. ${totalPetrol.toFixed(2)}`,`Rs. ${totalTransport.toFixed(2)}`,`Rs. ${totalNight.toFixed(2)}`,`Rs. ${totalFood.toFixed(2)}`,`Rs. ${totalOther.toFixed(2)}`,`Rs. ${totalAll.toFixed(2)}`],true);
 pages.forEach((pg,idx)=>{pg.content.push(rectCmd(LEFT,197,RIGHT-LEFT,10,.45,[.995,.958,.968]));pg.content.push(drawText(148.5,203,"Created by Ali Ashfaq",7.5,"center",true));pg.content.push(drawText(10,203,"Admin Expense Report",6.3,"left"));pg.content.push(drawText(287,203,`Page ${idx+1} of ${pages.length}`,6.3,"right"));});
 const objects=[]; const addObject=(body)=>{objects.push(body);return objects.length;}; const f1=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"), f2=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"); const contentIds=[],pageIds=[];
 pages.forEach((pg)=>{const stream=pg.content.join("\n")+"\n";contentIds.push(addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`));pageIds.push(0);}); const pagesId=addObject("");
 pages.forEach((pg,i)=>{pageIds[i]=addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${PAGE_W.toFixed(2)} ${PAGE_H.toFixed(2)}] /Resources << /Font << /F1 ${f1} 0 R /F2 ${f2} 0 R >> >> /Contents ${contentIds[i]} 0 R >>`);}); objects[pagesId-1]=`<< /Type /Pages /Kids [${pageIds.map(id=>`${id} 0 R`).join(" ")}] /Count ${pages.length} >>`; const root=addObject(`<< /Type /Catalog /Pages ${pagesId} 0 R >>`);
 let pdf="%PDF-1.4\n%\xE2\xE3\xCF\xD3\n"; const offsets=[0]; objects.forEach((obj,i)=>{offsets[i+1]=pdf.length;pdf+=`${i+1} 0 obj\n${obj}\nendobj\n`;}); const xref=pdf.length; pdf+=`xref\n0 ${objects.length+1}\n0000000000 65535 f \n`; for(let i=1;i<=objects.length;i++) pdf+=`${String(offsets[i]).padStart(10,"0")} 00000 n \n`; pdf+=`trailer\n<< /Size ${objects.length+1} /Root ${root} 0 R >>\nstartxref\n${xref}\n%%EOF`;
-const bytes=new Uint8Array(pdf.length);for(let i=0;i<pdf.length;i++)bytes[i]=pdf.charCodeAt(i)&0xff;const blob=new Blob([bytes],{type:"application/pdf"}),url=URL.createObjectURL(blob);const safeName=String(marketer.name||"Marketer").replace(/[^a-z0-9_-]+/gi,"_");const a=document.createElement("a");a.href=url;a.download=`Expense_Report_${safeName}_${adminExpenseFromDate}_to_${adminExpenseToDate}.pdf`;a.style.display="none";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+const bytes=new Uint8Array(pdf.length);for(let i=0;i<pdf.length;i++)bytes[i]=pdf.charCodeAt(i)&0xff;const blob=new Blob([bytes],{type:"application/pdf"}),url=URL.createObjectURL(blob);const safeName=String(marketerLabel).replace(/[^a-z0-9_-]+/gi,"_");const a=document.createElement("a");a.href=url;a.download=`Expense_Report_${safeName}_${adminExpenseFromDate}_to_${adminExpenseToDate}.pdf`;a.style.display="none";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
 } catch (err) { console.error("Admin expense PDF error:", err); alert("Expense PDF could not be downloaded. Please try again."); }
 };
-return { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerId, setAdminExpenseMarketerId, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, downloadAdminExpenseExcel, downloadAdminExpensePDF };
+return { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerIds, setAdminExpenseMarketerIds, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, getAdminExpenseMarketerName, downloadAdminExpenseExcel, downloadAdminExpensePDF };
 }

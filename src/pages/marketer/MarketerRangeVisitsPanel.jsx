@@ -1,9 +1,9 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
-import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
+import ReportMarketerFilterBar from "../../ui/ReportMarketerFilterBar.jsx";
 
 export default function MarketerRangeVisitsPanel() {
-  const { cardStyle, downloadExcel, downloadPDF, getAccessibleVisitMarketers, getVisitHistoryFilteredReports, handleDeleteVisit, inputStyle, marketerFromDate, marketerToDate, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, renderVisitReportTable, reportViewClass, selectedVisitHistoryMarketerIds, setMarketerFromDate, setMarketerToDate, setMarketerview, setSelectedVisitHistoryMarketerIds, setVisitHistoryPickerOpen, user, visitHistoryPickerOpen } = usePortalContext();
+  const { cardStyle, downloadExcel, downloadPDF, fetchMarketerReportsForEmails, getAccessibleVisitMarketers, getVisitHistoryFilteredReports, handleDeleteVisit, inputStyle, marketerFromDate, marketerToDate, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, selectedVisitHistoryMarketerIds, setMarketerFromDate, setMarketerToDate, setMarketerview, setSelectedVisitHistoryMarketerIds, user } = usePortalContext();
   return (<div className={reportViewClass("marketer-visit-history")}>
             {renderExpandedReportChrome("marketer-visit-history")}
             <div className="report-normal-toolbar" style={{ display:"flex", justifyContent:"space-between", marginBottom:"14px", alignItems:"center", gap:"8px", flexWrap:"wrap" }}>
@@ -20,15 +20,8 @@ export default function MarketerRangeVisitsPanel() {
                   <h3 style={{ margin:0, color:"#3b2329", fontSize:"17px" }}>📅 Visit History & Date Range Filter</h3>
                   <p style={{ margin:"4px 0 0", color:"#78686d", fontSize:"11px" }}>View your own visits and the marketers assigned under your account.</p>
                 </div>
-                {(marketerFromDate || marketerToDate) && <button className="white-range-btn" onClick={()=>{setMarketerFromDate("");setMarketerToDate("");}} style={{ padding:"5px 10px", background:"#fff", color:"#7a0f2b", border:"1px solid #d8c8cd", borderRadius:"7px", fontSize:"11px", fontWeight:800, cursor:"pointer" }}>Clear Range</button>}
               </div>
-              {getAccessibleVisitMarketers().length > 1 && <div style={{ marginBottom: "14px" }}>
-                <MarketerMultiSelect marketers={getAccessibleVisitMarketers()} selected={selectedVisitHistoryMarketerIds} onChange={setSelectedVisitHistoryMarketerIds} inputStyle={inputStyle} valueKey="id" emptyLabel="My Visits" />
-              </div>}
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(2,minmax(0,1fr))", gap:"10px", marginBottom:"16px" }}>
-                <div><label style={{ display:"block", fontSize:"11px", color:"#5c484e", fontWeight:700, marginBottom:"4px" }}>From Date</label><input type="date" lang="en-GB" value={marketerFromDate} onChange={(e)=>setMarketerFromDate(e.target.value)} style={{ ...inputStyle, padding:"10px", background:"#fff", colorScheme:"light" }} /></div>
-                <div><label style={{ display:"block", fontSize:"11px", color:"#5c484e", fontWeight:700, marginBottom:"4px" }}>To Date</label><input type="date" lang="en-GB" value={marketerToDate} onChange={(e)=>setMarketerToDate(e.target.value)} style={{ ...inputStyle, padding:"10px", background:"#fff", colorScheme:"light" }} /></div>
-              </div>
+              <ReportMarketerFilterBar fromDate={marketerFromDate} toDate={marketerToDate} onFromDate={setMarketerFromDate} onToDate={setMarketerToDate} onClear={() => { setMarketerFromDate(""); setMarketerToDate(""); }} marketers={getAccessibleVisitMarketers()} selected={selectedVisitHistoryMarketerIds} onSelected={setSelectedVisitHistoryMarketerIds} valueKey="id" emptyLabel="My Visits" onRefresh={() => fetchMarketerReportsForEmails(getAccessibleVisitMarketers().map((m) => m.email))} inputStyle={inputStyle} />
               {(!marketerFromDate || !marketerToDate) ? (
 <div style={{ padding:"16px", borderRadius:"12px", background:"#fffafa", border:"1px solid #eadde0", color:"#78686d", fontSize:"12px", textAlign:"center" }}>Select a date range to view visit reports.</div>
 ) : (() => {

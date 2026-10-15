@@ -282,7 +282,7 @@ useEffect(() => {
   return () => window.removeEventListener("keydown", onKeyDown, true);
 }, [fullScreenImage, expandedReportKey, setFullScreenImage, setFullScreenMediaRecord]);
 const { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanSearch, setAdminActionPlanSearch, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan } = useActionPlans({ user, setUser, setMarketerview, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId });
-const { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerId, setAdminExpenseMarketerId, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, downloadAdminExpenseExcel, downloadAdminExpensePDF } = useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12 });
+const { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerIds, setAdminExpenseMarketerIds, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, getAdminExpenseMarketerName, downloadAdminExpenseExcel, downloadAdminExpensePDF } = useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12 });
 const { renderVisitReportTable, renderSampleReportTable, renderActionPlanReportTable, renderVerificationReportTable, renderAttendanceReportTable } = createReportTables({ formatActionPlanDate, formatTime12, getAttendanceAssignedKms, getAttendancePetrolExpense, getAttendanceTotalKms, getAttendanceTotalOtherExpense, getTodayInputDate, groupRowsByMarketerAndDate, handleDeleteActionPlan, inputStyle, saveAttendanceAssignedKms, saveVerificationRemark, setFullScreenImage, setReports, verificationRemarkOptions, verificationSavingId });
 const reportViewClass = (key) => expandedReportKey === key ? "admin-report-view admin-report-expanded" : "admin-report-view";
 const renderReportExpandButton = (key, title = "Expand report") => expandedReportKey === key ? null : (
@@ -378,7 +378,9 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     adminCss,
     adminExpenseFromDate,
     adminExpenseLoading,
-    adminExpenseMarketerId,
+    adminExpenseMarketerIds,
+    setAdminExpenseMarketerIds,
+    getAdminExpenseMarketerName,
     adminExpenseToDate,
     adminSampleFromDate,
     adminSampleMarketersFilter,
@@ -536,7 +538,6 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     setAdminCityAssignOpen,
     setAdminCitySearch,
     setAdminExpenseFromDate,
-    setAdminExpenseMarketerId,
     setAdminExpenseRows,
     setAdminExpenseToDate,
     setAdminSampleFromDate,
@@ -657,6 +658,7 @@ return <Suspense fallback={<PortalLoading />}><MarketerPortal context={{
     fetchCatalogues,
     fetchMarketerExpenseReport,
     fetchMarketerReports,
+    fetchMarketerReportsForEmails,
     fetchMarketerSamples,
     fetchSchoolsForArea,
     footerStyle,

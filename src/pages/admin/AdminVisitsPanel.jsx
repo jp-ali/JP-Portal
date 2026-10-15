@@ -1,9 +1,9 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
-import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
+import ReportMarketerFilterBar from "../../ui/ReportMarketerFilterBar.jsx";
 
 export default function AdminVisitsPanel() {
-  const { allVisitsFromDate, allVisitsToDate, cardStyle, downloadExcel, downloadPDF, getDateKey, getMarketerName, handleDeletePicture, handleDeleteVisit, inputStyle, isDateInRange, marketersList, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, reports, selectedAdminAllSchoolBox, selectedMarketersFilter, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setFullScreenImage, setSelectedAdminAllSchoolBox, setSelectedMarketersFilter } = usePortalContext();
+  const { allVisitsFromDate, allVisitsToDate, cardStyle, downloadExcel, downloadPDF, fetchAllReports, fetchMarketers, getDateKey, getMarketerName, handleDeletePicture, handleDeleteVisit, inputStyle, isDateInRange, marketersList, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, reports, selectedAdminAllSchoolBox, selectedMarketersFilter, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setFullScreenImage, setSelectedAdminAllSchoolBox, setSelectedMarketersFilter } = usePortalContext();
   return (<div className={reportViewClass("visits")}>
               {renderExpandedReportChrome("visits")}
               <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px", alignItems: "center" }}>
@@ -55,31 +55,7 @@ style={{ padding: "6px 12px", background: "linear-gradient(135deg,#6f0b24,#86132
                 {!selectedAdminAllSchoolBox ? (
 <>
                     <h3 style={{ marginTop: 0, color: "#3b2329", fontSize: "17px", marginBottom: "14px" }}>📊 All Visits & Reports Options</h3>
-                    <div style={{ background: "rgba(255,255,255,0.96)", padding: "14px", borderRadius: "12px", marginBottom: "12px", border: "1px solid rgba(143,21,50,.22)" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                        <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#b6405b" }}>1. Select Range (Date Picker)</label>
-                        {(allVisitsFromDate || allVisitsToDate) && (
-<button 
-className="white-range-btn"
-onClick={() => { setAllVisitsFromDate(""); setAllVisitsToDate(""); }}
-style={{ padding: "4px 10px", background: "#ffffff", color: "#7a0f2b", border: "1px solid #d8c8cd", borderRadius: "7px", fontSize: "11px", fontWeight: "700", cursor: "pointer", boxShadow: "0 2px 7px rgba(15,23,42,.06)" }}
->
-                            Clear Range
-                          </button>
-)}
-                      </div>
-                      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                        <div style={{ flex: 1, minWidth: "130px" }}>
-                          <span style={{ fontSize: "11px", color: "#78686d" }}>From Date:</span>
-                          <input type="date" lang="en-GB" value={allVisitsFromDate} onChange={(e) => setAllVisitsFromDate(e.target.value)} style={{ ...inputStyle, padding: "8px", colorScheme: "light" }} />
-                        </div>
-                        <div style={{ flex: 1, minWidth: "130px" }}>
-                          <span style={{ fontSize: "11px", color: "#78686d" }}>To Date:</span>
-                          <input type="date" lang="en-GB" value={allVisitsToDate} onChange={(e) => setAllVisitsToDate(e.target.value)} style={{ ...inputStyle, padding: "8px", colorScheme: "light" }} />
-                        </div>
-                        <MarketerMultiSelect marketers={marketersList} selected={selectedMarketersFilter} onChange={setSelectedMarketersFilter} inputStyle={inputStyle} />
-                      </div>
-                    </div>
+                    <ReportMarketerFilterBar fromDate={allVisitsFromDate} toDate={allVisitsToDate} onFromDate={setAllVisitsFromDate} onToDate={setAllVisitsToDate} onClear={() => { setAllVisitsFromDate(""); setAllVisitsToDate(""); }} marketers={marketersList} selected={selectedMarketersFilter} onSelected={setSelectedMarketersFilter} onRefresh={() => Promise.all([fetchAllReports(), fetchMarketers()])} inputStyle={inputStyle} />
                     <h4 style={{ color: "#5c484e", fontSize: "15px", marginBottom: "10px" }}>Filtered Visits List:</h4>
                     {allVisitsFromDate && allVisitsToDate ? (
 <div style={{ marginBottom: "10px", padding: "10px 12px", borderRadius: "10px", background: "rgba(143,21,50,.08)", border: "1px solid rgba(143,21,50,.18)", color: "#7a0f2b", fontSize: "13px" }}>Marketers: <strong>{selectedMarketersFilter.length ? `${selectedMarketersFilter.length} selected` : "All"}</strong> &nbsp;•&nbsp; Visits in selected range: <strong>{reports.filter(r => r.createdAt && isDateInRange(r.createdAt, allVisitsFromDate, allVisitsToDate) && (!selectedMarketersFilter.length || selectedMarketersFilter.includes(r.marketerEmail))).length}</strong></div>
