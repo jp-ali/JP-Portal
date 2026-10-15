@@ -2,7 +2,14 @@ import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
 
 export default function AdminTodayVisitsPanel() {
-  const { cardStyle, downloadExcel, downloadPDF, formatTime12, getMarketerName, handleDeletePicture, handleDeleteVisit, inputStyle, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, renderVisitReportTable, reportViewClass, selectedAdminMarketerBox, setAdminView, setFullScreenImage, setSelectedAdminMarketerBox, setVisitSearch, todayCounts, todayReports, visitSearch } = usePortalContext();
+  const { cardStyle, downloadExcel, downloadPDF, formatTime12, getDateKey, getMarketerName, handleDeletePicture, handleDeleteVisit, inputStyle, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, renderVisitReportTable, reportViewClass, reports, selectedAdminMarketerBox, setAdminView, setFullScreenImage, setSelectedAdminMarketerBox, setVisitSearch, visitSearch } = usePortalContext();
+  const todayKey = getDateKey(new Date());
+  const todayReports = reports.filter((report) => report.createdAt && getDateKey(report.createdAt) === todayKey);
+  const todayCounts = todayReports.reduce((counts, report) => {
+    const email = String(report.marketerEmail || "Unknown marketer");
+    counts[email] = (counts[email] || 0) + 1;
+    return counts;
+  }, {});
   return (<div className={reportViewClass("today-visits")}>
               {renderExpandedReportChrome("today-visits")}
               <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px", alignItems: "center" }}>

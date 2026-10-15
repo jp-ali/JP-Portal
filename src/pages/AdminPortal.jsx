@@ -19,25 +19,6 @@ import React from "react";
 function AdminPortalContent({ context }) {
   const { adminCss, adminSidebarOpen, adminView, containerStyle, fetchActionPlans, fetchAllReports, fetchAllSamples, fetchAttendanceRecords, fetchCatalogues, fetchDeletedMarketers, fetchDeletedMedia, fetchLocationCatalog, fetchMarketers, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getTodayInputDate, globalStyle, handleLogout, marketerEmail, mediaView, openAdminExpenseReport, openVerificationCalls, pdfExportData, pdfTemplateRef, portalSkeletonLoading, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderMarketerPersonIcon, renderRedSkeleton, renderResponsiveStyles, reports, resetMarketerAssignmentForm, restoreMedia, setAdminActionPlanFromDate, setAdminActionPlanSearch, setAdminActionPlanToDate, setAdminAttendanceFromDate, setAdminAttendanceSearch, setAdminAttendanceToDate, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminSidebarOpen, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setCatalogueSearch, setEditingId, setEditingReturnToMarketerDetails, setFullScreenImage, setFullScreenMediaRecord, setMarketerAssignedKms, setMarketerDesignation, setMarketerEmail, setMarketerName, setMarketerPass, setMarketerPhone, setMarketerWhatsappGroupLink, setMarketerWhatsappGroupName, setMediaMarketer, setMediaView, setSelectedAdminAllBoxKey, setSelectedAdminAllSchoolBox, setSelectedAdminMarketerBox, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox, setSelectedDeletedMediaIds, setSelectedMarketerDetailBox, setSelectedMarketersFilter, setSelectedMediaIds, setSubordinateMarketerIds, setSubordinatePickerOpen, setSubordinateSearch, softDeleteMedia } = context;
 
-const getMarketerCountsAndList = (filteredReports) => {
-const counts = {};
-filteredReports.forEach(r => {
-const mKey = r.marketerEmail;
-counts[mKey] = (counts[mKey] || 0) + 1;
-});
-return counts;
-};
-const todayReports = reports.filter(r => {
-if (!r.createdAt) return false;
-const rDate = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt);
-const today = new Date();
-return (
-rDate.getDate() === today.getDate() &&
-rDate.getMonth() === today.getMonth() &&
-rDate.getFullYear() === today.getFullYear()
-);
-});
-const todayCounts = getMarketerCountsAndList(todayReports);
 const openAdminSidebarSection = (key) => {
 setAdminSidebarOpen(false);
 if (key === "home") {
