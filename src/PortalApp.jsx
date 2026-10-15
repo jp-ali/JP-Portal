@@ -43,6 +43,31 @@ document.body.classList.remove("report-fullscreen-active");
 };
 }, [expandedReportKey]);
 useEffect(() => { setExpandedReportKey(""); }, [adminView, marketerView]);
+useEffect(() => {
+  if (!expandedReportKey) return;
+  let observer;
+  const frame = requestAnimationFrame(() => {
+    const report = document.querySelector(".admin-report-expanded");
+    if (!report) return;
+    const showTable = () => {
+      const table = report.querySelector(".pdf-like-table-shell, .table-scroll, .attendance-admin-table-wrap");
+      if (!table) return false;
+      const toolbar = report.querySelector(".report-expanded-toolbar");
+      report.scrollTop += table.getBoundingClientRect().top - report.getBoundingClientRect().top - (toolbar?.offsetHeight || 0) - 4;
+      return true;
+    };
+    if (!showTable()) {
+      observer = new MutationObserver(() => {
+        if (showTable()) observer.disconnect();
+      });
+      observer.observe(report, { childList: true, subtree: true });
+    }
+  });
+  return () => {
+    cancelAnimationFrame(frame);
+    observer?.disconnect();
+  };
+}, [expandedReportKey]);
 const [selectedAdminMarketerBox, setSelectedAdminMarketerBox] = useState(null);
 const [selectedAdminAllBoxKey, setSelectedAdminAllBoxKey] = useState(null);
 const [selectedAdminAllSchoolBox, setSelectedAdminAllSchoolBox] = useState(null);
@@ -286,11 +311,11 @@ pdfAction = () => downloadPDF(getVisitHistoryFilteredReports());
 return (
 <div className="report-expanded-toolbar">
 <button type="button" className="report-expanded-back" onClick={() => setExpandedReportKey("")} title="Back" aria-label="Back">
-<svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
 </button>
 {(excelAction || pdfAction) && <div className="report-expanded-exports">
-{excelAction && <button type="button" className="report-expanded-excel" onClick={excelAction}>📥 Excel</button>}
-{pdfAction && <button type="button" className="report-expanded-pdf" onClick={pdfAction}>📄 PDF</button>}
+{excelAction && <button type="button" className="report-expanded-excel" onClick={excelAction}>Excel</button>}
+{pdfAction && <button type="button" className="report-expanded-pdf" onClick={pdfAction}>PDF</button>}
 </div>}
 </div>
 );

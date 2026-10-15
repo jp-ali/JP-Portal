@@ -60,11 +60,11 @@
         .admin-report-expanded .report-normal-toolbar,
         .admin-report-expanded .report-normal-back,
         .admin-report-expanded .report-normal-actions { display:none !important; }
-        .report-expanded-toolbar { position:relative !important; top:auto !important; z-index:1; min-height:62px; margin:0 -14px 12px; padding:11px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; background:rgba(248,244,245,.985); border-bottom:1px solid rgba(122,15,43,.14); box-shadow:0 7px 18px rgba(78,20,36,.10); backdrop-filter:blur(8px); box-sizing:border-box; }
-        .report-expanded-back { position:static !important; width:40px; height:40px; padding:0; border:none; border-radius:10px; background:linear-gradient(135deg,#6f0b24,#86132f); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 7px 18px rgba(78,20,36,.22); flex:0 0 auto; }
+        .report-expanded-toolbar { position:sticky !important; top:0 !important; z-index:20; min-height:44px; margin:0 -14px 7px; padding:5px 9px; display:flex; align-items:center; justify-content:space-between; gap:7px; background:rgba(248,244,245,.985); border-bottom:1px solid rgba(122,15,43,.14); box-shadow:0 3px 9px rgba(78,20,36,.09); backdrop-filter:blur(8px); box-sizing:border-box; }
+        .report-expanded-back { position:static !important; width:32px; height:32px; padding:0; border:none; border-radius:7px; background:linear-gradient(135deg,#6f0b24,#86132f); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(78,20,36,.16); flex:0 0 auto; }
         .report-expanded-back:hover { background:linear-gradient(135deg,#62081f,#77102a); transform:translateY(-1px); }
         .report-expanded-exports { position:static !important; margin-left:auto; display:flex; align-items:center; gap:7px; }
-        .report-expanded-exports button { min-height:40px; padding:0 13px; border:none; border-radius:9px; color:#fff; font-size:11px; font-weight:800; cursor:pointer; box-shadow:0 6px 16px rgba(41,20,26,.16); }
+        .report-expanded-exports button { min-height:32px; padding:0 9px; border:none; border-radius:7px; color:#fff; font-size:10px; font-weight:800; cursor:pointer; box-shadow:0 3px 8px rgba(41,20,26,.13); }
         .report-expanded-excel { background:#15803d; }
         .report-expanded-pdf { background:linear-gradient(135deg,#6f0b24,#86132f); }
 
@@ -109,8 +109,8 @@
           .marketer-sidebar { width:min(86vw,286px); padding-top:10px; }
           .marketer-sidebar-item { min-height:40px; font-size:12px; padding:8px 9px; }
           .admin-report-expanded { padding:0 7px 14px !important; }
-          .report-expanded-toolbar { top:0 !important; min-height:56px; margin:0 -7px 10px; padding:9px 8px; }
-          .report-expanded-back { width:38px; height:38px; border-radius:9px; }
+          .report-expanded-toolbar { top:0 !important; min-height:42px; margin:0 -7px 6px; padding:4px 7px; }
+          .report-expanded-back { width:32px; height:32px; border-radius:7px; }
           .report-expanded-exports { gap:5px; }
-          .report-expanded-exports button { min-height:38px; padding:0 9px; font-size:10px; }
+          .report-expanded-exports button { min-height:32px; padding:0 8px; font-size:10px; }
         }
