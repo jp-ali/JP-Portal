@@ -104,7 +104,6 @@ useEffect(() => {
 }, [expandedReportKey]);
 const [selectedAdminMarketerBox, setSelectedAdminMarketerBox] = useState(null);
 const [selectedAdminAllBoxKey, setSelectedAdminAllBoxKey] = useState(null);
-const [selectedAdminAllSchoolBox, setSelectedAdminAllSchoolBox] = useState(null);
 const [selectedMarketerDetailBox, setSelectedMarketerDetailBox] = useState(null);
 const [selectedAdminSampleMarketerBox, setSelectedAdminSampleMarketerBox] = useState(null);
 const [selectedAdminSampleSchoolBox, setSelectedAdminSampleSchoolBox] = useState(null);
@@ -288,7 +287,6 @@ const portalView = portalSide === "admin" ? adminView : marketerView;
 const routeParts = [portalSide, portalView];
 if (portalSide === "admin") {
   if (adminView === "today-visits" && selectedAdminMarketerBox) routeParts.push(selectedAdminMarketerBox);
-  if (adminView === "visits" && selectedAdminAllSchoolBox) routeParts.push(selectedAdminAllSchoolBox);
   if (adminView === "sample-details") {
     if (selectedAdminSampleMarketerBox) routeParts.push(selectedAdminSampleMarketerBox);
     if (selectedAdminSampleSchoolBox) routeParts.push(selectedAdminSampleSchoolBox);
@@ -602,7 +600,6 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     restoreSelectedMedia,
     samples,
     saveAttendancePetrolRate,
-    selectedAdminAllSchoolBox,
     selectedAdminMarketerBox,
     selectedAdminSampleMarketerBox,
     selectedAdminSampleSchoolBox,
@@ -662,7 +659,6 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     setNewAreaName,
     setNewCityName,
     setSelectedAdminAllBoxKey,
-    setSelectedAdminAllSchoolBox,
     setSelectedAdminMarketerBox,
     setSelectedAdminSampleMarketerBox,
     setSelectedAdminSampleSchoolBox,

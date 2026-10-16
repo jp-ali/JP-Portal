@@ -1,5 +1,6 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import AdminVisitActions from "../../ui/AdminVisitActions.jsx";
 
 export default function AdminTodayVisitsPanel() {
   const { cardStyle, downloadExcel, downloadPDF, formatTime12, getDateKey, getMarketerName, handleDeletePicture, handleDeleteVisit, inputStyle, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, renderVisitReportTable, reportViewClass, reports, selectedAdminMarketerBox, setAdminView, setEditingVisit, setFullScreenImage, setSelectedAdminMarketerBox, setVisitSearch, visitSearch } = usePortalContext();
@@ -108,7 +109,7 @@ const mergedTodayRows = todayReports.filter((r) => {
 const mName = getMarketerName(r.marketerEmail, r.marketerName || r.marketerEmail || "");
 return !searchLower || String(r.marketerEmail || "").toLowerCase().includes(searchLower) || String(mName || "").toLowerCase().includes(searchLower);
 });
-return mergedTodayRows.length ? <div style={{marginTop:"18px"}}><h4 style={{margin:"0 0 9px",color:"#5c484e",fontSize:"14px"}}>Merged Visit Report</h4>{renderVisitReportTable(mergedTodayRows,(r)=>setSelectedAdminMarketerBox(r.marketerEmail),(r)=><button type="button" onClick={()=>setEditingVisit(r)} style={{padding:"5px 8px",background:"#7a0f2b",color:"#fff",border:0,borderRadius:"6px",cursor:"pointer"}}>Edit</button>)}</div> : null;
+return mergedTodayRows.length ? <div style={{marginTop:"18px"}}><h4 style={{margin:"0 0 9px",color:"#5c484e",fontSize:"14px"}}>Merged Visit Report</h4>{renderVisitReportTable(mergedTodayRows,null,(r)=><AdminVisitActions visit={r} onEdit={setEditingVisit} onDeletePicture={(id)=>handleDeletePicture(id,true)} onDeleteReport={(id)=>handleDeleteVisit(id,true)} />)}</div> : null;
 })()}
                   </>
 ) : (
@@ -145,23 +146,7 @@ style={{ width: "90px", height: "90px", objectFit: "cover", borderRadius: "8px",
 />
                               </div>
 )}
-                            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "10px" }}>
-                              <button type="button" onClick={() => setEditingVisit(r)} style={{ padding: "6px 10px", background: "#7a0f2b", color: "white", border: "none", borderRadius: "6px", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}>Edit</button>
-                              {r.image && (
-<button 
-onClick={() => handleDeletePicture(r.id, true)} 
-style={{ padding: "6px 10px", background: "#77102a", color: "white", border: "none", borderRadius: "6px", fontSize: "11px", fontWeight: "600", cursor: "pointer" }}
->
-                                  🗑️ Delete Picture
-                                </button>
-)}
-                              <button 
-onClick={() => handleDeleteVisit(r.id, true)} 
-style={{ padding: "6px 10px", background: "#ef4444", color: "white", border: "none", borderRadius: "6px", fontSize: "11px", fontWeight: "600", cursor: "pointer" }}
->
-                                🗑️ Delete Report
-                              </button>
-                            </div>
+                            <AdminVisitActions visit={r} onEdit={setEditingVisit} onDeletePicture={(id) => handleDeletePicture(id, true)} onDeleteReport={(id) => handleDeleteVisit(id, true)} />
                           </div>
 ))}
                     </div>

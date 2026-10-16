@@ -2,7 +2,7 @@ import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
 
 export default function AdminHomePanel() {
-  const { fetchActionPlans, fetchAllReports, fetchAllSamples, fetchAttendanceRecords, fetchCatalogues, fetchDeletedMarketers, fetchDeletedMedia, fetchLocationCatalog, fetchMarketers, getTodayInputDate, openAdminExpenseReport, openVerificationCalls, renderMarketerPersonIcon, resetMarketerAssignmentForm, setAdminActionPlanFromDate, setAdminActionPlanSearch, setAdminActionPlanToDate, setAdminAttendanceFromDate, setAdminAttendanceSearch, setAdminAttendanceToDate, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setCatalogueSearch, setEditingId, setEditingReturnToMarketerDetails, setMarketerAssignedKms, setMarketerDesignation, setMarketerEmail, setMarketerName, setMarketerPass, setMarketerPhone, setMarketerWhatsappGroupLink, setMarketerWhatsappGroupName, setMediaMarketer, setMediaView, setSelectedAdminAllBoxKey, setSelectedAdminAllSchoolBox, setSelectedAdminMarketerBox, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox, setSelectedDeletedMediaIds, setSelectedMarketerDetailBox, setSelectedMarketersFilter, setSelectedMediaIds, setSubordinateMarketerIds, setSubordinatePickerOpen, setSubordinateSearch } = usePortalContext();
+  const { fetchActionPlans, fetchAllReports, fetchAllSamples, fetchAttendanceRecords, fetchCatalogues, fetchDeletedMarketers, fetchDeletedMedia, fetchLocationCatalog, fetchMarketers, getTodayInputDate, openAdminExpenseReport, openVerificationCalls, renderMarketerPersonIcon, resetMarketerAssignmentForm, setAdminActionPlanFromDate, setAdminActionPlanSearch, setAdminActionPlanToDate, setAdminAttendanceFromDate, setAdminAttendanceSearch, setAdminAttendanceToDate, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setCatalogueSearch, setEditingId, setEditingReturnToMarketerDetails, setMarketerAssignedKms, setMarketerDesignation, setMarketerEmail, setMarketerName, setMarketerPass, setMarketerPhone, setMarketerWhatsappGroupLink, setMarketerWhatsappGroupName, setMediaMarketer, setMediaView, setSelectedAdminAllBoxKey, setSelectedAdminMarketerBox, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox, setSelectedDeletedMediaIds, setSelectedMarketerDetailBox, setSelectedMarketersFilter, setSelectedMediaIds, setSubordinateMarketerIds, setSubordinatePickerOpen, setSubordinateSearch } = usePortalContext();
   return (<div className="square-grid" style={{ marginTop: "10px" }}>
               <div
 className="square-card shaking-card"
@@ -33,7 +33,7 @@ style={{ borderTop: "4px solid #b6405b", animationDelay: "0.2s" }}
               </div>
               <div 
 className="square-card shaking-card"
-onClick={() => { setAdminView("visits"); fetchAllReports(); fetchMarketers(); setSelectedAdminAllBoxKey(null); setSelectedAdminAllSchoolBox(null); setAllVisitsFromDate(""); setAllVisitsToDate(""); setSelectedMarketersFilter([]); }}
+onClick={() => { setAdminView("visits"); fetchAllReports(); fetchMarketers(); setSelectedAdminAllBoxKey(null); setAllVisitsFromDate(""); setAllVisitsToDate(""); setSelectedMarketersFilter([]); }}
 style={{ borderTop: "4px solid #8f1532", animationDelay: "0.4s" }}
 >
                 <div style={{ fontSize: "32px", marginBottom: "10px" }}>📊</div>
