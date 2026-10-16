@@ -2,7 +2,7 @@ import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
 
 export default function AdminTodayVisitsPanel() {
-  const { cardStyle, downloadExcel, downloadPDF, formatTime12, getDateKey, getMarketerName, handleDeletePicture, handleDeleteVisit, inputStyle, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, renderVisitReportTable, reportViewClass, reports, selectedAdminMarketerBox, setAdminView, setFullScreenImage, setSelectedAdminMarketerBox, setVisitSearch, visitSearch } = usePortalContext();
+  const { cardStyle, downloadExcel, downloadPDF, formatTime12, getDateKey, getMarketerName, handleDeletePicture, handleDeleteVisit, inputStyle, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, renderVisitReportTable, reportViewClass, reports, selectedAdminMarketerBox, setAdminView, setEditingVisit, setFullScreenImage, setSelectedAdminMarketerBox, setVisitSearch, visitSearch } = usePortalContext();
   const todayKey = getDateKey(new Date());
   const todayReports = reports.filter((report) => report.createdAt && getDateKey(report.createdAt) === todayKey);
   const todayCounts = todayReports.reduce((counts, report) => {
@@ -108,7 +108,7 @@ const mergedTodayRows = todayReports.filter((r) => {
 const mName = getMarketerName(r.marketerEmail, r.marketerName || r.marketerEmail || "");
 return !searchLower || String(r.marketerEmail || "").toLowerCase().includes(searchLower) || String(mName || "").toLowerCase().includes(searchLower);
 });
-return mergedTodayRows.length ? <div style={{marginTop:"18px"}}><h4 style={{margin:"0 0 9px",color:"#5c484e",fontSize:"14px"}}>Merged Visit Report</h4>{renderVisitReportTable(mergedTodayRows,(r)=>setSelectedAdminMarketerBox(r.marketerEmail))}</div> : null;
+return mergedTodayRows.length ? <div style={{marginTop:"18px"}}><h4 style={{margin:"0 0 9px",color:"#5c484e",fontSize:"14px"}}>Merged Visit Report</h4>{renderVisitReportTable(mergedTodayRows,(r)=>setSelectedAdminMarketerBox(r.marketerEmail),(r)=><button type="button" onClick={()=>setEditingVisit(r)} style={{padding:"5px 8px",background:"#7a0f2b",color:"#fff",border:0,borderRadius:"6px",cursor:"pointer"}}>Edit</button>)}</div> : null;
 })()}
                   </>
 ) : (
@@ -132,6 +132,7 @@ padding: "16px"
                             <h4 style={{ margin: "0 0 6px 0", color: "#9a2844", fontSize: "16px" }}>🏫 {r.schoolName}</h4>
                             <p style={{ margin: "2px 0", fontSize: "13px" }}><strong>Principal:</strong> {r.principalName} ({r.phone})</p>
                             <p style={{ margin: "2px 0", fontSize: "13px" }}><strong>Purpose:</strong> {r.purpose || "N/A"}</p>
+                            <p style={{ margin: "2px 0", fontSize: "13px" }}><strong>Branches:</strong> {r.branches || "N/A"} &nbsp; <strong>Strength:</strong> {r.strength || "N/A"}</p>
                             <p style={{ margin: "2px 0", fontSize: "13px" }}><strong>Remarks:</strong> {r.notes}</p>
                             <p style={{ margin: "4px 0 10px 0", fontSize: "11px", color: "#78686d" }}><strong>Time:</strong> {formatTime12(r.createdAt && r.createdAt.toDate ? r.createdAt.toDate() : null)}</p>
                             {r.image && (
@@ -145,6 +146,7 @@ style={{ width: "90px", height: "90px", objectFit: "cover", borderRadius: "8px",
                               </div>
 )}
                             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "10px" }}>
+                              <button type="button" onClick={() => setEditingVisit(r)} style={{ padding: "6px 10px", background: "#7a0f2b", color: "white", border: "none", borderRadius: "6px", fontSize: "11px", fontWeight: 600, cursor: "pointer" }}>Edit</button>
                               {r.image && (
 <button 
 onClick={() => handleDeletePicture(r.id, true)} 

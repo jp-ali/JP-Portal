@@ -6,7 +6,7 @@ export default function AdminHomePanel() {
   return (<div className="square-grid" style={{ marginTop: "10px" }}>
               <div
 className="square-card shaking-card"
-onClick={() => { setAdminAttendanceFromDate(""); setAdminAttendanceToDate(""); setAdminAttendanceSearch(""); setAdminView("attendance"); fetchAttendanceRecords(); }}
+onClick={() => { const today = getTodayInputDate(); setAdminAttendanceFromDate(today); setAdminAttendanceToDate(today); setAdminAttendanceSearch(""); setAdminView("attendance"); fetchAttendanceRecords(); }}
 style={{ borderTop: "4px solid #a42243", animationDelay: "0s" }}
 >
                 <div style={{ fontSize: "32px", marginBottom: "10px" }}>🕘</div>

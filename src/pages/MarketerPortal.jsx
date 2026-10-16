@@ -12,6 +12,7 @@ import MarketerTodayVisitsPanel from "./marketer/MarketerTodayVisitsPanel.jsx";
 import MarketerRangeVisitsPanel from "./marketer/MarketerRangeVisitsPanel.jsx";
 import React from "react";
 import PhotoViewer from "../ui/PhotoViewer.jsx";
+import VisitEditDialog from "../ui/VisitEditDialog.jsx";
 
 function MarketerPortalContent({ context }) {
   const { containerStyle, fetchCatalogues, fetchMarketerReports, fetchMarketerSamples, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getMarketerName, globalStyle, handleLogout, marketerCss, marketerSidebarOpen, marketerView, notes, openActionPlanForm, openAddVisit, openAttendanceForm, openExpenseReport, openVisitHistory, pdfExportData, pdfTemplateRef, phone, portalSkeletonLoading, principalName, purpose, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderRedSkeleton, renderResponsiveStyles, restoreMedia, setCatalogueSearch, setFullScreenImage, setFullScreenMediaRecord, setMarketerSidebarOpen, setMarketerview, setSampleDetailsText, setSampleHistoryFromDate, setSampleHistorySearch, setSampleHistoryToDate, setSamplePhone, setSamplePrincipalName, setSampleSchoolName, setSampleSuccessMsg, setSelectedAdminMarketerBox, softDeleteMedia, user } = context;
@@ -148,11 +149,12 @@ return (
               <div>Page 1 of 1</div>
           </div>
       </div>
+      {context.editingVisit && <VisitEditDialog key={context.editingVisit.id} visit={context.editingVisit} onClose={() => context.setEditingVisit(null)} onSave={context.saveVisitEdit} inputStyle={context.inputStyle} />}
       <PhotoViewer
+          viewOnly
           image={fullScreenImage}
           mediaRecord={fullScreenMediaRecord}
           onClose={() => { setFullScreenImage(null); setFullScreenMediaRecord(null); }}
-          onDelete={async (record) => { setFullScreenImage(null); setFullScreenMediaRecord(null); await softDeleteMedia(record); }}
           onRestore={async (record) => { setFullScreenImage(null); setFullScreenMediaRecord(null); await restoreMedia(record); }}
         />
         <div className="mobile-footer-area" style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", margin: "0 auto", padding: "18px 0 10px", position: "relative", left: 0, right: 0 }}>

@@ -3,7 +3,7 @@ import React from "react";
 import ReportMarketerFilterBar from "../../ui/ReportMarketerFilterBar.jsx";
 
 export default function MarketerRangeVisitsPanel() {
-  const { cardStyle, downloadExcel, downloadPDF, fetchMarketerReportsForEmails, getAccessibleVisitMarketers, getVisitHistoryFilteredReports, handleDeleteVisit, inputStyle, marketerFromDate, marketerToDate, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, selectedVisitHistoryMarketerIds, setMarketerFromDate, setMarketerToDate, setMarketerview, setSelectedVisitHistoryMarketerIds, user } = usePortalContext();
+  const { canEditVisitToday, cardStyle, downloadExcel, downloadPDF, fetchMarketerReportsForEmails, getAccessibleVisitMarketers, getVisitHistoryFilteredReports, inputStyle, marketerFromDate, marketerToDate, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, selectedVisitHistoryMarketerIds, setEditingVisit, setFullScreenImage, setMarketerFromDate, setMarketerToDate, setMarketerview, setSelectedVisitHistoryMarketerIds } = usePortalContext();
   return (<div className={reportViewClass("marketer-visit-history")}>
             {renderExpandedReportChrome("marketer-visit-history")}
             <div className="report-normal-toolbar" style={{ display:"flex", justifyContent:"space-between", marginBottom:"14px", alignItems:"center", gap:"8px", flexWrap:"wrap" }}>
@@ -30,10 +30,7 @@ if (!rows.length) return <div style={{ padding:"16px", color:"#78686d", fontSize
 return (
 <>
 <div style={{ marginBottom:"10px", padding:"8px 10px", borderRadius:"9px", background:"#fff4f6", border:"1px solid #ead2d8", color:"#7a0f2b", fontSize:"11px", fontWeight:800 }}>Visits in selected range: {rows.length}</div>
-{renderVisitReportTable(rows, null, (r) => {
-const isOwn = String(r.marketerEmail || "").toLowerCase() === String(user?.email || "").toLowerCase();
-return isOwn ? <button type="button" onClick={()=>handleDeleteVisit(r.id,false)} style={{padding:"5px 7px",background:"#ef4444",color:"#fff",border:"none",borderRadius:"6px",fontSize:"9.5px",fontWeight:800,cursor:"pointer"}}>Delete</button> : <span style={{color:"#9a8a8e",fontSize:"9px"}}>View only</span>;
-})}
+{renderVisitReportTable(rows, null, (r) => <div style={{display:"flex",gap:"4px",justifyContent:"center"}}><button type="button" disabled={!r.image} onClick={()=>setFullScreenImage(r.image)} style={{padding:"5px 7px",background:"#fff",border:"1px solid #eadde0",borderRadius:"6px",fontSize:"9.5px",cursor:r.image?"pointer":"default"}}>View</button>{canEditVisitToday(r)&&<button type="button" onClick={()=>setEditingVisit(r)} style={{padding:"5px 7px",background:"#7a0f2b",color:"#fff",border:0,borderRadius:"6px",fontSize:"9.5px",fontWeight:800,cursor:"pointer"}}>Edit</button>}</div>)}
 </>
 );
 })()}

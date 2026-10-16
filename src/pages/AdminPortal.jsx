@@ -16,6 +16,7 @@ import AdminDeleteMarketerPanel from "./admin/AdminDeleteMarketerPanel.jsx";
 import AdminOldMarketersPanel from "./admin/AdminOldMarketersPanel.jsx";
 import React from "react";
 import PhotoViewer from "../ui/PhotoViewer.jsx";
+import VisitEditDialog from "../ui/VisitEditDialog.jsx";
 
 function AdminPortalContent({ context }) {
   const { adminCss, adminSidebarOpen, adminView, containerStyle, fetchActionPlans, fetchAllReports, fetchAllSamples, fetchAttendanceRecords, fetchCatalogues, fetchDeletedMarketers, fetchDeletedMedia, fetchLocationCatalog, fetchMarketers, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getTodayInputDate, globalStyle, handleLogout, marketerEmail, mediaView, openAdminExpenseReport, openVerificationCalls, pdfExportData, pdfTemplateRef, portalSkeletonLoading, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderMarketerPersonIcon, renderRedSkeleton, renderResponsiveStyles, reports, resetMarketerAssignmentForm, restoreMedia, setAdminActionPlanFromDate, setAdminActionPlanSearch, setAdminActionPlanToDate, setAdminAttendanceFromDate, setAdminAttendanceSearch, setAdminAttendanceToDate, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminSidebarOpen, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setCatalogueSearch, setEditingId, setEditingReturnToMarketerDetails, setFullScreenImage, setFullScreenMediaRecord, setMarketerAssignedKms, setMarketerDesignation, setMarketerEmail, setMarketerName, setMarketerPass, setMarketerPhone, setMarketerWhatsappGroupLink, setMarketerWhatsappGroupName, setMediaMarketer, setMediaView, setSelectedAdminAllBoxKey, setSelectedAdminAllSchoolBox, setSelectedAdminMarketerBox, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox, setSelectedDeletedMediaIds, setSelectedMarketerDetailBox, setSelectedMarketersFilter, setSelectedMediaIds, setSubordinateMarketerIds, setSubordinatePickerOpen, setSubordinateSearch, softDeleteMedia } = context;
@@ -27,8 +28,8 @@ setAdminView("home");
 return;
 }
 if (key === "attendance") {
-setAdminAttendanceFromDate("");
-setAdminAttendanceToDate("");
+setAdminAttendanceFromDate(getTodayInputDate());
+setAdminAttendanceToDate(getTodayInputDate());
 setAdminAttendanceSearch("");
 setAdminView("attendance");
 fetchAttendanceRecords();
@@ -285,6 +286,7 @@ onClick={() => openAdminSidebarSection(item.key)}
                 <div>Page 1 of 1</div>
             </div>
         </div>
+        {context.editingVisit && <VisitEditDialog key={context.editingVisit.id} visit={context.editingVisit} onClose={() => context.setEditingVisit(null)} onSave={context.saveVisitEdit} inputStyle={context.inputStyle} />}
         <PhotoViewer
           image={fullScreenImage}
           mediaRecord={fullScreenMediaRecord}

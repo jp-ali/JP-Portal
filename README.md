@@ -54,6 +54,7 @@ The frontend defaults to the same-origin `/api` path. `VITE_API_BASE_URL` is opt
 | POST | `/api/auth/login` | Public, rate limited | Admin or marketer login; legacy password migration depends on the environment switch |
 | GET | `/api/auth/me` | Signed session | Restore current profile |
 | POST | `/api/auth/logout` | Public | Clear session cookie |
+| PATCH | `/api/visits/:id` | Admin or visit owner on visit date | Edit visit details; marketer date uses Asia/Karachi calendar |
 | GET | `/api/marketers` | Admin | List active marketers without passwords or hashes |
 | GET | `/api/marketers/accessible` | Marketer | List own and subordinate profiles without passwords or hashes |
 | GET | `/api/marketers/deleted` | Admin | List archived marketers without passwords or hashes |

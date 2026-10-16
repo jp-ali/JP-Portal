@@ -1,6 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export async function request(path, options = {}) {
+  const service = path.startsWith("/auth/") ? "Login service" : "Visit service";
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20000);
   let response;
@@ -13,9 +14,9 @@ export async function request(path, options = {}) {
     });
   } catch (error) {
     if (error?.name === "AbortError") {
-      throw new Error("Login service timed out. Check the connection and try again.");
+      throw new Error(`${service} timed out. Check the connection and try again.`);
     }
-    throw new Error("Cannot reach the login service. Check your connection and the website address.");
+    throw new Error(`Cannot reach the ${service.toLowerCase()}. Check your connection and the website address.`);
   } finally {
     clearTimeout(timeout);
   }
@@ -24,12 +25,12 @@ export async function request(path, options = {}) {
   if (!response.ok) {
     if (body?.error) throw new Error(body.error);
     if (response.status === 404) {
-      throw new Error("Login service not found (404). This website address has no /api login route. Check the app URL and API server.");
+      throw new Error(`${service} not found (404). Check the app URL and API server.`);
     }
-    throw new Error(`Login service error (${response.status}). Check the website address and try again.`);
+    throw new Error(`${service} error (${response.status}). Check the website address and try again.`);
   }
   if (!body || typeof body !== "object") {
-    throw new Error("Login service returned an invalid response. Check the app URL and try again.");
+    throw new Error(`${service} returned an invalid response. Check the app URL and try again.`);
   }
   return body;
 }

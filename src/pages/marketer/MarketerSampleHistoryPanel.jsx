@@ -2,7 +2,7 @@ import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
 
 export default function MarketerSampleHistoryPanel() {
-  const { cardStyle, downloadExcel, downloadPDF, getDateKey, handleDeleteSample, inputStyle, isDateInRange, marketerSamples, renderExpandedReportChrome, renderReportExpandButton, renderSampleReportTable, reportViewClass, sampleHistoryFromDate, sampleHistorySearch, sampleHistoryToDate, setMarketerview, setSampleHistoryFromDate, setSampleHistorySearch, setSampleHistoryToDate } = usePortalContext();
+  const { cardStyle, downloadExcel, downloadPDF, getDateKey, inputStyle, isDateInRange, marketerSamples, renderExpandedReportChrome, renderReportExpandButton, renderSampleReportTable, reportViewClass, sampleHistoryFromDate, sampleHistorySearch, sampleHistoryToDate, setMarketerview, setSampleHistoryFromDate, setSampleHistorySearch, setSampleHistoryToDate } = usePortalContext();
   return (<div className={reportViewClass("marketer-samples")}>
             {renderExpandedReportChrome("marketer-samples")}
             <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px", alignItems: "center" }}>
@@ -89,7 +89,7 @@ if (!isDateInRange(s.createdAt, sampleHistoryFromDate, sampleHistoryToDate)) ret
 return true;
 });
 if (!filtered.length) return <p style={{ color: "#78686d", fontSize: "14px" }}>No sample records found.</p>;
-return renderSampleReportTable(filtered, null, (s) => <button type="button" onClick={() => handleDeleteSample(s.id, false)} style={{ padding:"5px 7px", background:"#ef4444", color:"#fff", border:"none", borderRadius:"6px", fontSize:"9.5px", fontWeight:800, cursor:"pointer" }}>Delete</button>);
+return renderSampleReportTable(filtered);
 })()}
             </div>
           </div>);

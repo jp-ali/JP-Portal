@@ -184,9 +184,9 @@
       .visit-school-add-panel {
         margin-top: 10px;
         padding: 12px;
-        border: 1px solid rgba(16,185,129,.34);
+        border: 1px solid rgba(143,21,50,.22);
         border-radius: 12px;
-        background: rgba(30,58,138,.18);
+        background: #fff5f7;
       }
       .visit-school-add-row {
         display: grid;

@@ -19,6 +19,7 @@ import adminCss from "./styles/admin.css?raw";
 import marketerCss from "./styles/marketer.css?raw";
 import React, { lazy, Suspense, useState, useRef, useEffect, useLayoutEffect } from "react";
 import { db } from "./services/firebase";
+import { request } from "./services/authApi.js";
 import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 const AdminPortal = lazy(() => import("./pages/AdminPortal.jsx"));
 const MarketerPortal = lazy(() => import("./pages/MarketerPortal.jsx"));
@@ -28,6 +29,7 @@ const [adminView, setAdminView] = useState("home");
 const [adminSidebarOpen, setAdminSidebarOpen] = useState(false);
 const [marketerSidebarOpen, setMarketerSidebarOpen] = useState(false);
 const [selectedMarketerForVisits, setSelectedMarketerForVisits] = useState(null);
+const [editingVisit, setEditingVisit] = useState(null);
 const [marketerView, setMarketerview] = useState("home");
 const [expandedReportKey, setExpandedReportKey] = useState("");
 const homeEscapeCountRef = useRef({ count: 0, lastAt: 0 });
@@ -129,7 +131,7 @@ const day = String(d.getDate()).padStart(2, "0");
 return `${y}-${m}-${day}`;
 };
 const visitForm = useVisitFormState();
-const { visitCityId, setVisitCityId, visitAreaId, setVisitAreaId, visitSchoolIds, setVisitSchoolIds, visitCitySearch, setVisitCitySearch, visitAreaSearch, setVisitAreaSearch, visitSchoolSearch, setVisitSchoolSearch, visitSession, setVisitSession, visitCityPickerOpen, setVisitCityPickerOpen, visitAreaPickerOpen, setVisitAreaPickerOpen, visitSchoolPickerOpen, setVisitSchoolPickerOpen, visitAddSchoolOpen, setVisitAddSchoolOpen, visitSchoolManagerOpen, setVisitSchoolManagerOpen, visitSchoolsLoading, setVisitSchoolsLoading, visitSchoolLoadError, setVisitSchoolLoadError, schoolName, setSchoolName, principalName, setPrincipalName, phone, setPhone, purpose, setPurpose, notes, setNotes, imageFile, setImageFile, loading, setLoading, successMsg, setSuccessMsg, sampleSchoolName, setSampleSchoolName, samplePrincipalName, setSamplePrincipalName, samplePhone, setSamplePhone, sampleDetailsText, setSampleDetailsText, sampleLoading, setSampleLoading, sampleSuccessMsg, setSampleSuccessMsg, isCameraActive, setIsCameraActive, videoRef, streamRef } = visitForm;
+const { visitCityId, setVisitCityId, visitAreaId, setVisitAreaId, visitSchoolIds, setVisitSchoolIds, visitCitySearch, setVisitCitySearch, visitAreaSearch, setVisitAreaSearch, visitSchoolSearch, setVisitSchoolSearch, visitSession, setVisitSession, visitBranches, setVisitBranches, visitStrength, setVisitStrength, visitCityPickerOpen, setVisitCityPickerOpen, visitAreaPickerOpen, setVisitAreaPickerOpen, visitSchoolPickerOpen, setVisitSchoolPickerOpen, visitAddSchoolOpen, setVisitAddSchoolOpen, visitSchoolManagerOpen, setVisitSchoolManagerOpen, visitSchoolsLoading, setVisitSchoolsLoading, visitSchoolLoadError, setVisitSchoolLoadError, schoolName, setSchoolName, principalName, setPrincipalName, phone, setPhone, purpose, setPurpose, notes, setNotes, imageFile, setImageFile, loading, setLoading, successMsg, setSuccessMsg, sampleSchoolName, setSampleSchoolName, samplePrincipalName, setSamplePrincipalName, samplePhone, setSamplePhone, sampleDetailsText, setSampleDetailsText, sampleLoading, setSampleLoading, sampleSuccessMsg, setSampleSuccessMsg, isCameraActive, setIsCameraActive, videoRef, streamRef } = visitForm;
 const { catalogues, catalogueTitle, setCatalogueTitle, catalogueFile, setCatalogueFile, catalogueUploading, catalogueUploadProgress, catalogueLoading, catalogueActionId, catalogueSearch, setCatalogueSearch, catalogueFileInputRef, fetchCatalogues, formatCatalogueFileSize, handleUploadCatalogue, viewCatalogue, downloadCatalogue, deleteCatalogue, getFilteredCatalogues } = useCatalogues(user);
 const pdfTemplateRef = useRef(null);
 const [pdfExportData, setPdfExportData] = useState([]);
@@ -263,6 +265,19 @@ const { assignedCityIds, setAssignedCityIds, assignedAreaIds, setAssignedAreaIds
 const { marketerName, setMarketerName, marketerPhone, setMarketerPhone, marketerEmail, setMarketerEmail, marketerPass, setMarketerPass, marketerDesignation, setMarketerDesignation, marketerAssignedKms, setMarketerAssignedKms, subordinateMarketerIds, setSubordinateMarketerIds, subordinatePickerOpen, setSubordinatePickerOpen, subordinateSearch, setSubordinateSearch, marketerWhatsappGroupName, setMarketerWhatsappGroupName, marketerWhatsappGroupLink, setMarketerWhatsappGroupLink, marketersList, setMarketersList, deletedMarketersList, setDeletedMarketersList, editingId, setEditingId, editingReturnToMarketerDetails, setEditingReturnToMarketerDetails, fetchMarketers, fetchMarketersByIds, getAccessibleVisitMarketers, fetchDeletedMarketers, handleSaveMarketer, handleEditMarketer, handleDeleteMarketer, handlePermanentDeleteMarketer, handleRestoreMarketer } = useMarketers({ user, fetchCitiesByIds, fetchAreasForCities, fetchLocationCatalog, getValidMarketerAssignments, resetMarketerAssignmentForm, setAdminView, setAssignedAreaIds, setAssignedCityIds, setAssignedSchoolIds, setAssignmentAreaFocusId, setAssignmentCityFocusId, setAdminAreaAssignOpen, setAdminAreaSearch, setAdminCityAssignOpen, setAdminCitySearch, setAdminSchoolSearch, setNewAreaName, setNewCityName, setNewSchoolName });
 useEffect(() => { if (user?.role === "admin") fetchMarketers(); }, [user?.role]);
 const { selectedMarketerVisitIds, setSelectedMarketerVisitIds, longPressTimer, setLongPressTimer, marketerFromDate, setMarketerFromDate, marketerToDate, setMarketerToDate, selectedVisitHistoryMarketerIds, setSelectedVisitHistoryMarketerIds, visitHistoryPickerOpen, setVisitHistoryPickerOpen, reports, setReports, marketerReports, setMarketerReports, samples, setSamples, marketerSamples, setMarketerSamples, fetchAllReports, fetchMarketerReportsForEmails, fetchMarketerReports, openVisitHistory, getVisitHistoryFilteredReports, fetchAllSamples, fetchMarketerSamples, handleDeleteVisit, toggleMarketerVisitSelection, startMarketerVisitLongPress, handleDeleteSample } = useVisitData({ user, setUser, getAccessibleVisitMarketers, fetchMarketersByIds, isDateInRange, setMarketerview, setSelectedAdminMarketerBox });
+const canEditVisitToday = (visit) => {
+  if (user?.role === "admin") return true;
+  const ownsVisit = visit.marketerId ? visit.marketerId === user?.marketerId : String(visit.marketerEmail || "").toLowerCase() === String(user?.email || "").toLowerCase();
+  return ownsVisit && getDateKey(visit.createdAt) === getTodayInputDate();
+};
+const saveVisitEdit = async (id, values) => {
+  await request(`/visits/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(values) });
+  const applyUpdate = (rows) => rows.map((row) => row.id === id ? { ...row, ...values, schoolNames: [values.schoolName] } : row);
+  setReports(applyUpdate);
+  setMarketerReports(applyUpdate);
+  if (user?.role === "admin") fetchAllReports().catch(() => {});
+  else fetchMarketerReportsForEmails([...new Set([user.email, ...marketerReports.map((row) => row.marketerEmail)].filter(Boolean))]).catch(() => {});
+};
 const activeMedia = reports.filter((report) => report.image);
 const { verificationFromDate, setVerificationFromDate, verificationToDate, setVerificationToDate, verificationMarketerIds, setVerificationMarketerIds, verificationPickerOpen, setVerificationPickerOpen, verificationSavingId, setVerificationSavingId, verificationRemarkOptions, openVerificationCalls, getFilteredVerificationRows, saveVerificationRemark, downloadVerificationExcel, downloadVerificationPDF } = useVerificationCalls({ reports, setReports, marketersList, fetchAllReports, fetchMarketers, formatTime12, getMarketerName, getTodayInputDate, groupRowsByMarketerAndDate, setAdminView, setExpandedReportKey, isDateInRange });
 const { attendanceType, setAttendanceType, attendanceStartReading, setAttendanceStartReading, attendanceEndReading, setAttendanceEndReading, attendanceLeaveReason, setAttendanceLeaveReason, attendanceOtherExpense, setAttendanceOtherExpense, attendanceTransportExpense, setAttendanceTransportExpense, attendanceFoodExpense, setAttendanceFoodExpense, attendanceNightStayExpense, setAttendanceNightStayExpense, attendanceStartPhoto, setAttendanceStartPhoto, attendanceEndPhoto, setAttendanceEndPhoto, attendanceOtherExpensePhoto, setAttendanceOtherExpensePhoto, attendanceTransportExpensePhoto, setAttendanceTransportExpensePhoto, attendanceFoodExpensePhoto, setAttendanceFoodExpensePhoto, attendanceNightStayExpensePhoto, setAttendanceNightStayExpensePhoto, attendanceCameraTarget, setAttendanceCameraTarget, attendanceCameraActive, setAttendanceCameraActive, attendanceSubmitting, setAttendanceSubmitting, todayAttendance, setTodayAttendance, attendanceRecords, setAttendanceRecords, adminAttendanceFromDate, setAdminAttendanceFromDate, adminAttendanceToDate, setAdminAttendanceToDate, adminAttendanceSearch, setAdminAttendanceSearch, adminAttendanceMarketerFilter, setAdminAttendanceMarketerFilter, attendancePetrolRates, setAttendancePetrolRates, adminAttendancePetrolRate, setAdminAttendancePetrolRate, attendanceMediaFromDate, setAttendanceMediaFromDate, attendanceMediaToDate, setAttendanceMediaToDate, selectedAttendanceMediaIds, setSelectedAttendanceMediaIds, attendanceMediaMarketer, setAttendanceMediaMarketer, attendanceVideoRef, getAttendanceDocId, fetchTodayAttendance, fetchAttendanceRecords, getFilteredAttendance, getFilteredAttendanceMedia, softDeleteAttendanceMedia, deleteSelectedAttendanceMedia, getAttendanceTotalKms, getAttendancePetrolRate, getAttendanceAssignedKms, getAttendancePetrolExpense, getAttendanceTotalOtherExpense, saveAttendancePetrolRate, saveAttendanceAssignedKms, startAttendanceCamera, stopAttendanceCamera, captureAttendancePhoto, submitAttendanceStart, submitAttendanceEnd, submitAttendanceLeave, openAttendanceForm, downloadAttendanceExcel, downloadAttendancePDF } = useAttendance({ user, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, setMarketerview, fetchDeletedMedia });
@@ -314,7 +329,10 @@ useEffect(() => {
     if (event.repeat) return;
     const activeView = user?.role === "admin" ? adminView : marketerView;
     event.preventDefault();
-    if (fullScreenImage) {
+    if (editingVisit) {
+      homeEscapeCountRef.current = { count: 0, lastAt: 0 };
+      setEditingVisit(null);
+    } else if (fullScreenImage) {
       homeEscapeCountRef.current = { count: 0, lastAt: 0 };
       setFullScreenImage(null);
       setFullScreenMediaRecord(null);
@@ -343,7 +361,7 @@ useEffect(() => {
   };
   window.addEventListener("keydown", onKeyDown, true);
   return () => window.removeEventListener("keydown", onKeyDown, true);
-}, [fullScreenImage, expandedReportKey, user?.role, adminView, marketerView, setFullScreenImage, setFullScreenMediaRecord, stopAttendanceCamera, stopCamera, onLogout]);
+}, [editingVisit, fullScreenImage, expandedReportKey, user?.role, adminView, marketerView, setFullScreenImage, setFullScreenMediaRecord, stopAttendanceCamera, stopCamera, onLogout]);
 const { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanSearch, setAdminActionPlanSearch, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan } = useActionPlans({ user, setUser, setMarketerview, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId });
 const { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, getMarketerExpensePetrol, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerIds, setAdminExpenseMarketerIds, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, getAdminExpenseMarketerName, downloadAdminExpenseExcel, downloadAdminExpensePDF } = useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12, groupRowsByMarketerAndDate });
 const { renderVisitReportTable, renderSampleReportTable, renderActionPlanReportTable, renderVerificationReportTable, renderAttendanceReportTable } = createReportTables({ formatActionPlanDate, formatTime12, getAttendanceAssignedKms, getAttendancePetrolExpense, getAttendanceTotalKms, getAttendanceTotalOtherExpense, getTodayInputDate, groupRowsByMarketerAndDate, handleDeleteActionPlan, inputStyle, saveAttendanceAssignedKms, saveVerificationRemark, setFullScreenImage, setReports, verificationRemarkOptions, verificationSavingId });
@@ -532,6 +550,10 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     handleDeletePicture,
     handleDeleteSample,
     handleDeleteVisit,
+    canEditVisitToday,
+    editingVisit,
+    setEditingVisit,
+    saveVisitEdit,
     handleEditMarketer,
     handleLogout,
     handlePermanentDeleteMarketer,
@@ -744,6 +766,10 @@ return <Suspense fallback={<PortalLoading />}><MarketerPortal context={{
     handleDeletePicture,
     handleDeleteSample,
     handleDeleteVisit,
+    canEditVisitToday,
+    editingVisit,
+    setEditingVisit,
+    saveVisitEdit,
     handleLogout,
     handleSendActionPlan,
     handleSubmitSample,
@@ -886,5 +912,9 @@ return <Suspense fallback={<PortalLoading />}><MarketerPortal context={{
     visitSchoolPickerOpen,
     visitSchoolSearch,
     visitSchoolsLoading,
-    visitSession
+    visitSession,
+    visitBranches,
+    setVisitBranches,
+    visitStrength,
+    setVisitStrength
 }} /></Suspense>;}

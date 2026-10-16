@@ -1,8 +1,9 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import NumberOrCustomField from "../../ui/NumberOrCustomField.jsx";
 
 export default function MarketerAddVisitPanel() {
-  const { areasList, btnPrimary, cancelEditVisitSchool, capturePhoto, cardStyle, citiesList, editingVisitSchoolId, editingVisitSchoolName, fetchAreasForCity, fetchSchoolsForArea, handleAddVisitSchool, handleSubmitVisit, imageFile, inputStyle, isCameraActive, isOwnManualSchool, isUsableSchoolRecord, loading, newSchoolName, notes, phone, principalName, purpose, readCachedAreasForCity, removeOwnVisitSchool, retakePhoto, saveEditedVisitSchool, schoolsList, selectVisitArea, setEditingVisitSchoolId, setEditingVisitSchoolName, setFullScreenImage, setMarketerview, setNewSchoolName, setNotes, setPhone, setPrincipalName, setPurpose, setSchoolName, setVisitAddSchoolOpen, setVisitAreaId, setVisitAreaPickerOpen, setVisitAreaSearch, setVisitCityId, setVisitCityPickerOpen, setVisitCitySearch, setVisitSchoolIds, setVisitSchoolLoadError, setVisitSchoolManagerOpen, setVisitSchoolPickerOpen, setVisitSchoolSearch, setVisitSchoolsLoading, setVisitSession, startCamera, startEditVisitSchool, stopCamera, successMsg, syncAreasForCityFromOpenStreetMap, toggleVisitSchool, user, videoRef, visitAddSchoolOpen, visitAreaId, visitAreaPickerOpen, visitAreaSearch, visitCityId, visitCityPickerOpen, visitCitySearch, visitSchoolIds, visitSchoolLoadError, visitSchoolManagerOpen, visitSchoolPickerOpen, visitSchoolSearch, visitSchoolsLoading, visitSession } = usePortalContext();
+  const { areasList, btnPrimary, cancelEditVisitSchool, capturePhoto, cardStyle, citiesList, editingVisitSchoolId, editingVisitSchoolName, fetchAreasForCity, fetchSchoolsForArea, handleAddVisitSchool, handleSubmitVisit, imageFile, inputStyle, isCameraActive, isOwnManualSchool, isUsableSchoolRecord, loading, newSchoolName, notes, phone, principalName, purpose, readCachedAreasForCity, removeOwnVisitSchool, retakePhoto, saveEditedVisitSchool, schoolsList, selectVisitArea, setEditingVisitSchoolId, setEditingVisitSchoolName, setFullScreenImage, setMarketerview, setNewSchoolName, setNotes, setPhone, setPrincipalName, setPurpose, setSchoolName, setVisitAddSchoolOpen, setVisitAreaId, setVisitAreaPickerOpen, setVisitAreaSearch, setVisitCityId, setVisitCityPickerOpen, setVisitCitySearch, setVisitSchoolIds, setVisitSchoolLoadError, setVisitSchoolManagerOpen, setVisitSchoolPickerOpen, setVisitSchoolSearch, setVisitSchoolsLoading, setVisitSession, startCamera, startEditVisitSchool, stopCamera, successMsg, syncAreasForCityFromOpenStreetMap, toggleVisitSchool, user, videoRef, visitAddSchoolOpen, visitAreaId, visitAreaPickerOpen, visitAreaSearch, visitCityId, visitCityPickerOpen, visitCitySearch, visitSchoolIds, visitSchoolLoadError, visitSchoolManagerOpen, visitSchoolPickerOpen, visitSchoolSearch, visitSchoolsLoading, visitSession, visitBranches, setVisitBranches, visitStrength, setVisitStrength } = usePortalContext();
   return (<div>
             <button onClick={() => { stopCamera(); setMarketerview("home"); }} style={{ marginBottom: "14px", padding: "8px 14px", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }}>← Back to Menu</button>
             <div style={cardStyle}>
@@ -234,11 +235,11 @@ gap: "10px",
 textAlign: "left",
 cursor: visitAreaId ? "pointer" : "not-allowed",
 opacity: visitAreaId ? 1 : .58,
-background: visitSchoolIds[0] ? "rgba(67,56,202,.24)" : "rgba(15,23,42,.82)",
-borderColor: visitSchoolIds[0] ? "rgba(129,140,248,.55)" : "rgba(255,255,255,.15)"
+background: visitSchoolIds[0] ? "#fff1f4" : "#fffdfa",
+borderColor: "rgba(143,21,50,.30)"
 }}
 >
-                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: visitSchoolIds[0] ? "#f6edef" : "#5c484e", fontWeight: visitSchoolIds[0] ? 700 : 500 }}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: visitSchoolIds[0] ? "#7a0f2b" : "#5c484e", fontWeight: visitSchoolIds[0] ? 700 : 500 }}>
                       {!visitAreaId
 ? "Select area first"
 : visitSchoolsLoading && !visitSchoolIds[0]
@@ -271,7 +272,7 @@ style={{ ...inputStyle, padding: "10px 12px", fontSize: "13px", marginBottom: "8
 .filter((sc) => sc.areaId === visitAreaId && sc.cityId === visitCityId && isUsableSchoolRecord(sc) && String(sc.name || "").toLowerCase().includes(visitSchoolSearch.toLowerCase()))
 .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
 .map((sc) => (
-<label key={sc.id} style={{ display: "flex", gap: "9px", alignItems: "center", padding: "9px", cursor: "pointer", borderRadius: "8px", background: visitSchoolIds[0] === sc.id ? "rgba(139,92,246,.18)" : "transparent", border: visitSchoolIds[0] === sc.id ? "1px solid rgba(167,139,250,.25)" : "1px solid transparent" }}>
+<label key={sc.id} style={{ display: "flex", gap: "9px", alignItems: "center", padding: "9px", cursor: "pointer", borderRadius: "8px", background: visitSchoolIds[0] === sc.id ? "#fff1f4" : "transparent", border: visitSchoolIds[0] === sc.id ? "1px solid rgba(143,21,50,.25)" : "1px solid transparent" }}>
                                 <input type="radio" name="visitSchool" checked={visitSchoolIds[0] === sc.id} onChange={() => toggleVisitSchool(sc.id)} />
                                 <span style={{ color: "#3b2329", fontSize: "13px", fontWeight: visitSchoolIds[0] === sc.id ? 700 : 500 }}>{sc.name}</span>
                               </label>
@@ -313,7 +314,7 @@ style={{ padding: "7px 11px", background: "linear-gradient(135deg,#741027,#77102
                       </div>
                       {visitAddSchoolOpen && (
 <div className="visit-school-add-panel">
-                          <div style={{ color: "#a7f3d0", fontSize: "12px", fontWeight: 800, marginBottom: "8px" }}>Add a school in the selected area</div>
+                          <div style={{ color: "#7a0f2b", fontSize: "12px", fontWeight: 800, marginBottom: "8px" }}>Add a school in the selected area</div>
                           <div className="visit-school-add-row">
                             <input
 autoFocus
@@ -418,6 +419,8 @@ style={{ ...inputStyle, padding: "10px 12px", fontSize: "13px" }}
                     <option value="December">December</option>
                   </select>
                 </div>
+                <NumberOrCustomField label="Branches" value={visitBranches} onChange={setVisitBranches} values={Array.from({ length: 10 }, (_, index) => String(index + 1))} inputStyle={inputStyle} resetKey={successMsg} required />
+                <NumberOrCustomField label="Strength" value={visitStrength} onChange={setVisitStrength} values={Array.from({ length: 10 }, (_, index) => String((index + 1) * 100))} inputStyle={inputStyle} resetKey={successMsg} required />
                 <div>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#5c484e", marginBottom: "6px" }}>Visit Notes / Remarks</label>
                   <textarea placeholder="Write visit summary or remarks..." value={notes} onChange={(e) => setNotes(e.target.value)} rows="3" style={{ ...inputStyle, fontFamily: "inherit" }} />

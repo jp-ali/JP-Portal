@@ -3,7 +3,7 @@ import React from "react";
 import ReportMarketerFilterBar from "../../ui/ReportMarketerFilterBar.jsx";
 
 export default function AdminVisitsPanel() {
-  const { allVisitsFromDate, allVisitsToDate, cardStyle, downloadExcel, downloadPDF, fetchAllReports, fetchMarketers, getDateKey, getMarketerName, handleDeletePicture, handleDeleteVisit, inputStyle, isDateInRange, marketersList, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, reports, selectedAdminAllSchoolBox, selectedMarketersFilter, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setFullScreenImage, setSelectedAdminAllSchoolBox, setSelectedMarketersFilter } = usePortalContext();
+  const { allVisitsFromDate, allVisitsToDate, cardStyle, downloadExcel, downloadPDF, fetchAllReports, fetchMarketers, getDateKey, getMarketerName, handleDeletePicture, handleDeleteVisit, inputStyle, isDateInRange, marketersList, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, reports, selectedAdminAllSchoolBox, selectedMarketersFilter, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setEditingVisit, setFullScreenImage, setSelectedAdminAllSchoolBox, setSelectedMarketersFilter } = usePortalContext();
   return (<div className={reportViewClass("visits")}>
               {renderExpandedReportChrome("visits")}
               <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px", alignItems: "center" }}>
@@ -73,7 +73,8 @@ return true;
 ) : (
 renderVisitReportTable(
 reports.filter(r => r.createdAt && isDateInRange(r.createdAt, allVisitsFromDate, allVisitsToDate) && (!selectedMarketersFilter.length || selectedMarketersFilter.includes(r.marketerEmail))),
-(r) => setSelectedAdminAllSchoolBox(r.id)
+(r) => setSelectedAdminAllSchoolBox(r.id),
+(r) => <button type="button" onClick={() => setEditingVisit(r)} style={{ padding: "5px 8px", background: "#7a0f2b", color: "#fff", border: 0, borderRadius: "6px", cursor: "pointer" }}>Edit</button>
 )
 )}
                   </>
@@ -88,6 +89,7 @@ return (
                           <p style={{ margin: "4px 0" }}><strong>Marketer:</strong> {getMarketerName(r.marketerEmail, r.marketerName || "N/A")}</p>
                           <p style={{ margin: "4px 0" }}><strong>Principal:</strong> {r.principalName} ({r.phone})</p>
                           <p style={{ margin: "4px 0" }}><strong>Purpose of Visit:</strong> {r.purpose || "N/A"}</p>
+                          <p style={{ margin: "4px 0" }}><strong>Session:</strong> {r.session || "N/A"} &nbsp; <strong>Branches:</strong> {r.branches || "N/A"} &nbsp; <strong>Strength:</strong> {r.strength || "N/A"}</p>
                           <p style={{ margin: "4px 0" }}><strong>Remarks:</strong> {r.notes}</p>
                           <p style={{ margin: "4px 0", fontSize: "12px", color: "#78686d" }}><strong>Time:</strong> {r.createdAt && r.createdAt.toDate ? r.createdAt.toDate().toLocaleString("en-US", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit", hour12:true }) : "N/A"}</p>
                           {r.image && (
@@ -102,6 +104,7 @@ style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "8px
                             </div>
 )}
                           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "16px" }}>
+                            <button type="button" onClick={() => setEditingVisit(r)} style={{ padding: "8px 14px", background: "#7a0f2b", color: "white", border: "none", borderRadius: "8px", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>Edit Details</button>
                             {r.image && (
 <button 
 onClick={() => handleDeletePicture(r.id, true)} 

@@ -2,7 +2,7 @@ import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
 
 export default function MarketerTodayVisitsPanel() {
-  const { cardStyle, downloadExcel, downloadPDF, getDateKey, handleDeletePicture, handleDeleteVisit, marketerReports, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, setFullScreenImage, setMarketerview } = usePortalContext();
+  const { canEditVisitToday, cardStyle, downloadExcel, downloadPDF, getDateKey, marketerReports, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, setEditingVisit, setFullScreenImage, setMarketerview } = usePortalContext();
   return (<div className={reportViewClass("marketer-today-visits")}>
             {renderExpandedReportChrome("marketer-today-visits")}
             <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px", alignItems: "center" }}>
@@ -43,7 +43,7 @@ style={{ padding: "6px 12px", background: "linear-gradient(135deg,#6f0b24,#86132
               {(() => {
 const todayRows = marketerReports.filter(r => r.createdAt && getDateKey(r.createdAt) === getDateKey(new Date()));
 if (!todayRows.length) return <p style={{ color: "#78686d", fontSize: "14px" }}>No visit reports available for today.</p>;
-return renderVisitReportTable(todayRows, null, (r) => <div style={{display:"flex",gap:"4px",justifyContent:"center",flexWrap:"wrap"}}>{r.image&&<button type="button" onClick={()=>setFullScreenImage(r.image)} style={{padding:"4px 6px",background:"#fff",border:"1px solid #eadde0",borderRadius:"5px",cursor:"pointer",fontSize:"9px"}}>View</button>}{r.image&&<button type="button" onClick={()=>handleDeletePicture(r.id,false)} style={{padding:"4px 6px",background:"#77102a",color:"#fff",border:"none",borderRadius:"5px",cursor:"pointer",fontSize:"9px"}}>Photo</button>}<button type="button" onClick={()=>handleDeleteVisit(r.id,false)} style={{padding:"4px 6px",background:"#ef4444",color:"#fff",border:"none",borderRadius:"5px",cursor:"pointer",fontSize:"9px"}}>Delete</button></div>);
+return renderVisitReportTable(todayRows, null, (r) => <div style={{display:"flex",gap:"4px",justifyContent:"center",flexWrap:"wrap"}}><button type="button" disabled={!r.image} onClick={()=>setFullScreenImage(r.image)} style={{padding:"4px 6px",background:"#fff",border:"1px solid #eadde0",borderRadius:"5px",cursor:r.image?"pointer":"default",fontSize:"9px"}}>View</button>{canEditVisitToday(r)&&<button type="button" onClick={()=>setEditingVisit(r)} style={{padding:"4px 6px",background:"#7a0f2b",color:"#fff",border:"none",borderRadius:"5px",cursor:"pointer",fontSize:"9px"}}>Edit</button>}</div>);
 })()}
             </div>
           </div>);

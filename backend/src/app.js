@@ -2,6 +2,7 @@ import express from "express";
 import "dotenv/config";
 import { authRoutes } from "./routes/authRoutes.js";
 import { marketerRoutes } from "./routes/marketerRoutes.js";
+import { visitRoutes } from "./routes/visitRoutes.js";
 
 export const app = express();
 
@@ -33,6 +34,7 @@ app.get("/api/health", (_request, response) => {
 });
 app.use("/api/auth", authRoutes);
 app.use("/api/marketers", marketerRoutes);
+app.use("/api/visits", visitRoutes);
 
 app.use((error, _request, response, _next) => {
   if (error instanceof SyntaxError && "body" in error) {

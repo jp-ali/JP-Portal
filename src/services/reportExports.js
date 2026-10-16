@@ -10,6 +10,8 @@ const formattedData = dataList.map((item, idx) => ({
 "City": item.cityName || "N/A",
 "Area": item.areaName || "N/A",
 "Session": item.session || "N/A",
+"Branches": item.branches || "N/A",
+"Strength": item.strength || "N/A",
 "Visit Time": formatTime12(item.visitTime || (item.createdAt && item.createdAt.toDate ? item.createdAt.toDate() : null)),
 "Principal Name": item.principalName,
 "Phone No": item.phone,
@@ -48,7 +50,7 @@ const columns = [
 ["Contact Person", 25],
 ["Phone No", 20],
 ["Visit Time", 15],
-["Session", 16],
+["Session / B / S", 16],
 ["Purpose / Details", 34],
 ["Remarks", 42]
 ];
@@ -135,7 +137,7 @@ item.schoolName || "N/A",
 item.principalName || "N/A",
 item.phone || "N/A",
 formatTime(item),
-item.session || "N/A",
+`${item.session || "N/A"} / ${item.branches || "-"} / ${item.strength || "-"}`,
 item.purpose || item.sampleDetails || "N/A",
 item.notes || "N/A"
 ];
@@ -242,7 +244,7 @@ drawCell(108, yy, 30, entry.height, item.schoolName || "N/A", "left", false, 5.5
 drawCell(138, yy, 25, entry.height, item.principalName || "N/A", "left", false, 5.5, fill);
 drawCell(163, yy, 20, entry.height, item.phone || "N/A", "left", false, 5.4, fill);
 drawCell(183, yy, 15, entry.height, formatTime(item), "center", false, 5.3, fill);
-drawCell(198, yy, 16, entry.height, item.session || "N/A", "center", false, 5.3, fill);
+drawCell(198, yy, 16, entry.height, `${item.session || "N/A"} / ${item.branches || "-"} / ${item.strength || "-"}`, "center", false, 5.3, fill);
 drawCell(214, yy, 34, entry.height, item.purpose || item.sampleDetails || "N/A", "left", false, 5.4, fill);
 drawCell(248, yy, 42, entry.height, item.notes || "N/A", "left", false, 5.4, fill);
 y += entry.height;
