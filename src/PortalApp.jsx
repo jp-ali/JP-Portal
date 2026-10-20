@@ -36,36 +36,6 @@ const [marketerView, setMarketerview] = useState("home");
 const [expandedReportKey, setExpandedReportKey] = useState("");
 const homeEscapeCountRef = useRef({ count: 0, lastAt: 0 });
 useEffect(() => { homeEscapeCountRef.current = { count: 0, lastAt: 0 }; }, [adminView, marketerView, expandedReportKey]);
-const nativeFullscreenReportRef = useRef(null);
-const closePhotoOnFullscreenExitRef = useRef(null);
-useEffect(() => {
-  const onFullscreenChange = () => {
-    if (document.fullscreenElement === nativeFullscreenReportRef.current) {
-      // Chrome normally consumes Escape before the photo viewer can receive it.
-      // Keyboard Lock gives the report control of Escape while it is fullscreen.
-      navigator.keyboard?.lock?.(["Escape"])?.catch(() => {});
-      return;
-    }
-    navigator.keyboard?.unlock?.();
-    if (!document.fullscreenElement && nativeFullscreenReportRef.current) {
-      nativeFullscreenReportRef.current = null;
-      if (document.querySelector(".photo-viewer")) closePhotoOnFullscreenExitRef.current?.();
-      else setExpandedReportKey("");
-    }
-  };
-  document.addEventListener("fullscreenchange", onFullscreenChange);
-  return () => {
-    document.removeEventListener("fullscreenchange", onFullscreenChange);
-    navigator.keyboard?.unlock?.();
-  };
-}, []);
-useEffect(() => {
-  if (!expandedReportKey && nativeFullscreenReportRef.current) {
-    const report = nativeFullscreenReportRef.current;
-    nativeFullscreenReportRef.current = null;
-    if (document.fullscreenElement === report) document.exitFullscreen().catch(() => {});
-  }
-}, [expandedReportKey]);
 useEffect(() => {
 if (!expandedReportKey) { document.body.classList.remove("report-fullscreen-active"); return; }
 const previousOverflow = document.body.style.overflow;
@@ -336,27 +306,29 @@ useLayoutEffect(() => {
   const frame = requestAnimationFrame(() => window.scrollTo(0, target));
   return () => cancelAnimationFrame(frame);
 }, [routeKey]);
-closePhotoOnFullscreenExitRef.current = () => { setFullScreenImage(null); setFullScreenMediaRecord(null); };
 useEffect(() => {
   const onKeyDown = (event) => {
     if (event.key !== "Escape") { homeEscapeCountRef.current = { count: 0, lastAt: 0 }; return; }
     if (event.repeat) return;
     const activeView = user?.role === "admin" ? adminView : marketerView;
     event.preventDefault();
-    if (editingVisit) {
-      homeEscapeCountRef.current = { count: 0, lastAt: 0 };
-      setEditingVisit(null);
-    } else if (fullScreenImage) {
+    if (fullScreenImage) {
       homeEscapeCountRef.current = { count: 0, lastAt: 0 };
       setFullScreenImage(null);
       setFullScreenMediaRecord(null);
+    } else if (editingVisit) {
+      homeEscapeCountRef.current = { count: 0, lastAt: 0 };
+      setEditingVisit(null);
     } else if (expandedReportKey) {
       homeEscapeCountRef.current = { count: 0, lastAt: 0 };
       setExpandedReportKey("");
+    } else if (adminSidebarOpen || marketerSidebarOpen) {
+      setAdminSidebarOpen(false);
+      setMarketerSidebarOpen(false);
     } else if (activeView !== "home") {
       homeEscapeCountRef.current = { count: 0, lastAt: 0 };
       const history = routeHistoryRef.current;
-      const previous = history.length > 1 ? history[history.length - 2] : null;
+      const previous = history.length > 1 ? (history.pop(), history.at(-1)) : null;
       if (user?.role !== "admin") {
         if (marketerView === "attendance") stopAttendanceCamera();
         if (marketerView === "add-visit") stopCamera();
@@ -388,18 +360,13 @@ useEffect(() => {
   };
   window.addEventListener("keydown", onKeyDown, true);
   return () => window.removeEventListener("keydown", onKeyDown, true);
-}, [editingVisit, fullScreenImage, expandedReportKey, user?.role, adminView, marketerView, setFullScreenImage, setFullScreenMediaRecord, stopAttendanceCamera, stopCamera, onLogout]);
+}, [editingVisit, fullScreenImage, expandedReportKey, adminSidebarOpen, marketerSidebarOpen, user?.role, adminView, marketerView, setFullScreenImage, setFullScreenMediaRecord, stopAttendanceCamera, stopCamera, onLogout]);
 const { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanSearch, setAdminActionPlanSearch, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan } = useActionPlans({ user, setUser, setMarketerview, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId });
 const { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, getMarketerExpensePetrol, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerIds, setAdminExpenseMarketerIds, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, getAdminExpenseMarketerName, downloadAdminExpenseExcel, downloadAdminExpensePDF } = useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12, groupRowsByMarketerAndDate });
 const { renderVisitReportTable, renderSampleReportTable, renderActionPlanReportTable, renderVerificationReportTable, renderAttendanceReportTable } = createReportTables({ formatActionPlanDate, formatTime12, getAttendanceAssignedKms, getAttendancePetrolExpense, getAttendanceTotalKms, getAttendanceTotalOtherExpense, getTodayInputDate, groupRowsByMarketerAndDate, handleDeleteActionPlan, inputStyle, saveAttendanceAssignedKms, saveVerificationRemark, setFullScreenImage, setReports, verificationRemarkOptions, verificationSavingId });
 const reportViewClass = (key) => expandedReportKey === key ? "admin-report-view admin-report-expanded" : "admin-report-view";
 const renderReportExpandButton = (key, title = "Expand report") => expandedReportKey === key ? null : (
-<button type="button" className="report-expand-btn" title={title} aria-label={title} onClick={(event) => {
-  const report = event.currentTarget.closest(".admin-report-view");
-  if (report?.requestFullscreen) {
-    nativeFullscreenReportRef.current = report;
-    report.requestFullscreen().catch(() => { nativeFullscreenReportRef.current = null; });
-  }
+<button type="button" className="report-expand-btn" title={title} aria-label={title} onClick={() => {
   setAdminSidebarOpen(false);
   setMarketerSidebarOpen(false);
   setExpandedReportKey(key);

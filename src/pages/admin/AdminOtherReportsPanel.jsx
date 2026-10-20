@@ -20,6 +20,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const [actionOpen, setActionOpen] = useState(false);
   const [actionMode, setActionMode] = useState("");
   const [selectedReports, setSelectedReports] = useState([]);
+  const [confirmRemoval, setConfirmRemoval] = useState(false);
   const [deletedReports, setDeletedReports] = useState([]);
   const [editingReportId, setEditingReportId] = useState("");
   const [title, setTitle] = useState("");
@@ -40,7 +41,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const [toDate, setToDate] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  useEffect(() => { if (!actionOpen) { setActionMode(""); setSelectedReports([]); } }, [actionOpen]);
+  useEffect(() => { if (!actionOpen) { setActionMode(""); setSelectedReports([]); setConfirmRemoval(false); } }, [actionOpen]);
   useEffect(() => { setSearch(""); setCityFilter(""); setRemarkFilter(""); setMarketerFilter([]); setFromDate(""); setToDate(""); setExtraFilterValues({}); if (selectedId) fetchMarketers().catch(() => {}); }, [selectedId]);
   const report = reports.find((item) => item.id === selectedId);
   const columns = reportColumns(report);
@@ -49,7 +50,24 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const resetEditor = () => { setAdding(false); setEditingReportId(""); setTitle(""); setHeadings("Name, Number, City, Institute, Remarks"); setIncludeMarketers(false); setDateRange(false); setFilterKeys([]); };
   const startEdit = (item) => { setEditingReportId(item.id); setTitle(item.title); setHeadings(reportColumns(item).filter((column) => !["date", "marketer"].includes(column.key)).map((column) => column.label).join(", ")); setIncludeMarketers(!!item.options?.includeMarketers); setDateRange(!!item.options?.dateRange); setFilterKeys(item.options?.filterKeys || []); setAdding(true); setActionMode(""); setActionOpen(false); };
   const loadDeleted = async () => { try { const result = await request("/custom-reports/deleted"); setDeletedReports(result.reports || []); setError(""); } catch (cause) { setError(cause.message); } };
-  const removeSelected = async () => { if (!selectedReports.length || !window.confirm(`Remove ${selectedReports.length} report(s)? You can restore them from Old Reports.`)) return; setBusy(true); try { await Promise.all(selectedReports.map((id) => request(`/custom-reports/${id}`, { method: "DELETE" }))); setReports((current) => current.filter((item) => !selectedReports.includes(item.id))); setSelectedReports([]); setActionMode(""); setError(""); } catch (cause) { setError(cause.message); reload(); } finally { setBusy(false); } };
+  const removeSelected = async () => {
+    if (!selectedReports.length || busy) return;
+    setBusy(true); setError("");
+    const removed = [];
+    try {
+      for (const id of selectedReports) {
+        await request(`/custom-reports/${encodeURIComponent(id)}`, { method: "DELETE" });
+        removed.push(id);
+      }
+      setReports((current) => current.filter((item) => !removed.includes(item.id)));
+      setSelectedReports([]); setConfirmRemoval(false); setActionMode(""); setActionOpen(false);
+      await reload();
+    } catch (cause) {
+      setError(cause.message);
+      if (removed.length) setReports((current) => current.filter((item) => !removed.includes(item.id)));
+      setSelectedReports((current) => current.filter((id) => !removed.includes(id)));
+    } finally { setBusy(false); }
+  };
   const restoreReport = async (id) => { setBusy(true); try { await request(`/custom-reports/${id}/restore`, { method: "POST" }); setDeletedReports((current) => current.filter((item) => item.id !== id)); await reload(); setError(""); } catch (cause) { setError(cause.message); } finally { setBusy(false); } };
   const detail = adminView === "custom-report";
   const back = () => { setSelectedId(""); setAdminView(mode === "verification" ? "verification-reports" : "other-reports"); };
@@ -140,11 +158,11 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     </div>
     {actionOpen && mode !== "verification" && <div className="other-report-action-menu">
       <button className="other-reports-btn" onClick={() => { resetEditor(); setAdding(true); setActionMode(""); }}>＋ Add</button>
-      <button className="other-reports-btn" onClick={() => { resetEditor(); setActionMode("remove"); setSelectedReports([]); }}>Remove</button>
+      <button className="other-reports-btn" onClick={() => { resetEditor(); setActionMode("remove"); setSelectedReports([]); setConfirmRemoval(false); }}>Remove</button>
       <button className="other-reports-btn" onClick={() => { resetEditor(); setActionMode("old"); loadDeleted(); }}>Old Reports</button>
       <button className="other-reports-btn" onClick={() => { resetEditor(); setActionMode("edit"); }}>Edit</button>
     </div>}
-    {actionMode === "remove" && <div className="other-report-selection"><span>Select reports to remove.</span><button className="other-reports-btn primary" disabled={!selectedReports.length || busy} onClick={removeSelected}>Remove Selected ({selectedReports.length})</button><button className="other-reports-btn" onClick={() => { setActionMode(""); setSelectedReports([]); }}>Cancel</button></div>}
+    {actionMode === "remove" && <div className="other-report-selection"><span>{confirmRemoval ? `Remove ${selectedReports.length} selected report(s)? You can restore them from Old Reports.` : "Select reports to remove."}</span><button className="other-reports-btn primary" disabled={!selectedReports.length || busy} onClick={() => confirmRemoval ? removeSelected() : setConfirmRemoval(true)}>{busy ? "Removing…" : confirmRemoval ? "Confirm Remove" : `Remove Selected (${selectedReports.length})`}</button><button className="other-reports-btn" onClick={() => { setActionMode(""); setSelectedReports([]); setConfirmRemoval(false); }}>Cancel</button></div>}
     {actionMode === "edit" && <div className="other-report-selection"><span>Select a report to edit its name, headings and options.</span><button className="other-reports-btn" onClick={() => setActionMode("")}>Cancel</button></div>}
     {actionMode === "old" && <div className="other-report-old"><h3>Old Reports</h3>{deletedReports.length ? deletedReports.map((item) => <div key={item.id}><strong>{item.title}</strong><button className="other-reports-btn primary" disabled={busy} onClick={() => restoreReport(item.id)}>Restore</button></div>) : <p>No deleted reports.</p>}</div>}
     <div className="other-reports-overview"><span className="other-reports-overview-icon" aria-hidden="true">▦</span><div><strong>{mode === "verification" ? reports.length + 1 : reports.length}</strong><span>{mode === "verification" ? "Available reports" : "Custom reports"}</span></div><p>{mode === "verification" ? "School Visits is ready whenever you need it." : "Create a report and start adding contacts in seconds."}</p></div>
@@ -162,7 +180,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
       {mode === "verification" && <button type="button" className="square-card other-report-card other-report-card-featured" onClick={openVerificationCalls}>
         <span className="other-report-icon">🏫</span><span className="other-report-card-type">DEFAULT REPORT</span><h3>School Visits</h3><p>Verification calls and visit remarks</p><span className="other-report-card-arrow" aria-hidden="true">↗</span>
       </button>}
-      {reports.map((item, index) => <button type="button" key={item.id} className={`square-card other-report-card${selectedReports.includes(item.id) ? " is-selected" : ""}`} style={{ "--report-order": index + 1 }} onClick={() => { if (actionMode === "remove") { setSelectedReports((current) => current.includes(item.id) ? current.filter((id) => id !== item.id) : [...current, item.id]); return; } if (actionMode === "edit") { startEdit(item); return; } onOrigin(mode); setSelectedId(item.id); setAdminView("custom-report"); }}>
+      {reports.map((item, index) => <button type="button" key={item.id} className={`square-card other-report-card${selectedReports.includes(item.id) ? " is-selected" : ""}`} style={{ "--report-order": index + 1 }} onClick={() => { if (actionMode === "remove") { setConfirmRemoval(false); setSelectedReports((current) => current.includes(item.id) ? current.filter((id) => id !== item.id) : [...current, item.id]); return; } if (actionMode === "edit") { startEdit(item); return; } onOrigin(mode); setSelectedId(item.id); setAdminView("custom-report"); }}>
         {actionMode === "remove" && <span className="other-report-checkbox" aria-hidden="true">{selectedReports.includes(item.id) ? "☑" : "☐"}</span>}<span className="other-report-icon">📋</span><span className="other-report-card-type">CUSTOM REPORT</span><h3>{item.title}</h3><span className="other-report-card-arrow" aria-hidden="true">↗</span>
       </button>)}
     </div>
