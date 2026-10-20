@@ -47,7 +47,7 @@ return (
                         </thead>
                         <tbody>
                           {people.flatMap((person, personIndex) => {
-let personWritten = false;
+let personWritten = false; let personSerial = 0;
 return [...person.dates.entries()].flatMap(([dateKey, entries]) => entries.map((row, itemIndex) => {
 const showPerson = !personWritten;
 if (showPerson) personWritten = true;
@@ -57,7 +57,7 @@ return (
 <tr key={row.id}>
                                 {showPerson && <><td rowSpan={person.total} className="expense-report-merged-cell">{personIndex + 1}</td><td rowSpan={person.total} className="expense-report-merged-cell">{person.name}</td></>}
                                 {itemIndex === 0 && <td rowSpan={entries.length} className="expense-report-merged-cell">{formatActionPlanDate(dateKey)}</td>}
-                                <td style={{ padding:"9px 8px", border:"1px solid #eee3e6", textAlign:"center", color:"#111" }}>{itemIndex + 1}</td>
+                                <td style={{ padding:"9px 8px", border:"1px solid #eee3e6", textAlign:"center", color:"#111" }}>{++personSerial}</td>
                                 <td style={{ padding:"9px 8px", border:"1px solid #eee3e6", textAlign:"center", color:"#111", whiteSpace:"nowrap" }}>{formatTime12(row.startTime,"—")} - {formatTime12(row.endTime,"—")}</td>
                                 <td style={{ padding:"9px 8px", border:"1px solid #eee3e6", textAlign:"center", color:"#111" }}>{row.startReading ?? "—"}</td>
                                 <td style={{ padding:"9px 8px", border:"1px solid #eee3e6", textAlign:"center", color:"#111" }}>{row.endReading ?? "—"}</td>

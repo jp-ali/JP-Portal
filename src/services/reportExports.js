@@ -210,7 +210,7 @@ const item = entries[oi];
 const h = rowHeight(item);
 if (chunk.length && usedMm + h > availableMm) break;
 if (!chunk.length && h > availableMm) break;
-chunk.push({ date: dateEntries[di][0], item, height: h, srInDate: oi + 1 });
+chunk.push({ date: dateEntries[di][0], item, height: h, serial: totalEntries - remainingTotal + chunk.length + 1 });
 usedMm += h;
 oi += 1;
 if (oi >= entries.length) { di += 1; oi = 0; }
@@ -241,7 +241,7 @@ const entry = chunk[i];
 const item = entry.item;
 const yy = y;
 const fill = ((i - cursor) % 2 === 1) ? [0.995, 0.995, 0.995] : null;
-drawCell(56, yy, 8, entry.height, entry.srInDate, "center", false, 5.4, fill);
+drawCell(56, yy, 8, entry.height, entry.serial, "center", false, 5.4, fill);
 drawCell(64, yy, 20, entry.height, item.cityName || "N/A", "left", false, 5.4, fill);
 drawCell(84, yy, 24, entry.height, item.areaName || "N/A", "left", false, 5.4, fill);
 drawCell(108, yy, 30, entry.height, item.schoolName || "N/A", "left", false, 5.5, fill);

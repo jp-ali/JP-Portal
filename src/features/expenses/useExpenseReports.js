@@ -522,7 +522,7 @@ page.content.push(drawWrapped(x,top,width,height,value,5.5,bold));
 const people=groupRowsByMarketerAndDate(rows,{getDateValue:(row)=>row.dateKey,getName:(row)=>row.marketerName,getPersonKey:(row)=>row.marketerEmail});
 people.forEach((person,personIndex)=>{
 const flat=[];
-[...person.dates.entries()].forEach(([dateKey,entries])=>entries.forEach((row,itemIndex)=>flat.push({dateKey,row,itemIndex})));
+[...person.dates.entries()].forEach(([dateKey,entries])=>entries.forEach((row)=>flat.push({dateKey,row,serial:flat.length+1})));
 let offset=0;
 while(offset<flat.length){
 let available=CONTENT_BOTTOM-page.y;
@@ -530,7 +530,7 @@ if(available<8){page=newPage();pages.push(page);available=CONTENT_BOTTOM-page.y;
 const chunk=[];let used=0;
 for(let index=offset;index<flat.length;index++){
 const entry=flat[index],row=entry.row;
-const values=[entry.itemIndex+1,row.time,row.dayIn,row.dayOut,Number(row.kms).toFixed(1).replace(/\.0$/, ""),Number(row.assignedKms).toFixed(1).replace(/\.0$/, ""),row.petrolRate === null ? "-" : `Rs. ${Number(row.petrolRate).toFixed(2)}`,`Rs. ${Number(row.petrolExpense).toFixed(2)}`,`Rs. ${Number(row.transport).toFixed(2)}`,`Rs. ${Number(row.nightStay).toFixed(2)}`,`Rs. ${Number(row.food).toFixed(2)}`,`Rs. ${Number(row.other).toFixed(2)}`,`Rs. ${Number(row.totalOtherExpense).toFixed(2)}`];
+const values=[entry.serial,row.time,row.dayIn,row.dayOut,Number(row.kms).toFixed(1).replace(/\.0$/, ""),Number(row.assignedKms).toFixed(1).replace(/\.0$/, ""),row.petrolRate === null ? "-" : `Rs. ${Number(row.petrolRate).toFixed(2)}`,`Rs. ${Number(row.petrolExpense).toFixed(2)}`,`Rs. ${Number(row.transport).toFixed(2)}`,`Rs. ${Number(row.nightStay).toFixed(2)}`,`Rs. ${Number(row.food).toFixed(2)}`,`Rs. ${Number(row.other).toFixed(2)}`,`Rs. ${Number(row.totalOtherExpense).toFixed(2)}`];
 const height=Math.min(18,Math.max(8,2.8+Math.max(...values.map((value,column)=>wrapText(value,columns[column+3][1]*MM-4*MM,5.5).length))*3.05));
 if(chunk.length&&used+height>available)break;
 if(!chunk.length&&height>available)break;
