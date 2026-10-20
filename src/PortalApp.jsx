@@ -17,6 +17,7 @@ import { useCatalogues } from "./features/catalogues/useCatalogues.js";
 import { createReportExporters } from "./services/reportExports.js";
 import adminCss from "./styles/admin.css?raw";
 import adminModernCss from "./styles/adminModern.css?raw";
+import portalShellCss from "./styles/portalShell.css?raw";
 import marketerCss from "./styles/marketer.css?raw";
 import React, { lazy, Suspense, useState, useRef, useEffect, useLayoutEffect } from "react";
 import { db } from "./services/firebase";
@@ -455,7 +456,7 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     adminAttendanceToDate,
     adminCityAssignOpen,
     adminCitySearch,
-    adminCss: `${adminCss}\n${adminModernCss}`,
+    adminCss: `${adminCss}\n${adminModernCss}\n${portalShellCss}`,
     adminExpenseFromDate,
     adminExpenseLoading,
     adminExpenseMarketerIds,
@@ -691,7 +692,8 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     verificationPickerOpen,
     verificationToDate,
     viewCatalogue,
-    visitSearch
+    visitSearch,
+    user
 }} /></Suspense>;
 return <Suspense fallback={<PortalLoading />}><MarketerPortal context={{
     actionPlanAreaText,
@@ -780,7 +782,7 @@ return <Suspense fallback={<PortalLoading />}><MarketerPortal context={{
     isOwnManualSchool,
     isUsableSchoolRecord,
     loading,
-    marketerCss,
+    marketerCss: `${marketerCss}\n${portalShellCss}`,
     marketerFromDate,
     marketerReports,
     marketerSamples,

@@ -13,6 +13,7 @@ import MarketerRangeVisitsPanel from "./marketer/MarketerRangeVisitsPanel.jsx";
 import React from "react";
 import PhotoViewer from "../ui/PhotoViewer.jsx";
 import VisitEditDialog from "../ui/VisitEditDialog.jsx";
+import PortalTopBar from "../ui/PortalTopBar.jsx";
 
 function MarketerPortalContent({ context }) {
   const { containerStyle, fetchCatalogues, fetchMarketerReports, fetchMarketerSamples, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getMarketerName, globalStyle, handleLogout, marketerCss, marketerSidebarOpen, marketerView, notes, openActionPlanForm, openAddVisit, openAttendanceForm, openExpenseReport, openVisitHistory, pdfExportData, pdfTemplateRef, phone, portalSkeletonLoading, principalName, purpose, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderRedSkeleton, renderResponsiveStyles, restoreMedia, setCatalogueSearch, setFullScreenImage, setFullScreenMediaRecord, setMarketerSidebarOpen, setMarketerview, setSampleDetailsText, setSampleHistoryFromDate, setSampleHistorySearch, setSampleHistoryToDate, setSamplePhone, setSamplePrincipalName, setSampleSchoolName, setSampleSuccessMsg, setSelectedAdminMarketerBox, softDeleteMedia, user } = context;
@@ -44,17 +45,13 @@ const marketerSidebarItems = [
 { key: "support", icon: "🎧", label: "Support", active: marketerView === "support" },
 ];
 return (
-<div style={globalStyle}>
-      {renderBackgroundStationary()}
+<div className="portal-shell portal-marketer-shell" style={globalStyle}>
       <style>{marketerCss}</style>
       <button type="button" className={`marketer-menu-toggle ${marketerSidebarOpen ? "sidebar-is-open" : ""}`} onClick={() => setMarketerSidebarOpen(true)} aria-label="Open marketer menu" title="Open Menu">☰</button>
       <div className={`marketer-sidebar-backdrop ${marketerSidebarOpen ? "open" : ""}`} onClick={() => setMarketerSidebarOpen(false)} aria-hidden="true" />
       <aside className={`marketer-sidebar ${marketerSidebarOpen ? "open" : ""}`}>
         <div className="marketer-sidebar-head">
-          <div style={{ minWidth:0 }}>
-            <div className="marketer-sidebar-title">Javed Publishers</div>
-            <div className="marketer-sidebar-user">{user?.name || "Marketer"}</div>
-          </div>
+          <div className="portal-sidebar-brand"><span className="portal-sidebar-logo">JP<span>.</span></span><strong>JAVED PUBLISHERS</strong></div>
           <div className="marketer-sidebar-head-actions">
             <button type="button" className="marketer-sidebar-close" onClick={() => setMarketerSidebarOpen(false)} title="Close menu" aria-label="Close menu">◀</button>
             <button type="button" className="marketer-sidebar-logout" onClick={() => { setMarketerSidebarOpen(false); handleLogout(); }} title="Logout" aria-label="Logout">{renderLogoutArrowIcon(18)}</button>
@@ -68,10 +65,11 @@ return (
             </button>
 ))}
         </nav>
+        <div className="portal-sidebar-footer"><div className="portal-sidebar-profile"><span className="portal-sidebar-avatar">{(user?.name || "M").charAt(0).toUpperCase()}</span><span><strong>{user?.name || "Marketer"}</strong><small>Javed Publishers</small></span></div><button type="button" onClick={handleLogout}>{renderLogoutArrowIcon(16)} Logout</button></div>
       </aside>
       <div className={`app-responsive marketer-portal-content ${marketerSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
         {renderResponsiveStyles()}
-        {renderBrandingStrip(() => setMarketerSidebarOpen(true), marketerSidebarOpen)}
+        <PortalTopBar role="marketer" name={user?.name || "Marketer"} items={marketerSidebarItems} onNavigate={openMarketerSidebarSection} onMenu={() => setMarketerSidebarOpen(true)} onLogout={handleLogout} />
         {portalSkeletonLoading && renderRedSkeleton()}
         {marketerView === "home" && (
 <MarketerHomePanel />

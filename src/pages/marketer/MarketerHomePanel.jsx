@@ -1,98 +1,43 @@
+import React, { useEffect, useState } from "react";
 import { usePortalContext } from "../../context/PortalContext.jsx";
-import React from "react";
+import DashboardHome from "../../ui/DashboardHome.jsx";
 
 export default function MarketerHomePanel() {
-  const { fetchCatalogues, fetchMarketerReports, fetchMarketerSamples, openActionPlanForm, openAddVisit, openAttendanceForm, openExpenseReport, openVisitHistory, setCatalogueSearch, setMarketerview, setSampleDetailsText, setSampleHistoryFromDate, setSampleHistorySearch, setSampleHistoryToDate, setSamplePhone, setSamplePrincipalName, setSampleSchoolName, setSampleSuccessMsg, setSelectedAdminMarketerBox, todayAttendance, user } = usePortalContext();
-  return (<div className="square-grid" style={{ marginTop: "10px" }}>
-            <div
-className="square-card shaking-card"
-onClick={openAttendanceForm}
-style={{ borderTop: "4px solid #a42243" }}
->
-              <div style={{ fontSize: "32px", marginBottom: "10px" }}>🕘</div>
-              <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Mark Attendance</h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>{todayAttendance?.endMarked ? "Day completed" : todayAttendance?.startMarked ? "Start marked • End pending" : todayAttendance?.status === "leave" ? "Leave submitted" : "Start / End / Leave"}</p>
-            </div>
-            <div
-className="square-card shaking-card"
-onClick={openActionPlanForm}
-style={{ borderTop: "4px solid #941a39", opacity: todayAttendance?.startMarked && todayAttendance?.status !== "leave" ? 1 : .58 }}
->
-              <div style={{ fontSize: "32px", marginBottom: "10px" }}>{todayAttendance?.actionPlanSent ? "✅" : todayAttendance?.startMarked ? "🗓️" : "🔒"}</div>
-              <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Daily Action Plan</h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>{todayAttendance?.actionPlanSent ? "Today's Action Plan submitted" : todayAttendance?.startMarked ? "Send Action Plan to unlock Add Visit" : "Mark Start Time to unlock"}</p>
-            </div>
-            <div 
-className="square-card shaking-card"
-onClick={openAddVisit} 
-style={{ borderTop: "4px solid #8f1532", opacity: (!todayAttendance?.startMarked || !todayAttendance?.actionPlanSent || todayAttendance?.endMarked || todayAttendance?.status === "leave") ? .52 : 1 }}
->
-              <div style={{ fontSize: "32px", marginBottom: "10px" }}>{(!todayAttendance?.startMarked || !todayAttendance?.actionPlanSent || todayAttendance?.endMarked || todayAttendance?.status === "leave") ? "🔒" : "➕"}</div>
-              <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Add Visit</h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>{todayAttendance?.status === "leave" ? "Closed for Leave" : todayAttendance?.endMarked ? "Closed after End Time" : !todayAttendance?.startMarked ? "Mark Attendance first" : !todayAttendance?.actionPlanSent ? "Send Action Plan first" : "Submit new school report"}</p>
-            </div>
-            <div 
-className="square-card shaking-card"
-onClick={() => { setMarketerview("today-visits"); fetchMarketerReports(user.email); setSelectedAdminMarketerBox(null); }} 
-style={{ borderTop: "4px solid #b6405b", animationDelay: "0.3s" }}
->
-              <div style={{ fontSize: "32px", marginBottom: "10px" }}>☀️️</div>
-              <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Today's Visits</h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Check today's reports</p>
-            </div>
-            <div 
-className="square-card shaking-card"
-onClick={openVisitHistory} 
-style={{ borderTop: "4px solid #9d3451", animationDelay: "0.4s" }}
->
-              <div style={{ fontSize: "32px", marginBottom: "10px", color: "#ffffff" }}>📅</div>
-              <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Visit History</h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Filter visit history</p>
-            </div>
-            <div 
-className="square-card shaking-card"
-onClick={() => { setMarketerview("add-sample"); setSampleSchoolName(""); setSamplePrincipalName(""); setSamplePhone(""); setSampleDetailsText(""); setSampleSuccessMsg(""); }} 
-style={{ borderTop: "4px solid #77102a", animationDelay: "0.1s" }}
->
-              <div style={{ fontSize: "32px", marginBottom: "10px" }}>📦</div>
-              <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Add sample</h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Add sample details</p>
-            </div>
-            <div 
-className="square-card shaking-card"
-onClick={() => { setMarketerview("sample-history"); fetchMarketerSamples(user.email); setSampleHistoryFromDate(""); setSampleHistoryToDate(""); setSampleHistorySearch(""); }} 
-style={{ borderTop: "4px solid #9a2844", animationDelay: "0.2s" }}
->
-              <div style={{ fontSize: "32px", marginBottom: "10px" }}>📋</div>
-              <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Sample History</h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>View your samples history</p>
-            </div>
-            <div
-className="square-card shaking-card"
-onClick={openExpenseReport}
-style={{ borderTop: "4px solid #8f1532", animationDelay: "0.45s" }}
->
-              <div style={{ width:"48px", height:"48px", marginBottom:"10px", borderRadius:"14px", display:"grid", placeItems:"center", background:"linear-gradient(145deg,#fff4f6,#f8e3e8)", border:"1px solid rgba(122,15,43,.18)", boxShadow:"0 8px 18px rgba(122,15,43,.12)", fontSize:"25px" }}>🧾</div>
-              <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Expense Report</h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>View your KMs & daily expenses</p>
-            </div>
-            <div
-className="square-card shaking-card"
-onClick={() => { setMarketerview("catalogues"); setCatalogueSearch(""); fetchCatalogues(); }}
-style={{ borderTop: "4px solid #7a0f2b", animationDelay: "0.48s" }}
->
-              <div style={{ width:"48px", height:"48px", marginBottom:"10px", borderRadius:"14px", display:"grid", placeItems:"center", background:"linear-gradient(145deg,#fff4f6,#f8e3e8)", border:"1px solid rgba(122,15,43,.18)", boxShadow:"0 8px 18px rgba(122,15,43,.12)", fontSize:"25px" }}>📚</div>
-              <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Catalogues</h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>View & download PDF catalogues</p>
-            </div>
-            <div 
-className="square-card shaking-card"
-onClick={() => setMarketerview("support")} 
-style={{ borderTop: "4px solid #86132f", animationDelay: "0.5s" }}
->
-              <div style={{ fontSize: "32px", marginBottom: "10px" }}>🎧</div>
-              <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Support</h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Contact admin & help</p>
-            </div>
-          </div>);
+  const c = usePortalContext();
+  const [statsReady, setStatsReady] = useState({ visits: false, samples: false });
+  useEffect(() => {
+    let active = true;
+    Promise.allSettled([c.fetchMarketerReports(c.user.email), c.fetchMarketerSamples(c.user.email)]).then(([visitsResult, samplesResult]) => { if (active) setStatsReady({ visits: visitsResult.status === "fulfilled", samples: samplesResult.status === "fulfilled" }); });
+    return () => { active = false; };
+  }, [c.user.email]);
+  const visits = c.marketerReports || [];
+  const today = c.getDateKey(new Date());
+  const attendance = c.todayAttendance;
+  const stats = [
+    { label: "My Visits", value: statsReady.visits ? visits.length : "—", icon: "▥", tone: "rose" },
+    { label: "Today's Visits", value: statsReady.visits ? visits.filter((item) => c.getDateKey(item.createdAt) === today).length : "—", icon: "▦", tone: "mint" },
+    { label: "Monthly Visits", value: statsReady.visits ? visits.filter((item) => c.getDateKey(item.createdAt).startsWith(today.slice(0, 7))).length : "—", icon: "▥", tone: "pink" },
+    { label: "My Samples", value: statsReady.samples ? (c.marketerSamples || []).length : "—", icon: "◇", tone: "amber" }
+  ];
+  const sections = [
+    { title: "Daily Activity", icon: "▥", description: "Start and manage your day", items: [
+      { title: "Mark Attendance", description: attendance?.endMarked ? "Day completed" : attendance?.startMarked ? "End time pending" : attendance?.status === "leave" ? "Leave submitted" : "Start, end or leave", icon: "◷", tone: "rose", onClick: c.openAttendanceForm },
+      { title: "Daily Action Plan", description: attendance?.actionPlanSent ? "Today's plan submitted" : attendance?.startMarked ? "Send your daily plan" : "Mark start time first", icon: attendance?.actionPlanSent ? "✓" : "▣", tone: "violet", muted: !attendance?.startMarked, onClick: c.openActionPlanForm },
+      { title: "Add Visit", description: attendance?.status === "leave" ? "Closed for leave" : attendance?.endMarked ? "Closed after end time" : !attendance?.startMarked ? "Mark attendance first" : !attendance?.actionPlanSent ? "Send action plan first" : "Submit a school report", icon: "+", tone: "mint", muted: !attendance?.startMarked || !attendance?.actionPlanSent || attendance?.endMarked || attendance?.status === "leave", onClick: c.openAddVisit }
+    ] },
+    { title: "Visits & Reports", icon: "▤", description: "Your visits and expenses", items: [
+      { title: "Today's Visits", description: "Check today's reports", icon: "☀", tone: "amber", onClick: () => { c.setMarketerview("today-visits"); c.fetchMarketerReports(c.user.email); c.setSelectedAdminMarketerBox(null); } },
+      { title: "Visit History", description: "Filter your past visits", icon: "▥", tone: "pink", onClick: c.openVisitHistory },
+      { title: "Expense Report", description: "KMs and daily expenses", icon: "▤", tone: "rose", onClick: c.openExpenseReport }
+    ] },
+    { title: "Samples", icon: "◇", description: "Send and review samples", items: [
+      { title: "Add Sample", description: "Add sample details", icon: "+", tone: "amber", onClick: () => { c.setMarketerview("add-sample"); c.setSampleSchoolName(""); c.setSamplePrincipalName(""); c.setSamplePhone(""); c.setSampleDetailsText(""); c.setSampleSuccessMsg(""); } },
+      { title: "Sample History", description: "View your samples", icon: "▣", tone: "violet", onClick: () => { c.setMarketerview("sample-history"); c.fetchMarketerSamples(c.user.email); c.setSampleHistoryFromDate(""); c.setSampleHistoryToDate(""); c.setSampleHistorySearch(""); } }
+    ] },
+    { title: "Resources & Support", icon: "▰", description: "Helpful materials and support", items: [
+      { title: "Catalogues", description: "View and download PDFs", icon: "▥", tone: "mint", onClick: () => { c.setMarketerview("catalogues"); c.setCatalogueSearch(""); c.fetchCatalogues(); } },
+      { title: "Support", description: "Contact admin for help", icon: "☎", tone: "violet", onClick: () => c.setMarketerview("support") }
+    ] }
+  ];
+  return <DashboardHome role="marketer" stats={stats} sections={sections} />;
 }

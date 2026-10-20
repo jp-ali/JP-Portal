@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { request } from "../services/authApi.js";
 import PhotoViewer from "../ui/PhotoViewer.jsx";
 import VisitEditDialog from "../ui/VisitEditDialog.jsx";
+import PortalTopBar from "../ui/PortalTopBar.jsx";
 
 function AdminPortalContent({ context }) {
   const [customReports, setCustomReports] = useState([]);
@@ -178,8 +179,7 @@ const adminSidebarItems = [
 { key: "media-deleted", icon: "♻️", label: "Recently Deleted", active: adminView === "media" && mediaView === "deleted" }
 ];
 return (
-<div style={globalStyle}>
-        {renderBackgroundStationary()}
+<div className="portal-shell portal-admin-shell" style={globalStyle}>
         <style>{adminCss}</style>
         <button
 type="button"
@@ -191,10 +191,7 @@ title="Open Admin Menu"
         <div className={`admin-sidebar-backdrop ${adminSidebarOpen ? "open" : ""}`} onClick={() => setAdminSidebarOpen(false)} aria-hidden="true" />
         <aside className={`admin-desktop-sidebar ${adminSidebarOpen ? "open" : ""}`}>
           <div className="admin-desktop-sidebar-head">
-            <div>
-              <div className="admin-desktop-sidebar-title">Javed Publishers</div>
-              <div style={{ color: "#756369", fontSize: "10.5px", marginTop: "2px" }}>Admin Panel</div>
-            </div>
+            <div className="portal-sidebar-brand"><span className="portal-sidebar-logo">JP<span>.</span></span><strong>JAVED PUBLISHERS</strong></div>
             <div className="admin-sidebar-head-actions">
               <button type="button" className="admin-desktop-sidebar-close" onClick={() => setAdminSidebarOpen(false)} title="Close menu" aria-label="Close menu">◀</button>
               <button type="button" className="admin-sidebar-logout" onClick={() => { setAdminSidebarOpen(false); handleLogout(); }} title="Logout" aria-label="Logout">{renderLogoutArrowIcon(18)}</button>
@@ -213,10 +210,11 @@ onClick={() => openAdminSidebarSection(item.key)}
               </button>
 ))}
           </nav>
+          <div className="portal-sidebar-footer"><div className="portal-sidebar-profile"><span className="portal-sidebar-avatar">A</span><span><strong>Admin</strong><small>Javed Publishers</small></span></div><button type="button" onClick={handleLogout}>{renderLogoutArrowIcon(16)} Logout</button></div>
         </aside>
         <div className={`app-responsive admin-desktop-content ${adminSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
           {renderResponsiveStyles()}
-          {renderBrandingStrip(() => setAdminSidebarOpen(true), adminSidebarOpen)}
+          <PortalTopBar role="admin" name="Admin" items={adminSidebarItems} onNavigate={openAdminSidebarSection} onMenu={() => setAdminSidebarOpen(true)} onLogout={handleLogout} />
           {portalSkeletonLoading && renderRedSkeleton()}
           {adminView === "home" && (
 <AdminHomePanel />

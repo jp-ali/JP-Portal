@@ -1,134 +1,48 @@
+import React, { useEffect, useState } from "react";
 import { usePortalContext } from "../../context/PortalContext.jsx";
-import React from "react";
+import DashboardHome from "../../ui/DashboardHome.jsx";
 
 export default function AdminHomePanel() {
-  const { fetchActionPlans, fetchAllReports, fetchAllSamples, fetchAttendanceRecords, fetchCatalogues, fetchDeletedMarketers, fetchDeletedMedia, fetchLocationCatalog, fetchMarketers, getTodayInputDate, openAdminExpenseReport, openVerificationCalls, renderMarketerPersonIcon, resetMarketerAssignmentForm, setAdminActionPlanFromDate, setAdminActionPlanSearch, setAdminActionPlanToDate, setAdminAttendanceFromDate, setAdminAttendanceSearch, setAdminAttendanceToDate, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setCatalogueSearch, setEditingId, setEditingReturnToMarketerDetails, setMarketerAssignedKms, setMarketerDesignation, setMarketerEmail, setMarketerName, setMarketerPass, setMarketerPhone, setMarketerWhatsappGroupLink, setMarketerWhatsappGroupName, setMediaMarketer, setMediaView, setSelectedAdminAllBoxKey, setSelectedAdminMarketerBox, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox, setSelectedDeletedMediaIds, setSelectedMarketerDetailBox, setSelectedMarketersFilter, setSelectedMediaIds, setSubordinateMarketerIds, setSubordinatePickerOpen, setSubordinateSearch } = usePortalContext();
-  return (<section className="admin-home">
-            <div className="admin-home-hero">
-              <div>
-                <span className="admin-home-eyebrow"><span className="admin-home-live-dot" /> ADMIN WORKSPACE</span>
-                <h1>Welcome to your portal</h1>
-                <p>Visits, team activity and reports, all in one place.</p>
-              </div>
-              <div className="admin-home-hero-mark" aria-hidden="true">JP<span>.</span></div>
-            </div>
-            <div className="admin-home-section-heading"><div><span className="admin-home-section-line" /><h2>Explore workspace</h2></div><span>Choose a section to get started</span></div>
-            <div className="square-grid admin-home-grid">
-              <div
-className="square-card shaking-card"
-onClick={() => { const today = getTodayInputDate(); setAdminAttendanceFromDate(today); setAdminAttendanceToDate(today); setAdminAttendanceSearch(""); setAdminView("attendance"); fetchAttendanceRecords(); }}
-style={{ borderTop: "4px solid #a42243", animationDelay: "0s" }}
->
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>🕘</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Attendance</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Daily readings, expenses & pictures</p>
-              </div>
-              <div
-className="square-card shaking-card"
-onClick={() => { const today = getTodayInputDate(); setAdminActionPlanFromDate(today); setAdminActionPlanToDate(today); setAdminActionPlanSearch(""); setAdminView("action-plans"); fetchActionPlans(); }}
-style={{ borderTop: "4px solid #941a39", animationDelay: "0.1s" }}
->
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>🗓️</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Action Plan</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>See marketers' daily action plans</p>
-              </div>
-              <div 
-className="square-card shaking-card"
-onClick={() => { setAdminView("today-visits"); fetchAllReports(); setSelectedAdminMarketerBox(null); }} 
-style={{ borderTop: "4px solid #b6405b", animationDelay: "0.2s" }}
->
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>☀️</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>View Today Visits</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Check today's marketer visits</p>
-              </div>
-              <div 
-className="square-card shaking-card"
-onClick={() => { setAdminView("visits"); fetchAllReports(); fetchMarketers(); setSelectedAdminAllBoxKey(null); setAllVisitsFromDate(""); setAllVisitsToDate(""); setSelectedMarketersFilter([]); }}
-style={{ borderTop: "4px solid #8f1532", animationDelay: "0.4s" }}
->
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>📊</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>All Visits and Reports</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Check all marketer visits</p>
-              </div>
-              <div 
-className="square-card shaking-card"
-onClick={() => { setAdminView("sample-details"); fetchAllSamples(); fetchMarketers(); setSelectedAdminSampleMarketerBox(null); setSelectedAdminSampleSchoolBox(null); setAdminSampleFromDate(""); setAdminSampleToDate(""); setAdminSampleMarketersFilter([]); }} 
-style={{ borderTop: "4px solid #77102a" }}
->
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>📦</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Sample Details</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Check marketers sample items</p>
-              </div>
-              <div
-className="square-card shaking-card"
-onClick={openAdminExpenseReport}
-style={{ borderTop: "4px solid #7a0f2b", animationDelay: "0.55s" }}
->
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>🧾</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Expense Report</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Marketer kilometres & expenses</p>
-              </div>
-              <div 
-className="square-card shaking-card"
-onClick={() => { setAdminView("marketers-detail"); fetchMarketers(); setSelectedMarketerDetailBox(null); }} 
-style={{ borderTop: "4px solid #8c1733", animationDelay: "0.6s" }}
->
-                <div style={{ marginBottom: "10px" }}>{renderMarketerPersonIcon(34, true)}</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Marketers Details</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>View active marketers</p>
-              </div>
-              <div 
-className="square-card shaking-card"
-onClick={() => { setEditingId(null); setEditingReturnToMarketerDetails(false); setMarketerName(""); setMarketerPhone(""); setMarketerEmail(""); setMarketerPass(""); setMarketerDesignation(""); setMarketerAssignedKms(""); setSubordinateMarketerIds([]); setSubordinatePickerOpen(false); setSubordinateSearch(""); setMarketerWhatsappGroupName(""); setMarketerWhatsappGroupLink(""); resetMarketerAssignmentForm(); setAdminView("add-marketer"); fetchLocationCatalog().catch(() => {}); }} 
-style={{ borderTop: "4px solid #86132f", animationDelay: "0.8s" }}
->
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>➕</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Add Marketer</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Create new account</p>
-              </div>
-              <div 
-className="square-card shaking-card"
-onClick={() => { setAdminView("delete-marketer"); fetchMarketers(); }} 
-style={{ borderTop: "4px solid #ef4444", animationDelay: "1.0s" }}
->
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>🗑️</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Delete Marketer</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Remove active marketer</p>
-              </div>
-              <div 
-className="square-card shaking-card"
-onClick={() => { setAdminView("old-marketers"); fetchDeletedMarketers(); }} 
-style={{ borderTop: "4px solid #9d3451", animationDelay: "1.2s" }}
->
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>🗄</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Old Marketers</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Restore deleted marketers</p>
-              </div>
-              <div className="square-card shaking-card" onClick={() => { setAdminView("catalogues"); setCatalogueSearch(""); fetchCatalogues(); }} style={{ borderTop: "4px solid #8f1532", animationDelay: "1.25s" }}>
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>📚</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Catalogues</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Upload & manage PDF catalogues</p>
-              </div>
-              <div className="square-card shaking-card" onClick={() => setAdminView("verification-reports")} style={{ borderTop: "4px solid #7a0f2b", animationDelay: "1.3s" }}>
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>☎️</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Verification Calls</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Verify school visits & call remarks</p>
-              </div>
-              <div className="square-card shaking-card" onClick={() => setAdminView("other-reports")} style={{ borderTop: "4px solid #8f1532", animationDelay: "1.35s" }}>
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>📋</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Other Reports</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Create and manage custom reports</p>
-              </div>
-              <div className="square-card shaking-card" onClick={() => { setAdminView("media"); fetchAllReports(); fetchDeletedMedia(); setMediaMarketer(null); setSelectedMediaIds([]); setSelectedDeletedMediaIds([]); setMediaView("active"); }} style={{ borderTop: "4px solid #8c1733", animationDelay: "1.4s" }}>
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>🖼️</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Media</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Manage all visit pictures</p>
-              </div>
-              <div className="square-card shaking-card" onClick={() => { setAdminView("media"); fetchAllReports(); fetchDeletedMedia(); setMediaMarketer(null); setSelectedMediaIds([]); setSelectedDeletedMediaIds([]); setMediaView("deleted"); }} style={{ borderTop: "4px solid #77102a", animationDelay: "1.6s" }}>
-                <div style={{ fontSize: "32px", marginBottom: "10px" }}>♻️</div>
-                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Recently Deleted</h3>
-                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Restore or permanently remove media</p>
-              </div>
-            </div>
-          </section>);
+  const c = usePortalContext();
+  const [statsReady, setStatsReady] = useState({ reports: false, marketers: false });
+  useEffect(() => {
+    let active = true;
+    Promise.allSettled([c.fetchAllReports(), c.fetchMarketers()]).then(([reportsResult, marketersResult]) => { if (active) setStatsReady({ reports: reportsResult.status === "fulfilled", marketers: marketersResult.status === "fulfilled" }); });
+    return () => { active = false; };
+  }, []);
+  const today = c.getDateKey(new Date());
+  const visits = c.reports || [];
+  const stats = [
+    { label: "Total Marketers", value: statsReady.marketers ? (c.marketersList || []).length : "—", icon: "♟", tone: "rose" },
+    { label: "Today's Visits", value: statsReady.reports ? visits.filter((item) => c.getDateKey(item.createdAt) === today).length : "—", icon: "▦", tone: "mint" },
+    { label: "Monthly Visits", value: statsReady.reports ? visits.filter((item) => c.getDateKey(item.createdAt).startsWith(today.slice(0, 7))).length : "—", icon: "▥", tone: "pink" },
+    { label: "All Visits", value: statsReady.reports ? visits.length : "—", icon: "▤", tone: "amber" }
+  ];
+  const openVisits = () => { c.setAdminView("visits"); c.fetchAllReports(); c.fetchMarketers(); c.setSelectedAdminAllBoxKey(null); c.setAllVisitsFromDate(""); c.setAllVisitsToDate(""); c.setSelectedMarketersFilter([]); };
+  const sections = [
+    { title: "Overview", icon: "▥", description: "Quick access to daily activities", items: [
+      { title: "Attendance", description: "Daily readings and expenses", icon: "◷", tone: "rose", onClick: () => { const day = c.getTodayInputDate(); c.setAdminAttendanceFromDate(day); c.setAdminAttendanceToDate(day); c.setAdminAttendanceSearch(""); c.setAdminView("attendance"); c.fetchAttendanceRecords(); } },
+      { title: "View Today Visits", description: "Check today's marketer visits", icon: "☀", tone: "amber", onClick: () => { c.setAdminView("today-visits"); c.fetchAllReports(); c.setSelectedAdminMarketerBox(null); } },
+      { title: "All Visits and Reports", description: "See all marketer visits", icon: "▥", tone: "mint", onClick: openVisits }
+    ] },
+    { title: "Reports & Planning", icon: "▤", description: "Plans, expenses and samples", items: [
+      { title: "Action Plan", description: "See marketers' daily plans", icon: "▣", tone: "rose", onClick: () => { const day = c.getTodayInputDate(); c.setAdminActionPlanFromDate(day); c.setAdminActionPlanToDate(day); c.setAdminActionPlanSearch(""); c.setAdminView("action-plans"); c.fetchActionPlans(); } },
+      { title: "Expense Report", description: "Kilometres and expenses", icon: "▤", tone: "violet", onClick: c.openAdminExpenseReport },
+      { title: "Sample Details", description: "Check sample items", icon: "◇", tone: "amber", onClick: () => { c.setAdminView("sample-details"); c.fetchAllSamples(); c.fetchMarketers(); c.setSelectedAdminSampleMarketerBox(null); c.setSelectedAdminSampleSchoolBox(null); c.setAdminSampleFromDate(""); c.setAdminSampleToDate(""); c.setAdminSampleMarketersFilter([]); } },
+      { title: "Other Reports", description: "Create custom reports", icon: "▧", tone: "violet", onClick: () => c.setAdminView("other-reports") }
+    ] },
+    { title: "Team Management", icon: "♟", description: "Manage your marketers", items: [
+      { title: "Marketers Details", description: "View active marketers", icon: "♟", tone: "rose", onClick: () => { c.setAdminView("marketers-detail"); c.fetchMarketers(); c.setSelectedMarketerDetailBox(null); } },
+      { title: "Add Marketer", description: "Create a new account", icon: "+", tone: "violet", onClick: () => { c.setEditingId(null); c.setEditingReturnToMarketerDetails(false); c.setMarketerName(""); c.setMarketerPhone(""); c.setMarketerEmail(""); c.setMarketerPass(""); c.setMarketerDesignation(""); c.setMarketerAssignedKms(""); c.setSubordinateMarketerIds([]); c.setSubordinatePickerOpen(false); c.setSubordinateSearch(""); c.setMarketerWhatsappGroupName(""); c.setMarketerWhatsappGroupLink(""); c.resetMarketerAssignmentForm(); c.setAdminView("add-marketer"); c.fetchLocationCatalog().catch(() => {}); } },
+      { title: "Delete Marketer", description: "Remove active marketer", icon: "▣", tone: "rose", onClick: () => { c.setAdminView("delete-marketer"); c.fetchMarketers(); } },
+      { title: "Old Marketers", description: "Restore deleted marketers", icon: "▤", tone: "pink", onClick: () => { c.setAdminView("old-marketers"); c.fetchDeletedMarketers(); } }
+    ] },
+    { title: "Resources & Communication", icon: "▰", description: "Catalogues, media and verification", items: [
+      { title: "Catalogues", description: "Upload and manage PDFs", icon: "▥", tone: "mint", onClick: () => { c.setAdminView("catalogues"); c.setCatalogueSearch(""); c.fetchCatalogues(); } },
+      { title: "Media", description: "Manage visit pictures", icon: "▧", tone: "violet", onClick: () => { c.setAdminView("media"); c.fetchAllReports(); c.fetchDeletedMedia(); c.setMediaMarketer(null); c.setSelectedMediaIds([]); c.setSelectedDeletedMediaIds([]); c.setMediaView("active"); } },
+      { title: "Verification Calls", description: "Verify school visits", icon: "☎", tone: "violet", onClick: () => c.setAdminView("verification-reports") },
+      { title: "Recently Deleted", description: "Restore removed media", icon: "♻", tone: "mint", onClick: () => { c.setAdminView("media"); c.fetchAllReports(); c.fetchDeletedMedia(); c.setMediaMarketer(null); c.setSelectedMediaIds([]); c.setSelectedDeletedMediaIds([]); c.setMediaView("deleted"); } }
+    ] }
+  ];
+  return <DashboardHome role="admin" stats={stats} sections={sections} />;
 }
