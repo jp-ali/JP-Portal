@@ -9,7 +9,13 @@
 .other-reports-btn.primary { background:linear-gradient(135deg,#6f0b24,#86132f); border-color:#6f0b24; color:#fff; }
 .other-reports-btn.excel { background:#15803d; border-color:#15803d; color:#fff; }
 .other-reports-btn:disabled { opacity:.55; cursor:not-allowed; }
-.other-reports-add { display:flex; gap:8px; margin-bottom:16px; }
+.other-reports-add { display:grid; grid-template-columns:minmax(180px,1fr) minmax(240px,1.5fr); gap:12px; margin-bottom:16px; }
+.other-reports-add > label { display:grid; gap:5px; color:#6f0b24; font-size:12px; font-weight:700; }
+.other-reports-add textarea { width:100%; padding:10px; border:1px solid #decbd0; border-radius:9px; background:#fff; color:#3b2329; font:inherit; resize:vertical; }
+.other-report-create-options { grid-column:1/-1; display:flex; align-items:center; gap:14px; flex-wrap:wrap; color:#6f0b24; font-size:12px; }
+.other-report-create-options label { display:inline-flex; align-items:center; gap:5px; }
+.other-report-create-options input { flex:none; min-height:0; width:auto; }
+.other-reports-add > button { justify-self:start; }
 .other-reports-add input, .other-report-filters input, .other-report-filters select, .other-report-date input, .other-report-quick textarea { min-height:39px; padding:8px 10px; border:1px solid #decbd0; border-radius:9px; background:#fff; font:inherit; color:#3b2329; }
 .other-reports-add input { flex:1; min-width:0; }
 .other-reports-grid { margin-top:8px; }
@@ -41,7 +47,7 @@
 .other-report-remark { display:grid; gap:2px; }
 .other-report-delete { border:0; background:#fff0f1; color:#9a1232; border-radius:6px; width:28px; height:28px; cursor:pointer; font-size:20px; }
 .admin-report-expanded .other-report-table-wrap { max-height:calc(100dvh - 165px); overflow:auto; }
-@media(max-width:767px) { .other-reports-header h2 { font-size:17px; } .other-report-filters input, .other-report-filters select { flex:1 1 100%; } }
+@media(max-width:767px) { .other-reports-header h2 { font-size:17px; } .other-report-filters input, .other-report-filters select { flex:1 1 100%; } .other-reports-add { grid-template-columns:1fr; } }
           .report-expand-btn { width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border:none; border-radius:8px; background:linear-gradient(135deg,#6f0b24,#86132f); color:#fff; cursor:pointer; box-shadow:0 5px 13px rgba(122,15,43,.24); flex:0 0 auto; }
           .report-expand-btn:hover { background:linear-gradient(135deg,#62081f,#77102a); transform:translateY(-1px); }
           body.report-fullscreen-active { overflow:hidden !important; }

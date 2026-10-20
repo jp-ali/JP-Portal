@@ -2,10 +2,11 @@ import React, { useMemo, useState } from "react";
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import { request } from "../../services/authApi.js";
 import { parseQuickContact } from "../../domain/parseQuickContact.js";
+import { blankRow, columnsFromHeadings, parseCustomReportText, reportColumns, rowValue } from "../../domain/customReportSchema.js";
+import CustomReportTable from "./CustomReportTable.jsx";
 import { exportCustomReportExcel, exportCustomReportPDF } from "../../services/customReportExports.js";
 
 const REMARKS = ["Contacted", "Contacted but sample didn't receive", "Didn't contact", "Sample received", "Other"];
-const COLUMNS = [["name", "Name"], ["number", "Number"], ["city", "City"], ["institute", "Institute"], ["remarks", "Remarks"]];
 const today = () => {
   const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Karachi", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
   const value = (part) => parts.find((item) => item.type === part)?.value;
@@ -13,21 +14,33 @@ const today = () => {
 };
 
 export default function AdminOtherReportsPanel({ mode, reports, setReports, selectedId, setSelectedId, loading, loadError, reload, onOrigin }) {
-  const { adminView, cardStyle, expandedReportKey, renderReportExpandButton, reportViewClass, setAdminView, setExpandedReportKey, openVerificationCalls } = usePortalContext();
+  const { adminView, cardStyle, expandedReportKey, renderReportExpandButton, reportViewClass, setAdminView, setExpandedReportKey, openVerificationCalls, marketersList = [] } = usePortalContext();
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
+  const [headings, setHeadings] = useState("Name, Number, City, Institute, Remarks");
+  const [includeMarketers, setIncludeMarketers] = useState(false);
+  const [dateRange, setDateRange] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickText, setQuickText] = useState("");
   const [search, setSearch] = useState("");
   const [cityFilter, setCityFilter] = useState("");
   const [remarkFilter, setRemarkFilter] = useState("");
+  const [marketerFilter, setMarketerFilter] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const report = reports.find((item) => item.id === selectedId);
+  const columns = reportColumns(report);
   const detail = adminView === "custom-report";
   const back = () => { setSelectedId(""); setAdminView(mode === "verification" ? "verification-reports" : "other-reports"); };
   const updateReport = (id, changes) => setReports((current) => current.map((item) => item.id === id ? { ...item, ...changes } : item));
   const updateRow = (rowId, changes) => updateReport(report.id, { rows: (report.rows || []).map((row) => row.id === rowId ? { ...row, ...changes } : row) });
+  const updateDateGroup = (ids, date) => updateReport(report.id, { rows: (report.rows || []).map((row) => ids.includes(row.id) ? { ...row, date } : row) });
+  const saveDateGroup = async (ids, date) => {
+    try { await Promise.all(ids.map((id) => request(`/custom-reports/${report.id}/rows/${id}`, { method: "PATCH", body: JSON.stringify({ date }) }))); setError(""); }
+    catch (cause) { setError(cause.message); reload(); }
+  };
   const saveRow = async (rowId, changes) => {
     try { await request(`/custom-reports/${report.id}/rows/${rowId}`, { method: "PATCH", body: JSON.stringify(changes) }); setError(""); }
     catch (cause) { setError(cause.message); reload(); }
@@ -35,9 +48,11 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const createReport = async (event) => {
     event.preventDefault();
     if (!title.trim() || busy) return;
+    const customColumns = columnsFromHeadings(headings);
+    if (!customColumns.length) { setError("Add at least one heading besides Date."); return; }
     setBusy(true); setError("");
     try {
-      const { report: created } = await request("/custom-reports", { method: "POST", body: JSON.stringify({ title: title.trim(), date: today() }) });
+      const { report: created } = await request("/custom-reports", { method: "POST", body: JSON.stringify({ title: title.trim(), date: today(), columns: customColumns, options: { includeMarketers, dateRange } }) });
       setReports((current) => [...current, created]); setTitle(""); setAdding(false); onOrigin("other"); setSelectedId(created.id); setAdminView("custom-report");
     } catch (cause) { setError(cause.message); }
     finally { setBusy(false); }
@@ -45,7 +60,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const addRow = async (row) => {
     setBusy(true); setError("");
     try {
-      const { row: created } = await request(`/custom-reports/${report.id}/rows`, { method: "POST", body: JSON.stringify(row) });
+      const { row: created } = await request(`/custom-reports/${report.id}/rows`, { method: "POST", body: JSON.stringify({ ...blankRow(report), ...row }) });
       setReports((current) => current.map((item) => item.id === report.id ? { ...item, rows: [...(item.rows || []), created] } : item));
       setQuickText(""); setQuickOpen(false);
     } catch (cause) { setError(cause.message); }
@@ -60,13 +75,17 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   };
   const filtered = useMemo(() => (report?.rows || []).filter((row) => {
     const q = search.toLowerCase();
-    return (!q || COLUMNS.some(([key]) => String(row[key] || "").toLowerCase().includes(q)))
+    const date = row.date || report.date;
+    return (!q || columns.some((column) => String(rowValue(row, column, report)).toLowerCase().includes(q)))
       && (!cityFilter || row.city === cityFilter)
-      && (!remarkFilter || row.remarks === remarkFilter);
-  }), [report, search, cityFilter, remarkFilter]);
+      && (!remarkFilter || row.remarks === remarkFilter)
+      && (!marketerFilter || row.marketer === marketerFilter)
+      && (!fromDate || date >= fromDate)
+      && (!toDate || date <= toDate);
+  }).sort((a, b) => String(a.date || report.date).localeCompare(String(b.date || report.date))), [report, search, cityFilter, remarkFilter, marketerFilter, fromDate, toDate]);
   const cities = [...new Set((report?.rows || []).map((row) => row.city).filter(Boolean))].sort();
   const runExport = async (kind) => {
-    try { if (kind === "excel") exportCustomReportExcel(report, filtered); else await exportCustomReportPDF(report, filtered); setError(""); }
+    try { if (kind === "excel") exportCustomReportExcel(report, filtered, marketersList); else await exportCustomReportPDF(report, filtered, marketersList); setError(""); }
     catch (cause) { setError(cause.message); }
   };
 
@@ -80,8 +99,10 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     </div>
     <div className="other-reports-overview"><span className="other-reports-overview-icon" aria-hidden="true">▦</span><div><strong>{mode === "verification" ? reports.length + 1 : reports.length}</strong><span>{mode === "verification" ? "Available reports" : "Custom reports"}</span></div><p>{mode === "verification" ? "School Visits is ready whenever you need it." : "Create a report and start adding contacts in seconds."}</p></div>
     {adding && mode !== "verification" && <form className="other-reports-add" onSubmit={createReport}>
-      <input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Enter report name" maxLength={120} aria-label="Report name" />
-      <button className="other-reports-btn primary" disabled={busy || !title.trim()}>Create</button>
+      <label>Report name<input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Enter report name" maxLength={120} required /></label>
+      <label>Headings (comma or line separated)<textarea value={headings} onChange={(event) => setHeadings(event.target.value)} rows={3} /></label>
+      <div className="other-report-create-options"><span>Add report options:</span><label><input type="checkbox" checked={includeMarketers} onChange={(event) => setIncludeMarketers(event.target.checked)} /> All Marketers</label><label><input type="checkbox" checked={dateRange} onChange={(event) => setDateRange(event.target.checked)} /> Date Range</label><small>Date is included automatically.</small></div>
+      <button className="other-reports-btn primary" disabled={busy || !title.trim()}>Create Report</button>
     </form>}
     {error && <p className="other-reports-error" role="alert">{error}</p>}
     {loadError && <p className="other-reports-error" role="alert">{loadError} <button className="other-reports-btn" onClick={reload}>Retry</button></p>}
@@ -112,10 +133,10 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     <div style={cardStyle} className="other-report-detail">
       <div className="other-reports-header"><div><input className="other-report-title-input" aria-label="Report title" value={report.title} onChange={(event) => updateReport(report.id, { title: event.target.value })} onBlur={(event) => { const title = event.target.value.trim(); if (!title) { reload(); return; } request(`/custom-reports/${report.id}`, { method: "PATCH", body: JSON.stringify({ title }) }).catch((cause) => { setError(cause.message); reload(); }); }} maxLength={120} /><p>Editable report · {report.rows?.length || 0} rows</p></div><label className="other-report-date">Report date<input type="date" value={report.date} onChange={(event) => { const date = event.target.value; updateReport(report.id, { date }); request(`/custom-reports/${report.id}`, { method: "PATCH", body: JSON.stringify({ date }) }).catch((cause) => { setError(cause.message); reload(); }); }} /></label></div>
       {error && <p className="other-reports-error" role="alert">{error}</p>}
-      <div className="other-report-filters"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search all columns" aria-label="Search report" /><select value={cityFilter} onChange={(event) => setCityFilter(event.target.value)} aria-label="Filter city"><option value="">All cities</option>{cities.map((city) => <option key={city}>{city}</option>)}</select><select value={remarkFilter} onChange={(event) => setRemarkFilter(event.target.value)} aria-label="Filter remarks"><option value="">All remarks</option>{REMARKS.slice(0, -1).map((item) => <option key={item}>{item}</option>)}</select><button className="other-reports-btn" onClick={() => { setSearch(""); setCityFilter(""); setRemarkFilter(""); }}>Clear</button><button className="other-reports-btn" onClick={reload} disabled={loading}>↻ Refresh</button></div>
-      <div className="other-reports-actions other-report-add-actions"><button className="other-reports-btn primary" onClick={() => addRow({ name: "", number: "", city: "", institute: "", remarks: "" })} disabled={busy}>＋ Add Row</button><button className="other-reports-btn" onClick={() => setQuickOpen((value) => !value)}>＋ Quick Add</button></div>
-      {quickOpen && <form className="other-report-quick" onSubmit={(event) => { event.preventDefault(); if (quickText.trim()) addRow(parseQuickContact(quickText)); }}><label>Paste contact details<textarea value={quickText} onChange={(event) => setQuickText(event.target.value)} placeholder={"Hassan Saif\nCity: Karachi\nCompany name: Merchant Navy\nWhatsApp number: +923052192103"} /></label><button className="other-reports-btn primary" disabled={!quickText.trim() || busy}>Parse and Add</button></form>}
-      <div className="table-scroll other-report-table-wrap"><table className="other-report-table"><thead><tr className="other-report-merged"><th colSpan={5}>{report.title} · {report.date}</th><th aria-label="Actions" /></tr><tr>{COLUMNS.map(([, label]) => <th key={label}>{label}</th>)}<th>Action</th></tr></thead><tbody>{filtered.map((row) => <tr key={row.id}>{COLUMNS.map(([key]) => <td key={key}>{key === "remarks" ? <div className="other-report-remark"><select value={REMARKS.includes(row.remarks) ? row.remarks : row.remarks ? "Other" : ""} onChange={(event) => { const value = event.target.value === "Other" ? "Other" : event.target.value; updateRow(row.id, { remarks: value }); saveRow(row.id, { remarks: value }); }} aria-label="Remarks option"><option value="">Select remarks</option>{REMARKS.map((value) => <option key={value}>{value}</option>)}</select>{row.remarks && !REMARKS.slice(0, -1).includes(row.remarks) && <input value={row.remarks === "Other" ? "" : row.remarks} placeholder="Custom remark" onChange={(event) => updateRow(row.id, { remarks: event.target.value || "Other" })} onBlur={(event) => saveRow(row.id, { remarks: event.target.value || "Other" })} aria-label="Custom remark" />}</div> : <input value={row[key] || ""} onChange={(event) => updateRow(row.id, { [key]: event.target.value })} onBlur={(event) => saveRow(row.id, { [key]: event.target.value })} aria-label={key} />}</td>)}<td><button className="other-report-delete" onClick={() => removeRow(row.id)} title="Delete row" aria-label="Delete row">×</button></td></tr>)}</tbody></table>{!filtered.length && <div className="other-reports-empty">No rows match the current filters.</div>}</div>
+      <div className="other-report-filters"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search all columns" aria-label="Search report" />{columns.some((column) => column.key === "city") && <select value={cityFilter} onChange={(event) => setCityFilter(event.target.value)} aria-label="Filter city"><option value="">All cities</option>{cities.map((city) => <option key={city}>{city}</option>)}</select>}{columns.some((column) => column.key === "remarks") && <select value={remarkFilter} onChange={(event) => setRemarkFilter(event.target.value)} aria-label="Filter remarks"><option value="">All remarks</option>{REMARKS.slice(0, -1).map((item) => <option key={item}>{item}</option>)}</select>}{report.options?.includeMarketers && <select value={marketerFilter} onChange={(event) => setMarketerFilter(event.target.value)} aria-label="Filter marketer"><option value="">All Marketers</option>{marketersList.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>}{report.options?.dateRange && <><label>From<input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label><label>To<input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label></>}<button className="other-reports-btn" onClick={() => { setSearch(""); setCityFilter(""); setRemarkFilter(""); setMarketerFilter(""); setFromDate(""); setToDate(""); }}>Clear</button><button className="other-reports-btn" onClick={reload} disabled={loading}>↻ Refresh</button></div>
+      <div className="other-reports-actions other-report-add-actions"><button className="other-reports-btn primary" onClick={() => addRow(blankRow(report))} disabled={busy}>＋ Add Row</button><button className="other-reports-btn" onClick={() => setQuickOpen((value) => !value)}>＋ Quick Add</button></div>
+      {quickOpen && <form className="other-report-quick" onSubmit={(event) => { event.preventDefault(); if (quickText.trim()) addRow(parseCustomReportText(quickText, columns, parseQuickContact)); }}><label>Paste contact details<textarea value={quickText} onChange={(event) => setQuickText(event.target.value)} placeholder={"Hassan Saif\nCity: Karachi\nCompany name: Merchant Navy\nWhatsApp number: +923052192103"} /></label><button className="other-reports-btn primary" disabled={!quickText.trim() || busy}>Parse and Add</button></form>}
+      <CustomReportTable report={report} columns={columns} rows={filtered} marketersList={marketersList} updateRow={updateRow} saveRow={saveRow} updateDateGroup={updateDateGroup} saveDateGroup={saveDateGroup} removeRow={removeRow} />
     </div>
   </div>;
 }

@@ -1,47 +1,80 @@
-const headers = ["Name", "Number", "City", "Institute", "Remarks"];
-const keys = ["name", "number", "city", "institute", "remarks"];
-const filename = (title) => String(title || "Custom_Report").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 60);
+import { reportColumns, rowValue } from "../domain/customReportSchema.js";
 
-export function exportCustomReportExcel(report, rows) {
+const filename = (title) => String(title || "Custom_Report").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 60);
+const display = (row, column, report, marketers) => {
+  const value = rowValue(row, column, report);
+  return column.type === "marketer" ? marketers.find((item) => item.id === value)?.name || value : value;
+};
+const dateGroups = (rows, report) => {
+  const groups = [];
+  rows.forEach((row, index) => {
+    const date = row.date || report.date;
+    if (groups.at(-1)?.date === date) groups.at(-1).end = index;
+    else groups.push({ date, start: index, end: index });
+  });
+  return groups;
+};
+
+export function exportCustomReportExcel(report, rows, marketers = []) {
   if (!window.XLSX) throw new Error("Excel exporter is still loading. Please try again.");
   const XLSX = window.XLSX;
+  const columns = reportColumns(report);
+  const last = columns.length - 1;
   const sheet = XLSX.utils.aoa_to_sheet([
     [report.title],
-    [`Date: ${report.date}`],
-    headers,
-    ...rows.map((row) => keys.map((key) => row[key] || ""))
+    [`Report date: ${report.date}   |   Rows: ${rows.length}`],
+    columns.map((column) => column.label),
+    ...rows.map((row) => columns.map((column) => display(row, column, report, marketers)))
   ]);
-  sheet["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } }];
-  sheet["!cols"] = [22, 22, 18, 30, 48].map((wch) => ({ wch }));
-  sheet["!autofilter"] = { ref: `A3:E${Math.max(3, rows.length + 3)}` };
+  const merges = [0, 1].map((r) => ({ s: { r, c: 0 }, e: { r, c: last } }));
+  const dateColumn = columns.findIndex((column) => column.key === "date");
+  if (dateColumn >= 0) dateGroups(rows, report).forEach(({ start, end }) => {
+    if (end > start) merges.push({ s: { r: start + 3, c: dateColumn }, e: { r: end + 3, c: dateColumn } });
+  });
+  sheet["!merges"] = merges;
+  sheet["!cols"] = columns.map((column) => ({ wch: column.type === "remarks" ? 45 : column.type === "date" ? 16 : Math.max(18, Math.min(34, column.label.length + 10)) }));
+  sheet["!autofilter"] = { ref: `A3:${XLSX.utils.encode_col(last)}${Math.max(3, rows.length + 3)}` };
+  sheet["!rows"] = [{ hpt: 32 }, { hpt: 24 }, { hpt: 28 }];
+  for (const address of ["A1", "A2"]) if (sheet[address]) sheet[address].s = { alignment: { horizontal: "center", vertical: "center" }, font: { bold: true, color: { rgb: "7A0F2B" } } };
   const book = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book, sheet, "Report");
   XLSX.writeFile(book, `${filename(report.title)}_${report.date}.xlsx`);
 }
 
-export async function exportCustomReportPDF(report, rows) {
+export async function exportCustomReportPDF(report, rows, marketers = []) {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
-  const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+  const columns = reportColumns(report);
+  const pdf = new jsPDF({ orientation: columns.length > 6 ? "landscape" : "portrait", unit: "pt", format: "a4" });
+  const width = pdf.internal.pageSize.getWidth();
   pdf.setFillColor(122, 15, 43);
-  pdf.rect(0, 0, pdf.internal.pageSize.getWidth(), 66, "F");
+  pdf.rect(0, 0, width, 70, "F");
   pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(17);
-  pdf.text(report.title, 30, 30);
-  pdf.setFontSize(10);
-  pdf.text(`Date: ${report.date}`, 30, 49);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(16);
+  pdf.text(report.title, width / 2, 29, { align: "center" });
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(9);
+  pdf.text(`Report date: ${report.date}   |   Rows: ${rows.length}`, width / 2, 49, { align: "center" });
+  const body = rows.map((row) => columns.map((column) => display(row, column, report, marketers)));
+  const dateIndex = columns.findIndex((column) => column.key === "date");
+  if (dateIndex >= 0) dateGroups(rows, report).forEach(({ start, end }) => {
+    if (end > start) {
+      body[start][dateIndex] = { content: body[start][dateIndex], rowSpan: end - start + 1, styles: { valign: "middle", halign: "center" } };
+      for (let index = start + 1; index <= end; index++) body[index].splice(dateIndex, 1);
+    }
+  });
   autoTable(pdf, {
-    startY: 78,
-    head: [headers],
-    body: rows.map((row) => keys.map((key) => row[key] || "")),
+    startY: 80,
+    head: [columns.map((column) => column.label)],
+    body,
     theme: "grid",
-    headStyles: { fillColor: [122, 15, 43], textColor: 255, fontStyle: "bold" },
+    headStyles: { fillColor: [122, 15, 43], textColor: 255, fontStyle: "bold", halign: "center" },
     alternateRowStyles: { fillColor: [252, 247, 248] },
-    styles: { fontSize: 9, cellPadding: 7, overflow: "linebreak", valign: "top" },
-    margin: { left: 30, right: 30, top: 30 },
+    styles: { fontSize: columns.length > 8 ? 6.5 : 8.5, cellPadding: 5, overflow: "linebreak", valign: "middle", halign: "center" },
+    margin: { left: 22, right: 22, top: 30 },
     didDrawPage: ({ pageNumber }) => {
-      pdf.setFontSize(8);
-      pdf.setTextColor(120);
-      pdf.text(`Page ${pageNumber}`, pdf.internal.pageSize.getWidth() - 60, pdf.internal.pageSize.getHeight() - 20);
+      pdf.setFontSize(8); pdf.setTextColor(120);
+      pdf.text(`Page ${pageNumber}`, width - 58, pdf.internal.pageSize.getHeight() - 18);
     }
   });
   pdf.save(`${filename(report.title)}_${report.date}.pdf`);

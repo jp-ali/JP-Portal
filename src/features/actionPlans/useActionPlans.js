@@ -3,6 +3,7 @@ import { addDoc, collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc } 
 import { db } from "../../services/firebase";
 import { getSession } from "../../services/authApi";
 import { formatActionPlanDate } from "../../domain/dates.js";
+import { mergedReportSheet } from "../../services/mergedReportSheet.js";
 
 export function useActionPlans({ user, setUser, setMarketerview, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId }) {
 const [actionPlanDate, setActionPlanDate] = useState(getTodayInputDate());
@@ -92,7 +93,7 @@ const formatted = rows.map((p, index) => ({
 "Area": p.areaName || "N/A",
 "Purpose": p.purpose || "N/A"
 }));
-const worksheet = window.XLSX.utils.json_to_sheet(formatted);
+const worksheet = mergedReportSheet(window.XLSX, formatted, "Action Plans Report");
 const workbook = window.XLSX.utils.book_new();
 window.XLSX.utils.book_append_sheet(workbook, worksheet, "Action Plans");
 const fromPart = adminActionPlanFromDate || "All";

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { calculatedKms, dailyAssignedKms, dailyPetrolExpense, dailyPetrolRate } from "./expenseCalculations.js";
+import { mergedReportSheet } from "../../services/mergedReportSheet.js";
 
 export function useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12, groupRowsByMarketerAndDate }) {
 const [expenseReportFromDate, setExpenseReportFromDate] = useState("");
@@ -130,7 +131,7 @@ data.push({
 "Other": Number(totalOther.toFixed(2)),
 "Total Other Expense": Number(totalAllOther.toFixed(2))
 });
-const worksheet = window.XLSX.utils.json_to_sheet(data);
+const worksheet = mergedReportSheet(window.XLSX, data, "Expense Report");
 worksheet["!cols"] = [
 { wch: 6 }, { wch: 15 }, { wch: 24 }, { wch: 16 }, { wch: 16 },
 { wch: 16 }, { wch: 17 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 20 }
@@ -442,7 +443,7 @@ data.push({
 "Other": Number(totalOther.toFixed(2)),
 "Total Other Expense": Number(totalAllOther.toFixed(2))
 });
-const worksheet = window.XLSX.utils.json_to_sheet(data);
+const worksheet = mergedReportSheet(window.XLSX, data, "Expense Report");
 worksheet["!cols"] = [
 { wch: 6 }, { wch: 28 }, { wch: 15 }, { wch: 24 }, { wch: 16 }, { wch: 16 },
 { wch: 16 }, { wch: 16 }, { wch: 13 }, { wch: 17 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 20 }

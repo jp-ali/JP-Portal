@@ -70,26 +70,19 @@ style={{ ...inputStyle, marginBottom: "16px", fontSize: "14px", padding: "12px 1
 .length === 0 ? (
 <p style={{ color: "#78686d", fontSize: "14px" }}>No marketers found.</p>
 ) : (
-<div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "14px" }}>
+<div className="marketer-detail-grid">
                           {marketersList
 .filter(m => (m.name && m.name.toLowerCase().includes(marketerSearch.toLowerCase())) || (m.email && m.email.toLowerCase().includes(marketerSearch.toLowerCase())))
 .map((m) => (
-<div 
+<button type="button"
 key={m.id} 
 onClick={() => setSelectedMarketerDetailBox(m.id)}
-style={{ 
-background: "rgba(255,255,255,0.96)", 
-border: "1px solid rgba(99, 102, 241, 0.4)", 
-borderRadius: "14px", 
-padding: "18px", 
-cursor: "pointer",
-transition: "transform 0.2s, background 0.2s"
-}}
+className="marketer-detail-card"
 >
-                                <h4 style={{ margin: "0 0 6px 0", color: "#b76a7b", fontSize: "16px" }}><span style={{display:"inline-flex",verticalAlign:"middle",marginRight:"6px"}}>{renderMarketerPersonIcon(18)}</span>{m.name || "Unnamed"}</h4>
-                                <p style={{ margin: "0 0 12px 0", fontSize: "12px", color: "#78686d" }}>{m.email}</p>
-                                <span style={{ fontSize: "13px", color: "#5c484e" }}>Click to view details →</span>
-                              </div>
+                                <strong><span aria-hidden="true">{renderMarketerPersonIcon(15)}</span>{m.name || "Unnamed"}</strong>
+                                <small>{m.email}</small>
+                                <span className="marketer-detail-card-action">View Details →</span>
+                              </button>
 ))}
                         </div>
 )}

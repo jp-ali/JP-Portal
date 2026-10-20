@@ -1,7 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
 html,body,#root { margin:0; min-height:100%; }
-.login-screen { display:grid; grid-template-columns:54% 46%; min-height:100dvh; overflow:hidden; background:#fffafa; color:#412832; font-family:Inter,'Segoe UI',Arial,sans-serif; }
+.login-screen { position:relative; display:grid; grid-template-columns:54% 46%; min-height:100dvh; overflow:hidden; background:#fffafa; color:#412832; font-family:Inter,'Segoe UI',Arial,sans-serif; }
 .login-screen * { box-sizing:border-box; }
+.login-mobile-decor { display:none; }
 .login-art-panel { min-height:100dvh; overflow:hidden; background:#fae9e9; }
 .login-reference-art { display:block; width:100%; height:100%; min-height:100dvh; object-fit:cover; object-position:center; }
 .login-form-panel { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:40px; min-width:0; padding:35px clamp(22px,6vw,85px); background:#fffafa; }
@@ -26,5 +27,5 @@ html,body,#root { margin:0; min-height:100%; }
 .login-error { margin:0; color:#cc294b; font-size:12px; font-weight:700; line-height:1.4; text-align:center; }
 .login-credit { margin:0; color:#8f7e84; font-size:12px; font-weight:600; }
 @media(max-width:950px) { .login-screen { grid-template-columns:50% 50%; }.login-form-panel { padding:25px; } }
-@media(max-width:767px) { .login-screen { grid-template-columns:1fr; min-height:100dvh; overflow:visible; }.login-art-panel { display:none; }.login-form-panel { min-height:100dvh; justify-content:center; gap:23px; padding:24px 15px; }.login-card { max-width:420px; padding:13px; }.login-brand { min-height:115px; margin-bottom:19px; }.login-card form { gap:16px; } }
+@media(max-width:767px) { .login-screen { grid-template-columns:1fr; min-height:100dvh; overflow:hidden; }.login-mobile-decor { position:absolute; inset:0; display:block; overflow:hidden; pointer-events:none; }.login-art-panel { display:none; }.login-form-panel { position:relative; z-index:2; min-height:100dvh; justify-content:center; gap:23px; padding:24px 15px; background:transparent; }.login-card { max-width:420px; padding:13px; }.login-brand { min-height:115px; margin-bottom:19px; }.login-card form { gap:16px; }.login-input-wrap input { font-size:16px; } }
 @media(prefers-reduced-motion:reduce) { .login-input-wrap input,.login-submit { transition:none; } }

@@ -34,7 +34,7 @@ function AdminPortalContent({ context }) {
     catch (error) { setCustomReportsError(error.message); }
     finally { setCustomReportsLoading(false); }
   };
-  useEffect(() => { if (["other-reports", "verification-reports"].includes(context.adminView)) reloadCustomReports(); }, [context.adminView]);
+  useEffect(() => { if (["other-reports", "verification-reports"].includes(context.adminView)) { reloadCustomReports(); context.fetchMarketers(); } }, [context.adminView]);
   const { adminCss, adminSidebarOpen, adminView, containerStyle, fetchActionPlans, fetchAllReports, fetchAllSamples, fetchAttendanceRecords, fetchCatalogues, fetchDeletedMarketers, fetchDeletedMedia, fetchLocationCatalog, fetchMarketers, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getTodayInputDate, globalStyle, handleLogout, marketerEmail, mediaView, openAdminExpenseReport, openVerificationCalls, pdfExportData, pdfTemplateRef, portalSkeletonLoading, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderMarketerPersonIcon, renderRedSkeleton, renderResponsiveStyles, reports, resetMarketerAssignmentForm, restoreMedia, setAdminActionPlanFromDate, setAdminActionPlanSearch, setAdminActionPlanToDate, setAdminAttendanceFromDate, setAdminAttendanceSearch, setAdminAttendanceToDate, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminSidebarOpen, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setCatalogueSearch, setEditingId, setEditingReturnToMarketerDetails, setFullScreenImage, setFullScreenMediaRecord, setMarketerAssignedKms, setMarketerDesignation, setMarketerEmail, setMarketerName, setMarketerPass, setMarketerPhone, setMarketerWhatsappGroupLink, setMarketerWhatsappGroupName, setMediaMarketer, setMediaView, setSelectedAdminAllBoxKey, setSelectedAdminMarketerBox, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox, setSelectedDeletedMediaIds, setSelectedMarketerDetailBox, setSelectedMarketersFilter, setSelectedMediaIds, setSubordinateMarketerIds, setSubordinatePickerOpen, setSubordinateSearch, softDeleteMedia } = context;
 
 const openAdminSidebarSection = (key) => {
@@ -173,6 +173,7 @@ const adminSidebarItems = [
 { key: "add-marketer", icon: "➕", label: "Add Marketer", active: adminView === "add-marketer" },
 { key: "delete-marketer", icon: "🗑️", label: "Delete Marketer", active: adminView === "delete-marketer" },
 { key: "old-marketers", icon: "🗄️", label: "Old Marketers", active: adminView === "old-marketers" },
+{ key: "catalogues", icon: "📚", label: "Catalogues", active: adminView === "catalogues" },
 { key: "verification-calls", icon: "☎️", label: "Verification Calls", active: ["verification-reports", "verification-calls"].includes(adminView) },
 { key: "other-reports", icon: "📋", label: "Other Reports", active: adminView === "other-reports" || adminView === "custom-report" },
 { key: "media-active", icon: "🖼️", label: "Media", active: adminView === "media" && mediaView === "active" },

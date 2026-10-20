@@ -2,6 +2,7 @@ import { useState } from "react";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { formatActionPlanDate } from "../../domain/dates.js";
+import { mergedReportSheet } from "../../services/mergedReportSheet.js";
 
 export function useVerificationCalls({ reports, setReports, marketersList, fetchAllReports, fetchMarketers, formatTime12, getMarketerName, getTodayInputDate, groupRowsByMarketerAndDate, setAdminView, setExpandedReportKey, isDateInRange }) {
 const [verificationFromDate, setVerificationFromDate] = useState("");
@@ -79,7 +80,7 @@ const data = rows.map((row, index) => ({
 "Principal Number": row.phone || "N/A",
 "Remarks": getVerificationRemarkText(row)
 }));
-const ws = window.XLSX.utils.json_to_sheet(data);
+const ws = mergedReportSheet(window.XLSX, data, "Verification Calls Report");
 ws["!cols"] = [{wch:6},{wch:14},{wch:13},{wch:24},{wch:24},{wch:36},{wch:24},{wch:20},{wch:34}];
 const wb = window.XLSX.utils.book_new();
 window.XLSX.utils.book_append_sheet(wb, ws, "Verification Calls");

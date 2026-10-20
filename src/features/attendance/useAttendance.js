@@ -4,6 +4,7 @@ import { db } from "../../services/firebase";
 import { listMarketers } from "../../services/marketerApi";
 import { formatActionPlanDate } from "../../domain/dates.js";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
+import { mergedReportSheet } from "../../services/mergedReportSheet.js";
 
 export function useAttendance({ user, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, setMarketerview, fetchDeletedMedia }) {
 const [attendanceType, setAttendanceType] = useState("");
@@ -622,7 +623,7 @@ const formatted = rows.map((r, idx) => ({
 "FOOD PROOF": r.foodExpensePhoto ? "Available" : "Not uploaded",
 "OTHER PROOF": r.otherExpensePhoto ? "Available" : "Not uploaded"
 }));
-const worksheet = window.XLSX.utils.json_to_sheet(formatted);
+const worksheet = mergedReportSheet(window.XLSX, formatted, "Attendance Report");
 worksheet["!cols"] = Object.keys(formatted[0]).map((key) => ({
 wch: key.includes("PROOF") ? 18 : key === "SALE OFFICER" ? 22 : key === "AREA NAME" ? 20 : 14
 }));

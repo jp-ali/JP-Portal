@@ -1,3 +1,5 @@
+import { mergedReportSheet } from "./mergedReportSheet.js";
+
 export function createReportExporters({ formatTime12, getMarketerName }) {
 const downloadExcel = (dataList, filename = "Report.xlsx") => {
 if (!window.XLSX) {
@@ -20,7 +22,7 @@ const formattedData = dataList.map((item, idx) => ({
 "Marketer": getMarketerName(item.marketerEmail, item.marketerName || item.marketerEmail || "N/A"),
 "Date": item.createdAt && item.createdAt.toDate ? item.createdAt.toDate().toLocaleDateString() : "N/A"
 }));
-const worksheet = window.XLSX.utils.json_to_sheet(formattedData);
+const worksheet = mergedReportSheet(window.XLSX, formattedData, "School Visits Report");
 const workbook = window.XLSX.utils.book_new();
 window.XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
 window.XLSX.writeFile(workbook, filename);
@@ -334,7 +336,7 @@ const formattedData = rows.map((m, idx) => ({
 "Designation": m.designation || "Regional Manager",
 "Assigned KMs / Litre": m.assignedKms || "N/A"
 }));
-const worksheet = window.XLSX.utils.json_to_sheet(formattedData);
+const worksheet = mergedReportSheet(window.XLSX, formattedData, "Marketer Details Report");
 worksheet["!cols"] = [
 { wch: 7 },
 { wch: 28 },
