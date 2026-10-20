@@ -72,12 +72,13 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
 
   if (!detail) return <div style={cardStyle} className="other-reports-section">
     <div className="other-reports-header">
-      <div><h2>{mode === "verification" ? "Verification" : "Other Reports"}</h2><p>{mode === "verification" ? "School visits and your custom reports" : "Create and manage custom reports"}</p></div>
+      <div><span className="other-reports-eyebrow">REPORT WORKSPACE</span><h2>{mode === "verification" ? "Verification" : "Other Reports"}</h2><p>{mode === "verification" ? "Review school visits and keep every follow-up in one place." : "A clean space for the reports you create and manage."}</p></div>
       <div className="other-reports-actions">
         <button className="other-reports-btn" onClick={() => setAdminView("home")}>← Back</button>
         {mode !== "verification" && <button className="other-reports-btn primary" onClick={() => setAdding((value) => !value)}>＋ Add Report</button>}
       </div>
     </div>
+    <div className="other-reports-overview"><span className="other-reports-overview-icon" aria-hidden="true">▦</span><div><strong>{mode === "verification" ? reports.length + 1 : reports.length}</strong><span>{mode === "verification" ? "Available reports" : "Custom reports"}</span></div><p>{mode === "verification" ? "School Visits is ready whenever you need it." : "Create a report and start adding contacts in seconds."}</p></div>
     {adding && mode !== "verification" && <form className="other-reports-add" onSubmit={createReport}>
       <input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Enter report name" maxLength={120} aria-label="Report name" />
       <button className="other-reports-btn primary" disabled={busy || !title.trim()}>Create</button>
@@ -85,12 +86,13 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     {error && <p className="other-reports-error" role="alert">{error}</p>}
     {loadError && <p className="other-reports-error" role="alert">{loadError} <button className="other-reports-btn" onClick={reload}>Retry</button></p>}
     {loading && <p>Loading reports…</p>}
+    <div className="other-reports-list-heading"><h3>{mode === "verification" ? "Your verification reports" : "Your reports"}</h3><span>{mode === "verification" ? reports.length + 1 : reports.length} total</span></div>
     <div className="square-grid other-reports-grid">
-      {mode === "verification" && <button type="button" className="square-card shaking-card other-report-card" onClick={openVerificationCalls}>
-        <span className="other-report-icon">🏫</span><h3>School Visits</h3><p>Verification calls and visit remarks</p>
+      {mode === "verification" && <button type="button" className="square-card other-report-card other-report-card-featured" onClick={openVerificationCalls}>
+        <span className="other-report-icon">🏫</span><span className="other-report-card-type">DEFAULT REPORT</span><h3>School Visits</h3><p>Verification calls and visit remarks</p><span className="other-report-card-arrow" aria-hidden="true">↗</span>
       </button>}
-      {reports.map((item) => <button type="button" key={item.id} className="square-card shaking-card other-report-card" onClick={() => { onOrigin(mode); setSelectedId(item.id); setAdminView("custom-report"); }}>
-        <span className="other-report-icon">📋</span><h3>{item.title}</h3><p>{item.rows?.length || 0} rows · {item.date}</p>
+      {reports.map((item, index) => <button type="button" key={item.id} className="square-card other-report-card" style={{ "--report-order": index + 1 }} onClick={() => { onOrigin(mode); setSelectedId(item.id); setAdminView("custom-report"); }}>
+        <span className="other-report-icon">📋</span><span className="other-report-card-type">CUSTOM REPORT</span><h3>{item.title}</h3><p>{item.rows?.length || 0} rows · {item.date}</p><span className="other-report-card-arrow" aria-hidden="true">↗</span>
       </button>)}
     </div>
     {!loading && !reports.length && mode !== "verification" && <p className="other-reports-empty">No custom reports yet. Select Add Report to create one.</p>}

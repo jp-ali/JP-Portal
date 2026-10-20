@@ -3,7 +3,17 @@ import React from "react";
 
 export default function AdminHomePanel() {
   const { fetchActionPlans, fetchAllReports, fetchAllSamples, fetchAttendanceRecords, fetchCatalogues, fetchDeletedMarketers, fetchDeletedMedia, fetchLocationCatalog, fetchMarketers, getTodayInputDate, openAdminExpenseReport, openVerificationCalls, renderMarketerPersonIcon, resetMarketerAssignmentForm, setAdminActionPlanFromDate, setAdminActionPlanSearch, setAdminActionPlanToDate, setAdminAttendanceFromDate, setAdminAttendanceSearch, setAdminAttendanceToDate, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setCatalogueSearch, setEditingId, setEditingReturnToMarketerDetails, setMarketerAssignedKms, setMarketerDesignation, setMarketerEmail, setMarketerName, setMarketerPass, setMarketerPhone, setMarketerWhatsappGroupLink, setMarketerWhatsappGroupName, setMediaMarketer, setMediaView, setSelectedAdminAllBoxKey, setSelectedAdminMarketerBox, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox, setSelectedDeletedMediaIds, setSelectedMarketerDetailBox, setSelectedMarketersFilter, setSelectedMediaIds, setSubordinateMarketerIds, setSubordinatePickerOpen, setSubordinateSearch } = usePortalContext();
-  return (<div className="square-grid" style={{ marginTop: "10px" }}>
+  return (<section className="admin-home">
+            <div className="admin-home-hero">
+              <div>
+                <span className="admin-home-eyebrow"><span className="admin-home-live-dot" /> ADMIN WORKSPACE</span>
+                <h1>Welcome to your portal</h1>
+                <p>Visits, team activity and reports, all in one place.</p>
+              </div>
+              <div className="admin-home-hero-mark" aria-hidden="true">JP<span>.</span></div>
+            </div>
+            <div className="admin-home-section-heading"><div><span className="admin-home-section-line" /><h2>Explore workspace</h2></div><span>Choose a section to get started</span></div>
+            <div className="square-grid admin-home-grid">
               <div
 className="square-card shaking-card"
 onClick={() => { const today = getTodayInputDate(); setAdminAttendanceFromDate(today); setAdminAttendanceToDate(today); setAdminAttendanceSearch(""); setAdminView("attendance"); fetchAttendanceRecords(); }}
@@ -119,5 +129,6 @@ style={{ borderTop: "4px solid #9d3451", animationDelay: "1.2s" }}
                 <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Recently Deleted</h3>
                 <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Restore or permanently remove media</p>
               </div>
-            </div>);
+            </div>
+          </section>);
 }

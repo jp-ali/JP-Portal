@@ -16,6 +16,7 @@ import { useExpenseReports } from "./features/expenses/useExpenseReports.js";
 import { useCatalogues } from "./features/catalogues/useCatalogues.js";
 import { createReportExporters } from "./services/reportExports.js";
 import adminCss from "./styles/admin.css?raw";
+import adminModernCss from "./styles/adminModern.css?raw";
 import marketerCss from "./styles/marketer.css?raw";
 import React, { lazy, Suspense, useState, useRef, useEffect, useLayoutEffect } from "react";
 import { db } from "./services/firebase";
@@ -454,7 +455,7 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     adminAttendanceToDate,
     adminCityAssignOpen,
     adminCitySearch,
-    adminCss,
+    adminCss: `${adminCss}\n${adminModernCss}`,
     adminExpenseFromDate,
     adminExpenseLoading,
     adminExpenseMarketerIds,
