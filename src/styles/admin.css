@@ -15,6 +15,8 @@
 .other-report-create-options { grid-column:1/-1; display:flex; align-items:center; gap:14px; flex-wrap:wrap; color:#6f0b24; font-size:12px; }
 .other-report-create-options label { display:inline-flex; align-items:center; gap:5px; }
 .other-report-create-options input { flex:none; min-height:0; width:auto; }
+.other-report-create-options select { min-height:36px; padding:6px 9px; border:1px solid #decbd0; border-radius:8px; background:#fff; color:#3b2329; }
+.other-report-filter-chip { padding:6px 9px; border:1px solid #d7a8b7; border-radius:999px; background:#fff3f6; color:#7a0f2b; font-size:11px; font-weight:700; font-family:inherit; cursor:pointer; }
 .other-reports-add > button { justify-self:start; }
 .other-reports-add input, .other-report-filters input, .other-report-filters select, .other-report-date input, .other-report-quick textarea { min-height:39px; padding:8px 10px; border:1px solid #decbd0; border-radius:9px; background:#fff; font:inherit; color:#3b2329; }
 .other-reports-add input { flex:1; min-width:0; }

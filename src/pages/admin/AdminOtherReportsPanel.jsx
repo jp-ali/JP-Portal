@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import { request } from "../../services/authApi.js";
 import { parseQuickContact } from "../../domain/parseQuickContact.js";
 import { blankRow, columnsFromHeadings, parseCustomReportText, reportColumns, rowValue } from "../../domain/customReportSchema.js";
 import CustomReportTable from "./CustomReportTable.jsx";
 import { exportCustomReportExcel, exportCustomReportPDF } from "../../services/customReportExports.js";
+import ReportMarketerFilterBar from "../../ui/ReportMarketerFilterBar.jsx";
+import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
 
 const REMARKS = ["Contacted", "Contacted but sample didn't receive", "Didn't contact", "Sample received", "Other"];
 const today = () => {
@@ -20,18 +22,25 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const [headings, setHeadings] = useState("Name, Number, City, Institute, Remarks");
   const [includeMarketers, setIncludeMarketers] = useState(false);
   const [dateRange, setDateRange] = useState(false);
+  const [filterKeys, setFilterKeys] = useState([]);
+  const [extraFilterOpen, setExtraFilterOpen] = useState(false);
+  const [extraFilter, setExtraFilter] = useState("");
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickText, setQuickText] = useState("");
   const [search, setSearch] = useState("");
   const [cityFilter, setCityFilter] = useState("");
   const [remarkFilter, setRemarkFilter] = useState("");
-  const [marketerFilter, setMarketerFilter] = useState("");
+  const [marketerFilter, setMarketerFilter] = useState([]);
+  const [extraFilterValues, setExtraFilterValues] = useState({});
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useEffect(() => { setSearch(""); setCityFilter(""); setRemarkFilter(""); setMarketerFilter([]); setFromDate(""); setToDate(""); setExtraFilterValues({}); }, [selectedId]);
   const report = reports.find((item) => item.id === selectedId);
   const columns = reportColumns(report);
+  const availableFilters = columnsFromHeadings(headings).filter((column) => !["city", "remarks"].includes(column.key) && column.type !== "date");
+  const toggleFilter = (key) => setFilterKeys((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
   const detail = adminView === "custom-report";
   const back = () => { setSelectedId(""); setAdminView(mode === "verification" ? "verification-reports" : "other-reports"); };
   const updateReport = (id, changes) => setReports((current) => current.map((item) => item.id === id ? { ...item, ...changes } : item));
@@ -52,8 +61,8 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     if (!customColumns.length) { setError("Add at least one heading besides Date."); return; }
     setBusy(true); setError("");
     try {
-      const { report: created } = await request("/custom-reports", { method: "POST", body: JSON.stringify({ title: title.trim(), date: today(), columns: customColumns, options: { includeMarketers, dateRange } }) });
-      setReports((current) => [...current, created]); setTitle(""); setAdding(false); onOrigin("other"); setSelectedId(created.id); setAdminView("custom-report");
+      const { report: created } = await request("/custom-reports", { method: "POST", body: JSON.stringify({ title: title.trim(), date: today(), columns: customColumns, options: { includeMarketers, dateRange, filterKeys } }) });
+      setReports((current) => [...current, created]); setTitle(""); setHeadings("Name, Number, City, Institute, Remarks"); setIncludeMarketers(false); setDateRange(false); setFilterKeys([]); setAdding(false); onOrigin("other"); setSelectedId(created.id); setAdminView("custom-report");
     } catch (cause) { setError(cause.message); }
     finally { setBusy(false); }
   };
@@ -79,10 +88,11 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     return (!q || columns.some((column) => String(rowValue(row, column, report)).toLowerCase().includes(q)))
       && (!cityFilter || row.city === cityFilter)
       && (!remarkFilter || row.remarks === remarkFilter)
-      && (!marketerFilter || row.marketer === marketerFilter)
+      && (!marketerFilter.length || marketerFilter.includes(row.marketer))
       && (!fromDate || date >= fromDate)
-      && (!toDate || date <= toDate);
-  }).sort((a, b) => String(a.date || report.date).localeCompare(String(b.date || report.date))), [report, search, cityFilter, remarkFilter, marketerFilter, fromDate, toDate]);
+      && (!toDate || date <= toDate)
+      && Object.entries(extraFilterValues).every(([key, value]) => !value || String(row[key] || "") === value);
+  }).sort((a, b) => String(a.date || report.date).localeCompare(String(b.date || report.date))), [report, search, cityFilter, remarkFilter, marketerFilter, fromDate, toDate, extraFilterValues]);
   const cities = [...new Set((report?.rows || []).map((row) => row.city).filter(Boolean))].sort();
   const runExport = async (kind) => {
     try { if (kind === "excel") exportCustomReportExcel(report, filtered, marketersList); else await exportCustomReportPDF(report, filtered, marketersList); setError(""); }
@@ -101,7 +111,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     {adding && mode !== "verification" && <form className="other-reports-add" onSubmit={createReport}>
       <label>Report name<input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Enter report name" maxLength={120} required /></label>
       <label>Headings (comma or line separated)<textarea value={headings} onChange={(event) => setHeadings(event.target.value)} rows={3} /></label>
-      <div className="other-report-create-options"><span>Add report options:</span><label><input type="checkbox" checked={includeMarketers} onChange={(event) => setIncludeMarketers(event.target.checked)} /> All Marketers</label><label><input type="checkbox" checked={dateRange} onChange={(event) => setDateRange(event.target.checked)} /> Date Range</label><small>Date is included automatically.</small></div>
+      <div className="other-report-create-options"><span>Add report options:</span><label><input type="checkbox" checked={includeMarketers} onChange={(event) => setIncludeMarketers(event.target.checked)} /> All Marketers</label><label><input type="checkbox" checked={dateRange} onChange={(event) => setDateRange(event.target.checked)} /> Date Range</label><label><input type="checkbox" checked={filterKeys.includes("city")} onChange={() => toggleFilter("city")} /> City</label><label><input type="checkbox" checked={filterKeys.includes("remarks")} onChange={() => toggleFilter("remarks")} /> Remarks</label><button type="button" className="other-reports-btn" onClick={() => setExtraFilterOpen((value) => !value)}>＋ Add Filter</button>{extraFilterOpen && <><select value={extraFilter} onChange={(event) => setExtraFilter(event.target.value)} aria-label="Choose extra filter"><option value="">Choose heading</option>{availableFilters.map((column) => <option key={column.key} value={column.key}>{column.label}</option>)}</select><button type="button" className="other-reports-btn" disabled={!extraFilter} onClick={() => { if (extraFilter && !filterKeys.includes(extraFilter)) setFilterKeys((current) => [...current, extraFilter]); setExtraFilter(""); }}>Add</button></>}{filterKeys.filter((key) => !["city", "remarks"].includes(key)).map((key) => <button type="button" className="other-report-filter-chip" key={key} onClick={() => toggleFilter(key)}>{key.replaceAll("_", " ")} ×</button>)}<small>Date is included automatically.</small></div>
       <button className="other-reports-btn primary" disabled={busy || !title.trim()}>Create Report</button>
     </form>}
     {error && <p className="other-reports-error" role="alert">{error}</p>}
@@ -133,7 +143,16 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     <div style={cardStyle} className="other-report-detail">
       <div className="other-reports-header"><div><input className="other-report-title-input" aria-label="Report title" value={report.title} onChange={(event) => updateReport(report.id, { title: event.target.value })} onBlur={(event) => { const title = event.target.value.trim(); if (!title) { reload(); return; } request(`/custom-reports/${report.id}`, { method: "PATCH", body: JSON.stringify({ title }) }).catch((cause) => { setError(cause.message); reload(); }); }} maxLength={120} /><p>Editable report · {report.rows?.length || 0} rows</p></div><label className="other-report-date">Report date<input type="date" value={report.date} onChange={(event) => { const date = event.target.value; updateReport(report.id, { date }); request(`/custom-reports/${report.id}`, { method: "PATCH", body: JSON.stringify({ date }) }).catch((cause) => { setError(cause.message); reload(); }); }} /></label></div>
       {error && <p className="other-reports-error" role="alert">{error}</p>}
-      <div className="other-report-filters"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search all columns" aria-label="Search report" />{columns.some((column) => column.key === "city") && <select value={cityFilter} onChange={(event) => setCityFilter(event.target.value)} aria-label="Filter city"><option value="">All cities</option>{cities.map((city) => <option key={city}>{city}</option>)}</select>}{columns.some((column) => column.key === "remarks") && <select value={remarkFilter} onChange={(event) => setRemarkFilter(event.target.value)} aria-label="Filter remarks"><option value="">All remarks</option>{REMARKS.slice(0, -1).map((item) => <option key={item}>{item}</option>)}</select>}{report.options?.includeMarketers && <select value={marketerFilter} onChange={(event) => setMarketerFilter(event.target.value)} aria-label="Filter marketer"><option value="">All Marketers</option>{marketersList.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select>}{report.options?.dateRange && <><label>From<input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label><label>To<input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label></>}<button className="other-reports-btn" onClick={() => { setSearch(""); setCityFilter(""); setRemarkFilter(""); setMarketerFilter(""); setFromDate(""); setToDate(""); }}>Clear</button><button className="other-reports-btn" onClick={reload} disabled={loading}>↻ Refresh</button></div>
+      {report.options?.dateRange && <ReportMarketerFilterBar fromDate={fromDate} toDate={toDate} onFromDate={setFromDate} onToDate={setToDate} onClear={() => { setFromDate(""); setToDate(""); setMarketerFilter([]); }} marketers={marketersList} selected={marketerFilter} onSelected={setMarketerFilter} valueKey="id" hideMarketers={!report.options?.includeMarketers} onRefresh={reload} />}
+      <div className="other-report-filters">
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search all columns" aria-label="Search report" />
+        {report.options?.includeMarketers && !report.options?.dateRange && <MarketerMultiSelect marketers={marketersList} selected={marketerFilter} onChange={setMarketerFilter} valueKey="id" emptyLabel="All Marketers" />}
+        {report.options?.filterKeys?.includes("city") && <select value={cityFilter} onChange={(event) => setCityFilter(event.target.value)} aria-label="Filter city"><option value="">All cities</option>{cities.map((city) => <option key={city}>{city}</option>)}</select>}
+        {report.options?.filterKeys?.includes("remarks") && <select value={remarkFilter} onChange={(event) => setRemarkFilter(event.target.value)} aria-label="Filter remarks"><option value="">All remarks</option>{REMARKS.slice(0, -1).map((item) => <option key={item}>{item}</option>)}</select>}
+        {(report.options?.filterKeys || []).filter((key) => !["city", "remarks"].includes(key)).map((key) => { const column = columns.find((item) => item.key === key); if (!column) return null; const values = [...new Set((report.rows || []).map((row) => row[key]).filter(Boolean))].sort(); return <select key={key} value={extraFilterValues[key] || ""} onChange={(event) => setExtraFilterValues((current) => ({ ...current, [key]: event.target.value }))} aria-label={`Filter ${column.label}`}><option value="">All {column.label}</option>{values.map((value) => <option key={value}>{value}</option>)}</select>; })}
+        <button className="other-reports-btn" onClick={() => { setSearch(""); setCityFilter(""); setRemarkFilter(""); setMarketerFilter([]); setFromDate(""); setToDate(""); setExtraFilterValues({}); }}>Clear</button>
+        {!report.options?.dateRange && <button className="other-reports-btn" onClick={reload} disabled={loading}>↻ Refresh</button>}
+      </div>
       <div className="other-reports-actions other-report-add-actions"><button className="other-reports-btn primary" onClick={() => addRow(blankRow(report))} disabled={busy}>＋ Add Row</button><button className="other-reports-btn" onClick={() => setQuickOpen((value) => !value)}>＋ Quick Add</button></div>
       {quickOpen && <form className="other-report-quick" onSubmit={(event) => { event.preventDefault(); if (quickText.trim()) addRow(parseCustomReportText(quickText, columns, parseQuickContact)); }}><label>Paste contact details<textarea value={quickText} onChange={(event) => setQuickText(event.target.value)} placeholder={"Hassan Saif\nCity: Karachi\nCompany name: Merchant Navy\nWhatsApp number: +923052192103"} /></label><button className="other-reports-btn primary" disabled={!quickText.trim() || busy}>Parse and Add</button></form>}
       <CustomReportTable report={report} columns={columns} rows={filtered} marketersList={marketersList} updateRow={updateRow} saveRow={saveRow} updateDateGroup={updateDateGroup} saveDateGroup={saveDateGroup} removeRow={removeRow} />

@@ -21,7 +21,11 @@ const validDate = (value) => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.
   && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
 const bad = (response, message) => response.status(400).json({ error: message });
 const reportColumns = (report) => Array.isArray(report.columns) && report.columns.length ? report.columns : defaultColumns;
-const reportOptions = (value) => ({ includeMarketers: value?.includeMarketers === true, dateRange: value?.dateRange === true });
+const reportOptions = (value) => ({
+  includeMarketers: value?.includeMarketers === true,
+  dateRange: value?.dateRange === true,
+  filterKeys: [...new Set((Array.isArray(value?.filterKeys) ? value.filterKeys : []).filter((key) => typeof key === "string" && /^[a-z][a-z0-9_]{0,39}$/.test(key)))].slice(0, 12)
+});
 function validateColumns(value, options) {
   if (!Array.isArray(value) || !value.length || value.length > 18) return null;
   const seen = new Set();
@@ -36,6 +40,12 @@ function validateColumns(value, options) {
   }
   if (!seen.has("date")) columns.unshift(defaultColumns[0]);
   if (options.includeMarketers && !seen.has("marketer")) columns.splice(1, 0, { key: "marketer", label: "Marketer", type: "marketer" });
+  for (const key of ["city", "remarks"]) if (options.filterKeys.includes(key) && !seen.has(key)) {
+    const column = defaultColumns.find((item) => item.key === key);
+    columns.push(column);
+    seen.add(key);
+  }
+  if (options.filterKeys.some((key) => !seen.has(key))) return null;
   return columns.length <= 20 ? columns : null;
 }
 function rowValue(value, column, fallbackDate) {

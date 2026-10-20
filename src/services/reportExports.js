@@ -1,4 +1,5 @@
 import { mergedReportSheet } from "./mergedReportSheet.js";
+import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill } from "./pdfTheme.js";
 
 export function createReportExporters({ formatTime12, getMarketerName }) {
 const downloadExcel = (dataList, filename = "Report.xlsx") => {
@@ -93,7 +94,7 @@ const width = textWidth(txt, size);
 if (align === "center") x -= width / 2;
 if (align === "right") x -= width;
 const y = topToPdfY(topMm) - size * 0.80;
-return `BT ${fontName} ${size} Tf 0.10 0.12 0.15 rg 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${safe}) Tj ET`;
+return `BT ${fontName} ${size} Tf ${pdfTextFill(topMm)} rg 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${safe}) Tj ET`;
 };
 const drawWrapped = (xMm, topMm, wMm, hMm, txt, size = 6.5, align = "left", bold = false) => {
 const lines = wrapText(txt, wMm * MM - 4 * MM, size);
@@ -151,7 +152,7 @@ return Math.min(22, Math.max(8, 2.8 + Math.max(...lineCounts) * 3.15));
 const pages = [];
 const newPage = () => {
 const c = [];
-c.push(rectCmd(LEFT, 5, RIGHT - LEFT, 24, 0.55, [0.995, 0.965, 0.972]));
+c.push(rectCmd(LEFT, 5, RIGHT - LEFT, 24, 0.55, PDF_BANNER));
 c.push(drawText(148.5, 9, "JAVED PUBLISHERS", 18, "center", true));
 c.push(drawText(148.5, 15.5, isSampleReport ? "SCHOOL SAMPLE REPORT" : "SCHOOL VISIT REPORT", 11.5, "center", true));
 c.push(drawText(10, 22.5, `Report Date: ${new Date().toLocaleDateString("en-GB")}`, 6.5, "left", false));
@@ -159,7 +160,7 @@ c.push(drawText(148.5, 22.5, `Total Records: ${rows.length}`, 6.5, "center", fal
 c.push(drawText(287, 22.5, "Official Visit Record", 6.5, "right", false));
 let x = LEFT;
 columns.forEach(([heading, width]) => {
-c.push(rectCmd(x, TABLE_TOP, width, 9, 0.55, [0.985, 0.915, 0.935]));
+c.push(rectCmd(x, TABLE_TOP, width, 9, 0.55, PDF_TABLE_HEAD));
 c.push(drawWrapped(x, TABLE_TOP, width, 9, heading, 6.5, "center", true));
 x += width;
 });
@@ -263,7 +264,7 @@ if (!rows.length) {
 page.content.push(drawText(148.5, page.y + 10, "No records found for the selected filters.", 8.5, "center", false));
 }
 pages.forEach((pg, idx) => {
-pg.content.push(rectCmd(LEFT, 197, RIGHT - LEFT, 10, 0.45, [0.995, 0.958, 0.968]));
+pg.content.push(rectCmd(LEFT, 197, RIGHT - LEFT, 10, 0.45, PDF_FOOTER));
 pg.content.push(drawText(148.5, 203, "Created by Ali Ashfaq", 7.5, "center", true));
 pg.content.push(drawText(10, 203, isSampleReport ? "School Sample Report" : "School Visit Report", 6.3, "left", false));
 pg.content.push(drawText(287, 203, `Page ${idx + 1} of ${pages.length}`, 6.3, "right", false));
@@ -410,7 +411,7 @@ const width = textWidth(txt, size);
 if (align === "center") x -= width / 2;
 if (align === "right") x -= width;
 const y = topToPdfY(topMm) - size * 0.80;
-return `BT ${fontName} ${size} Tf 0.10 0.12 0.15 rg 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${safe}) Tj ET`;
+return `BT ${fontName} ${size} Tf ${pdfTextFill(topMm)} rg 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${safe}) Tj ET`;
 };
 const drawWrapped = (xMm, topMm, wMm, hMm, txt, size = 6.4, align = "left", bold = false) => {
 const lines = wrapText(txt, wMm * MM - 4 * MM, size);
@@ -445,7 +446,7 @@ return Math.min(22, Math.max(9, 3.0 + Math.max(...counts) * 3.2));
 const pages = [];
 const newPage = () => {
 const c = [];
-c.push(rectCmd(LEFT, 5, RIGHT - LEFT, 24, 0.55, [0.995, 0.965, 0.972]));
+c.push(rectCmd(LEFT, 5, RIGHT - LEFT, 24, 0.55, PDF_BANNER));
 c.push(drawText(148.5, 9, "JAVED PUBLISHERS", 18, "center", true));
 c.push(drawText(148.5, 15.5, "MARKETER DETAILS REPORT", 11.5, "center", true));
 c.push(drawText(10, 22.5, `Report Date: ${new Date().toLocaleDateString("en-GB")}`, 6.5, "left", false));
@@ -453,7 +454,7 @@ c.push(drawText(148.5, 22.5, `Total Marketers: ${rows.length}`, 6.5, "center", f
 c.push(drawText(287, 22.5, "Official Marketer Record", 6.3, "right", false));
 let x = LEFT;
 columns.forEach(([heading, width]) => {
-c.push(rectCmd(x, TABLE_TOP, width, 9, 0.55, [0.985, 0.915, 0.935]));
+c.push(rectCmd(x, TABLE_TOP, width, 9, 0.55, PDF_TABLE_HEAD));
 c.push(drawWrapped(x, TABLE_TOP, width, 9, heading, 6.4, "center", true));
 x += width;
 });
@@ -482,7 +483,7 @@ drawCell(x, page.y, 40, h, m.assignedKms || "N/A", "center", false, 6.1, fill);
 page.y += h;
 });
 pages.forEach((pg, idx) => {
-pg.content.push(rectCmd(LEFT, 197, RIGHT - LEFT, 10, 0.45, [0.995, 0.958, 0.968]));
+pg.content.push(rectCmd(LEFT, 197, RIGHT - LEFT, 10, 0.45, PDF_FOOTER));
 pg.content.push(drawText(148.5, 203, "Created by Ali Ashfaq", 7.5, "center", true));
 pg.content.push(drawText(10, 203, "Marketer Details Report", 6.3, "left", false));
 pg.content.push(drawText(287, 203, `Page ${idx + 1} of ${pages.length}`, 6.3, "right", false));

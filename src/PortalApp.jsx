@@ -289,6 +289,7 @@ const portalView = portalSide === "admin" ? adminView : marketerView;
 const routeParts = [portalSide, portalView];
 if (portalSide === "admin") {
   if (adminView === "today-visits" && selectedAdminMarketerBox) routeParts.push(selectedAdminMarketerBox);
+  if (adminView === "visits" && selectedAdminAllBoxKey) routeParts.push(selectedAdminAllBoxKey);
   if (adminView === "sample-details") {
     if (selectedAdminSampleMarketerBox) routeParts.push(selectedAdminSampleMarketerBox);
     if (selectedAdminSampleSchoolBox) routeParts.push(selectedAdminSampleSchoolBox);
@@ -301,6 +302,19 @@ if (portalSide === "admin") {
   if (adminView === "attendance-media" && attendanceMediaMarketer) routeParts.push(attendanceMediaMarketer);
 }
 const routeKey = JSON.stringify(routeParts);
+const routeSnapshot = {
+  key: routeKey, view: portalView, selectedAdminMarketerBox, selectedAdminSampleMarketerBox,
+  selectedAdminSampleSchoolBox, selectedMarketerDetailBox, mediaView, mediaMarketer,
+  attendanceMediaMarketer, selectedAdminAllBoxKey, selectedMarketerForVisits
+};
+const routeHistoryRef = useRef([routeSnapshot]);
+useEffect(() => {
+  const history = routeHistoryRef.current;
+  if (history.at(-1)?.key === routeKey) { history[history.length - 1] = routeSnapshot; return; }
+  const earlier = history.map((entry) => entry.key).lastIndexOf(routeKey);
+  if (earlier >= 0) history.splice(earlier + 1);
+  else history.push(routeSnapshot);
+}, [routeKey]);
 const scrollPositionsRef = useRef(new Map());
 const currentRouteKeyRef = useRef(routeKey);
 const previousRouteRef = useRef(routeParts);
@@ -341,12 +355,25 @@ useEffect(() => {
       setExpandedReportKey("");
     } else if (activeView !== "home") {
       homeEscapeCountRef.current = { count: 0, lastAt: 0 };
+      const history = routeHistoryRef.current;
+      const previous = history.length > 1 ? history[history.length - 2] : null;
       if (user?.role !== "admin") {
         if (marketerView === "attendance") stopAttendanceCamera();
         if (marketerView === "add-visit") stopCamera();
-        setMarketerview("home");
+        setMarketerview(previous?.view || "home");
       } else {
-        setAdminView("home");
+        if (previous) {
+          setSelectedAdminMarketerBox(previous.selectedAdminMarketerBox);
+          setSelectedAdminSampleMarketerBox(previous.selectedAdminSampleMarketerBox);
+          setSelectedAdminSampleSchoolBox(previous.selectedAdminSampleSchoolBox);
+          setSelectedMarketerDetailBox(previous.selectedMarketerDetailBox);
+          setMediaView(previous.mediaView);
+          setMediaMarketer(previous.mediaMarketer);
+          setAttendanceMediaMarketer(previous.attendanceMediaMarketer);
+          setSelectedAdminAllBoxKey(previous.selectedAdminAllBoxKey);
+          setSelectedMarketerForVisits(previous.selectedMarketerForVisits);
+        }
+        setAdminView(previous?.view || "home");
       }
     } else {
       const now = Date.now();

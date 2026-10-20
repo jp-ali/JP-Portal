@@ -3,6 +3,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { calculatedKms, dailyAssignedKms, dailyPetrolExpense, dailyPetrolRate } from "./expenseCalculations.js";
 import { mergedReportSheet } from "../../services/mergedReportSheet.js";
+import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill } from "../../services/pdfTheme.js";
 
 export function useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12, groupRowsByMarketerAndDate }) {
 const [expenseReportFromDate, setExpenseReportFromDate] = useState("");
@@ -202,7 +203,7 @@ const width = textWidth(txt, size);
 if (align === "center") x -= width / 2;
 if (align === "right") x -= width;
 const y = topToPdfY(topMm) - size * 0.80;
-return `BT ${fontName} ${size} Tf 0.10 0.12 0.15 rg 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${safe}) Tj ET`;
+return `BT ${fontName} ${size} Tf ${pdfTextFill(topMm)} rg 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${safe}) Tj ET`;
 };
 const drawWrapped = (xMm, topMm, wMm, hMm, txt, size = 6.0, bold = false) => {
 const lines = wrapText(txt, wMm * MM - 4 * MM, size);
@@ -219,7 +220,7 @@ const marketerLabel = user?.name || user?.email || "Marketer";
 const rangeLabel = `${expenseReportFromDate} to ${expenseReportToDate}`;
 const newPage = () => {
 const c = [];
-c.push(rectCmd(LEFT, 5, RIGHT - LEFT, 24, 0.55, [0.995, 0.965, 0.972]));
+c.push(rectCmd(LEFT, 5, RIGHT - LEFT, 24, 0.55, PDF_BANNER));
 c.push(drawText(148.5, 9, "JAVED PUBLISHERS", 18, "center", true));
 c.push(drawText(148.5, 15.5, "MARKETER EXPENSE REPORT", 11.5, "center", true));
 c.push(drawText(10, 22.5, `Report Date: ${new Date().toLocaleDateString("en-GB")}`, 6.5, "left", false));
@@ -227,7 +228,7 @@ c.push(drawText(148.5, 22.5, `Range: ${rangeLabel}`, 6.5, "center", false));
 c.push(drawText(287, 22.5, marketerLabel, 6.3, "right", false));
 let x = LEFT;
 columns.forEach(([heading, width]) => {
-c.push(rectCmd(x, TABLE_TOP, width, 9, 0.55, [0.985, 0.915, 0.935]));
+c.push(rectCmd(x, TABLE_TOP, width, 9, 0.55, PDF_TABLE_HEAD));
 c.push(drawWrapped(x, TABLE_TOP, width, 9, heading, 6.0, true));
 x += width;
 });
@@ -267,7 +268,7 @@ const totalOther = rows.reduce((sum, row) => sum + Number(row.other || 0), 0);
 const totalAll = rows.reduce((sum, row) => sum + Number(row.totalOtherExpense || 0), 0);
 drawRow(["", "TOTAL", "", "", "", `${totalKms.toFixed(1).replace(/\.0$/, "")} KMs`, `Rs. ${totalPetrol.toFixed(2)}`, `Rs. ${totalTransport.toFixed(2)}`, `Rs. ${totalNight.toFixed(2)}`, `Rs. ${totalFood.toFixed(2)}`, `Rs. ${totalOther.toFixed(2)}`, `Rs. ${totalAll.toFixed(2)}`], true);
 pages.forEach((pg, idx) => {
-pg.content.push(rectCmd(LEFT, 197, RIGHT - LEFT, 10, 0.45, [0.995, 0.958, 0.968]));
+pg.content.push(rectCmd(LEFT, 197, RIGHT - LEFT, 10, 0.45, PDF_FOOTER));
 pg.content.push(drawText(148.5, 203, "Created by Ali Ashfaq", 7.5, "center", true));
 pg.content.push(drawText(10, 203, "Marketer Expense Report", 6.3, "left", false));
 pg.content.push(drawText(287, 203, `Page ${idx + 1} of ${pages.length}`, 6.3, "right", false));
@@ -485,7 +486,7 @@ parts.push(`${stroke} w`, `${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.t
 const drawText = (xMm, topMm, txt, size=7, align="left", bold=false) => {
 const safe=esc(txt), fontName=bold?"/F2":"/F1"; let x=xMm*MM; const width=textWidth(txt,size);
 if(align==="center") x-=width/2; if(align==="right") x-=width; const y=topToPdfY(topMm)-size*.80;
-return `BT ${fontName} ${size} Tf 0.10 0.12 0.15 rg 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${safe}) Tj ET`;
+return `BT ${fontName} ${size} Tf ${pdfTextFill(topMm)} rg 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${safe}) Tj ET`;
 };
 const drawWrapped = (xMm, topMm, wMm, hMm, txt, size=6.0, bold=false) => {
 const lines=wrapText(txt,wMm*MM-4*MM,size), lineH=size*1.22; const maxLines=Math.max(1,Math.floor((hMm*MM-2.2*MM)/lineH));
@@ -498,13 +499,13 @@ const rangeLabel=`${adminExpenseFromDate} to ${adminExpenseToDate}`;
 const marketerLabel=adminExpenseMarketerIds.length === 1 ? (marketersList.find((m) => m.id === adminExpenseMarketerIds[0])?.name || "Marketer") : adminExpenseMarketerIds.length ? `${adminExpenseMarketerIds.length} Marketers` : "All Marketers";
 const newPage=()=>{
 const c=[];
-c.push(rectCmd(LEFT,5,RIGHT-LEFT,24,.55,[.995,.965,.972]));
+c.push(rectCmd(LEFT,5,RIGHT-LEFT,24,.55,PDF_BANNER));
 c.push(drawText(148.5,9,"JAVED PUBLISHERS",18,"center",true));
 c.push(drawText(148.5,15.5,"ADMIN EXPENSE REPORT",11.5,"center",true));
 c.push(drawText(10,22.5,`Report Date: ${new Date().toLocaleDateString("en-GB")}`,6.5,"left"));
 c.push(drawText(148.5,22.5,`Range: ${rangeLabel}`,6.5,"center"));
 c.push(drawText(287,22.5,marketerLabel,6.3,"right"));
-let x=LEFT; columns.forEach(([heading,width])=>{ c.push(rectCmd(x,TABLE_TOP,width,9,.55,[.985,.915,.935])); c.push(drawWrapped(x,TABLE_TOP,width,9,heading,6.0,true)); x+=width; });
+let x=LEFT; columns.forEach(([heading,width])=>{ c.push(rectCmd(x,TABLE_TOP,width,9,.55,PDF_TABLE_HEAD)); c.push(drawWrapped(x,TABLE_TOP,width,9,heading,6.0,true)); x+=width; });
 return {content:c,y:TABLE_TOP+9};
 };
 let page=newPage(); pages.push(page);
@@ -555,7 +556,7 @@ page.y+=used;offset+=chunk.length;
 });
 const totalKms=rows.reduce((s,r)=>s+Number(r.kms||0),0), totalPetrol=rows.reduce((s,r)=>s+Number(r.petrolExpense||0),0), totalTransport=rows.reduce((s,r)=>s+Number(r.transport||0),0), totalNight=rows.reduce((s,r)=>s+Number(r.nightStay||0),0), totalFood=rows.reduce((s,r)=>s+Number(r.food||0),0), totalOther=rows.reduce((s,r)=>s+Number(r.other||0),0), totalAll=rows.reduce((s,r)=>s+Number(r.totalOtherExpense||0),0);
 drawRow(["","","TOTAL","","","","",`${totalKms.toFixed(1)} KMs`,"","",`Rs. ${totalPetrol.toFixed(2)}`,`Rs. ${totalTransport.toFixed(2)}`,`Rs. ${totalNight.toFixed(2)}`,`Rs. ${totalFood.toFixed(2)}`,`Rs. ${totalOther.toFixed(2)}`,`Rs. ${totalAll.toFixed(2)}`],true);
-pages.forEach((pg,idx)=>{pg.content.push(rectCmd(LEFT,197,RIGHT-LEFT,10,.45,[.995,.958,.968]));pg.content.push(drawText(148.5,203,"Created by Ali Ashfaq",7.5,"center",true));pg.content.push(drawText(10,203,"Admin Expense Report",6.3,"left"));pg.content.push(drawText(287,203,`Page ${idx+1} of ${pages.length}`,6.3,"right"));});
+pages.forEach((pg,idx)=>{pg.content.push(rectCmd(LEFT,197,RIGHT-LEFT,10,.45,PDF_FOOTER));pg.content.push(drawText(148.5,203,"Created by Ali Ashfaq",7.5,"center",true));pg.content.push(drawText(10,203,"Admin Expense Report",6.3,"left"));pg.content.push(drawText(287,203,`Page ${idx+1} of ${pages.length}`,6.3,"right"));});
 const objects=[]; const addObject=(body)=>{objects.push(body);return objects.length;}; const f1=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"), f2=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"); const contentIds=[],pageIds=[];
 pages.forEach((pg)=>{const stream=pg.content.join("\n")+"\n";contentIds.push(addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`));pageIds.push(0);}); const pagesId=addObject("");
 pages.forEach((pg,i)=>{pageIds[i]=addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${PAGE_W.toFixed(2)} ${PAGE_H.toFixed(2)}] /Resources << /Font << /F1 ${f1} 0 R /F2 ${f2} 0 R >> >> /Contents ${contentIds[i]} 0 R >>`);}); objects[pagesId-1]=`<< /Type /Pages /Kids [${pageIds.map(id=>`${id} 0 R`).join(" ")}] /Count ${pages.length} >>`; const root=addObject(`<< /Type /Catalog /Pages ${pagesId} 0 R >>`);
