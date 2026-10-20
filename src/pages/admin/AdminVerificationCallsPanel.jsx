@@ -7,7 +7,7 @@ export default function AdminVerificationCallsPanel() {
   return (<div className={reportViewClass("verification-calls")}>
               {renderExpandedReportChrome("verification-calls")}
               <div className="report-normal-toolbar" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:"8px", flexWrap:"wrap", marginBottom:"14px" }}>
-                <button type="button" onClick={() => setAdminView("home")} style={{ padding:"8px 14px", background:"linear-gradient(135deg,#6f0b24,#86132f)", color:"white", border:"none", borderRadius:"10px", fontWeight:700, cursor:"pointer", fontSize:"13px" }}>← Back to Menu</button>
+                <button type="button" onClick={() => setAdminView("verification-reports")} style={{ padding:"8px 14px", background:"linear-gradient(135deg,#6f0b24,#86132f)", color:"white", border:"none", borderRadius:"10px", fontWeight:700, cursor:"pointer", fontSize:"13px" }}>← Back to Verification</button>
                 <div style={{ display:"flex", gap:"7px", alignItems:"center", flexWrap:"wrap" }}>
                   <button type="button" onClick={downloadVerificationExcel} style={{ padding:"7px 11px", background:"#15803d", color:"#fff", border:"none", borderRadius:"8px", fontWeight:800, fontSize:"11px", cursor:"pointer" }}>📥 Excel</button>
                   <button type="button" onClick={downloadVerificationPDF} style={{ padding:"7px 11px", background:"linear-gradient(135deg,#6f0b24,#86132f)", color:"#fff", border:"none", borderRadius:"8px", fontWeight:800, fontSize:"11px", cursor:"pointer" }}>📄 PDF</button>

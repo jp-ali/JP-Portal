@@ -99,10 +99,15 @@ style={{ borderTop: "4px solid #9d3451", animationDelay: "1.2s" }}
                 <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Catalogues</h3>
                 <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Upload & manage PDF catalogues</p>
               </div>
-              <div className="square-card shaking-card" onClick={openVerificationCalls} style={{ borderTop: "4px solid #7a0f2b", animationDelay: "1.3s" }}>
+              <div className="square-card shaking-card" onClick={() => setAdminView("verification-reports")} style={{ borderTop: "4px solid #7a0f2b", animationDelay: "1.3s" }}>
                 <div style={{ fontSize: "32px", marginBottom: "10px" }}>☎️</div>
                 <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Verification Calls</h3>
                 <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Verify school visits & call remarks</p>
+              </div>
+              <div className="square-card shaking-card" onClick={() => setAdminView("other-reports")} style={{ borderTop: "4px solid #8f1532", animationDelay: "1.35s" }}>
+                <div style={{ fontSize: "32px", marginBottom: "10px" }}>📋</div>
+                <h3 style={{ margin: "0 0 4px 0", color: "#3b2329", fontSize: "16px" }}>Other Reports</h3>
+                <p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Create and manage custom reports</p>
               </div>
               <div className="square-card shaking-card" onClick={() => { setAdminView("media"); fetchAllReports(); fetchDeletedMedia(); setMediaMarketer(null); setSelectedMediaIds([]); setSelectedDeletedMediaIds([]); setMediaView("active"); }} style={{ borderTop: "4px solid #8c1733", animationDelay: "1.4s" }}>
                 <div style={{ fontSize: "32px", marginBottom: "10px" }}>🖼️</div>

@@ -3,6 +3,7 @@ import AdminHomePanel from "./admin/AdminHomePanel.jsx";
 import AdminAttendancePanel from "./admin/AdminAttendancePanel.jsx";
 import AdminCataloguesPanel from "./admin/AdminCataloguesPanel.jsx";
 import AdminVerificationCallsPanel from "./admin/AdminVerificationCallsPanel.jsx";
+import AdminOtherReportsPanel from "./admin/AdminOtherReportsPanel.jsx";
 import AdminAttendanceMediaPanel from "./admin/AdminAttendanceMediaPanel.jsx";
 import AdminActionPlansPanel from "./admin/AdminActionPlansPanel.jsx";
 import AdminMediaPanel from "./admin/AdminMediaPanel.jsx";
@@ -15,10 +16,24 @@ import AdminAddMarketerPanel from "./admin/AdminAddMarketerPanel.jsx";
 import AdminDeleteMarketerPanel from "./admin/AdminDeleteMarketerPanel.jsx";
 import AdminOldMarketersPanel from "./admin/AdminOldMarketersPanel.jsx";
 import React from "react";
+import { useEffect, useState } from "react";
+import { request } from "../services/authApi.js";
 import PhotoViewer from "../ui/PhotoViewer.jsx";
 import VisitEditDialog from "../ui/VisitEditDialog.jsx";
 
 function AdminPortalContent({ context }) {
+  const [customReports, setCustomReports] = useState([]);
+  const [selectedCustomReportId, setSelectedCustomReportId] = useState("");
+  const [customReportsLoading, setCustomReportsLoading] = useState(false);
+  const [customReportsError, setCustomReportsError] = useState("");
+  const [customReportOrigin, setCustomReportOrigin] = useState("other");
+  const reloadCustomReports = async () => {
+    setCustomReportsLoading(true);
+    try { const result = await request("/custom-reports"); setCustomReports(result.reports || []); setCustomReportsError(""); }
+    catch (error) { setCustomReportsError(error.message); }
+    finally { setCustomReportsLoading(false); }
+  };
+  useEffect(() => { if (["other-reports", "verification-reports"].includes(context.adminView)) reloadCustomReports(); }, [context.adminView]);
   const { adminCss, adminSidebarOpen, adminView, containerStyle, fetchActionPlans, fetchAllReports, fetchAllSamples, fetchAttendanceRecords, fetchCatalogues, fetchDeletedMarketers, fetchDeletedMedia, fetchLocationCatalog, fetchMarketers, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getTodayInputDate, globalStyle, handleLogout, marketerEmail, mediaView, openAdminExpenseReport, openVerificationCalls, pdfExportData, pdfTemplateRef, portalSkeletonLoading, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderMarketerPersonIcon, renderRedSkeleton, renderResponsiveStyles, reports, resetMarketerAssignmentForm, restoreMedia, setAdminActionPlanFromDate, setAdminActionPlanSearch, setAdminActionPlanToDate, setAdminAttendanceFromDate, setAdminAttendanceSearch, setAdminAttendanceToDate, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminSidebarOpen, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setCatalogueSearch, setEditingId, setEditingReturnToMarketerDetails, setFullScreenImage, setFullScreenMediaRecord, setMarketerAssignedKms, setMarketerDesignation, setMarketerEmail, setMarketerName, setMarketerPass, setMarketerPhone, setMarketerWhatsappGroupLink, setMarketerWhatsappGroupName, setMediaMarketer, setMediaView, setSelectedAdminAllBoxKey, setSelectedAdminMarketerBox, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox, setSelectedDeletedMediaIds, setSelectedMarketerDetailBox, setSelectedMarketersFilter, setSelectedMediaIds, setSubordinateMarketerIds, setSubordinatePickerOpen, setSubordinateSearch, softDeleteMedia } = context;
 
 const openAdminSidebarSection = (key) => {
@@ -83,7 +98,11 @@ fetchCatalogues();
 return;
 }
 if (key === "verification-calls") {
-openVerificationCalls();
+setAdminView("verification-reports");
+return;
+}
+if (key === "other-reports") {
+setAdminView("other-reports");
 return;
 }
 if (key === "marketers-detail") {
@@ -153,7 +172,8 @@ const adminSidebarItems = [
 { key: "add-marketer", icon: "➕", label: "Add Marketer", active: adminView === "add-marketer" },
 { key: "delete-marketer", icon: "🗑️", label: "Delete Marketer", active: adminView === "delete-marketer" },
 { key: "old-marketers", icon: "🗄️", label: "Old Marketers", active: adminView === "old-marketers" },
-{ key: "verification-calls", icon: "☎️", label: "Verification Calls", active: adminView === "verification-calls" },
+{ key: "verification-calls", icon: "☎️", label: "Verification Calls", active: ["verification-reports", "verification-calls"].includes(adminView) },
+{ key: "other-reports", icon: "📋", label: "Other Reports", active: adminView === "other-reports" || adminView === "custom-report" },
 { key: "media-active", icon: "🖼️", label: "Media", active: adminView === "media" && mediaView === "active" },
 { key: "media-deleted", icon: "♻️", label: "Recently Deleted", active: adminView === "media" && mediaView === "deleted" }
 ];
@@ -209,6 +229,9 @@ onClick={() => openAdminSidebarSection(item.key)}
 )}
           {adminView === "verification-calls" && (
 <AdminVerificationCallsPanel />
+)}
+          {["other-reports", "verification-reports", "custom-report"].includes(adminView) && (
+<AdminOtherReportsPanel mode={adminView === "custom-report" ? customReportOrigin : adminView === "verification-reports" ? "verification" : "other"} reports={customReports} setReports={setCustomReports} selectedId={selectedCustomReportId} setSelectedId={setSelectedCustomReportId} loading={customReportsLoading} loadError={customReportsError} reload={reloadCustomReports} onOrigin={setCustomReportOrigin} />
 )}
           {adminView === "attendance-media" && (
 <AdminAttendanceMediaPanel />

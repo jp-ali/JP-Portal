@@ -594,6 +594,8 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     renderVerificationReportTable,
     renderVisitReportTable,
     reportViewClass,
+    expandedReportKey,
+    setExpandedReportKey,
     reports,
     resetMarketerAssignmentForm,
     restoreMedia,

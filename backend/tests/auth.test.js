@@ -52,6 +52,19 @@ test("invalid admin password is rejected", async () => {
   assert.equal(response.status, 401);
 });
 
+test("custom reports require admin authentication and validate input", async () => {
+  const denied = await fetch(`${baseUrl}/api/custom-reports`);
+  assert.equal(denied.status, 401);
+  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const cookie = `school_visit_session=${token}`;
+  const invalid = await fetch(`${baseUrl}/api/custom-reports`, {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie },
+    body: JSON.stringify({ title: "Example", date: "2026-02-31" })
+  });
+  assert.equal(invalid.status, 400);
+});
+
 test("forwarded local login requests are accepted", async () => {
   const response = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",
@@ -87,9 +100,11 @@ test("missing Firestore credentials return a clear error without stopping the AP
   }
 });
 
-test("signed sessions reject changes and expiry", () => {
+test("signed admin sessions reject changes but do not expire", () => {
   const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET, 1000);
   assert.equal(verifySession(token, process.env.SESSION_SECRET, 2000)?.role, "admin");
   assert.equal(verifySession(`${token}x`, process.env.SESSION_SECRET, 2000), null);
-  assert.equal(verifySession(token, process.env.SESSION_SECRET, 1000 + 8 * 60 * 60 * 1000), null);
+  assert.equal(verifySession(token, process.env.SESSION_SECRET, 1000 + 10 * 365 * 24 * 60 * 60 * 1000)?.role, "admin");
+  const marketerToken = createSession({ sub: "marketer-1", role: "marketer" }, process.env.SESSION_SECRET, 1000);
+  assert.equal(verifySession(marketerToken, process.env.SESSION_SECRET, 1000 + 8 * 60 * 60 * 1000), null);
 });

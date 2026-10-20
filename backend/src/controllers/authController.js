@@ -9,7 +9,7 @@ export async function login(request, response, next) {
     }
     const result = await authenticate(identifier.trim(), password);
     if (!result) return response.status(401).json({ error: "Invalid email/phone or password" });
-    setSessionCookie(response, createSession(result.claims, process.env.SESSION_SECRET));
+    setSessionCookie(response, createSession(result.claims, process.env.SESSION_SECRET), result.claims.role);
     return response.json({ user: result.profile });
   } catch (error) {
     next(error);
