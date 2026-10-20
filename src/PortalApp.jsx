@@ -441,8 +441,8 @@ else if (key === "marketers-detail") {
 const list = selectedMarketerDetailBox ? marketersList.filter((item) => item.id === selectedMarketerDetailBox) : marketersList.filter((item) => { const q = marketerSearch.toLowerCase(); return (item.name && item.name.toLowerCase().includes(q)) || (item.email && item.email.toLowerCase().includes(q)); });
 const selected = list[0];
 const safeName = String(selected?.name || "All_Marketers").replace(/[^a-z0-9_-]+/gi, "_");
-excelAction = () => downloadMarketersExcel(list, selectedMarketerDetailBox ? `${safeName}_Marketer_Details.xlsx` : "All_Marketers_Details.xlsx");
-pdfAction = () => downloadMarketersPDF(list, selectedMarketerDetailBox ? `${safeName}_Marketer_Details` : "All_Marketers_Details");
+excelAction = () => downloadMarketersExcel(list, selectedMarketerDetailBox ? `${safeName}_Marketer_Details.xlsx` : "All_Marketers_Details.xlsx", citiesList);
+pdfAction = () => downloadMarketersPDF(list, selectedMarketerDetailBox ? `${safeName}_Marketer_Details` : "All_Marketers_Details", citiesList);
 }
 else if (key === "marketer-samples") {
 const list = marketerSamples.filter((item) => { if (sampleHistorySearch && !String(item.schoolName || "").toLowerCase().includes(sampleHistorySearch.toLowerCase())) return false; return !!item.createdAt && isDateInRange(item.createdAt, sampleHistoryFromDate, sampleHistoryToDate); });

@@ -1,5 +1,6 @@
 import { mergedReportSheet } from "./mergedReportSheet.js";
 import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill } from "./pdfTheme.js";
+import { marketerCityNames } from "../domain/marketerCities.js";
 
 export function createReportExporters({ formatTime12, getMarketerName }) {
 const downloadExcel = (dataList, filename = "Report.xlsx") => {
@@ -319,7 +320,7 @@ if (!sample) return;
 const safeName = String(sample.schoolName || "Sample").replace(/[^a-z0-9_-]+/gi, "_");
 downloadExcel([sample], `Sample_${safeName}.xlsx`);
 };
-const downloadMarketersExcel = (dataList, filename = "Marketer_Details.xlsx") => {
+const downloadMarketersExcel = (dataList, filename = "Marketer_Details.xlsx", citiesList = []) => {
 const rows = Array.isArray(dataList) ? dataList : [];
 if (!rows.length) {
 alert("No marketer details found to download.");
@@ -334,6 +335,7 @@ const formattedData = rows.map((m, idx) => ({
 "Name": m.name || "N/A",
 "Phone": m.phone || "N/A",
 "Email": m.email || "N/A",
+"City": marketerCityNames(m, citiesList),
 "Designation": m.designation || "Regional Manager",
 "Assigned KMs / Litre": m.assignedKms || "N/A"
 }));
@@ -343,6 +345,7 @@ worksheet["!cols"] = [
 { wch: 28 },
 { wch: 18 },
 { wch: 34 },
+{ wch: 30 },
 { wch: 28 },
 { wch: 22 }
 ];
@@ -350,7 +353,7 @@ const workbook = window.XLSX.utils.book_new();
 window.XLSX.utils.book_append_sheet(workbook, worksheet, "Marketer Details");
 window.XLSX.writeFile(workbook, filename);
 };
-const downloadMarketersPDF = (dataList, filenameBase = "Marketer_Details_Report") => {
+const downloadMarketersPDF = (dataList, filenameBase = "Marketer_Details_Report", citiesList = []) => {
 const rows = Array.isArray(dataList) ? dataList : [];
 if (!rows.length) {
 alert("No marketer details found to download.");
@@ -367,12 +370,13 @@ const RIGHT = 290;
 const TABLE_TOP = 38;
 const CONTENT_BOTTOM = 193;
 const columns = [
-["Sr.", 10],
-["Name", 64],
-["Phone", 30],
-["Email", 89],
-["Designation", 50],
-["Assigned KMs/L", 40]
+["Sr.", 9],
+["Name", 49],
+["Phone", 28],
+["Email", 52],
+["City", 50],
+["Designation", 49],
+["Assigned KMs/L", 46]
 ];
 const esc = (v) => ascii(v).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 const textWidth = (txt, size) => ascii(txt).length * size * 0.50;
@@ -435,11 +439,12 @@ const values = [
 m.name || "N/A",
 m.phone || "N/A",
 m.email || "N/A",
+marketerCityNames(m, citiesList),
 m.designation || "Regional Manager",
 m.assignedKms || "N/A"
 ];
-const widths = [64, 30, 89, 50, 40];
-const sizes = [6.2, 6.1, 6.0, 6.1, 6.1];
+const widths = [49, 28, 52, 50, 49, 46];
+const sizes = [6.2, 6.1, 6.0, 6.0, 6.1, 6.1];
 const counts = values.map((v, i) => wrapText(v, widths[i] * MM - 4 * MM, sizes[i]).length);
 return Math.min(22, Math.max(9, 3.0 + Math.max(...counts) * 3.2));
 };
@@ -474,12 +479,13 @@ pages.push(page);
 }
 const fill = index % 2 === 1 ? [0.995, 0.995, 0.995] : null;
 let x = LEFT;
-drawCell(x, page.y, 10, h, index + 1, "center", false, 6.0, fill); x += 10;
-drawCell(x, page.y, 64, h, m.name || "N/A", "left", true, 6.2, fill); x += 64;
-drawCell(x, page.y, 30, h, m.phone || "N/A", "left", false, 6.1, fill); x += 30;
-drawCell(x, page.y, 89, h, m.email || "N/A", "left", false, 6.0, fill); x += 89;
-drawCell(x, page.y, 50, h, m.designation || "Regional Manager", "left", false, 6.1, fill); x += 50;
-drawCell(x, page.y, 40, h, m.assignedKms || "N/A", "center", false, 6.1, fill);
+drawCell(x, page.y, 9, h, index + 1, "center", false, 6.0, fill); x += 9;
+drawCell(x, page.y, 49, h, m.name || "N/A", "left", true, 6.2, fill); x += 49;
+drawCell(x, page.y, 28, h, m.phone || "N/A", "left", false, 6.1, fill); x += 28;
+drawCell(x, page.y, 52, h, m.email || "N/A", "left", false, 6.0, fill); x += 52;
+drawCell(x, page.y, 50, h, marketerCityNames(m, citiesList), "left", false, 6.0, fill); x += 50;
+drawCell(x, page.y, 49, h, m.designation || "Regional Manager", "left", false, 6.1, fill); x += 49;
+drawCell(x, page.y, 46, h, m.assignedKms || "N/A", "center", false, 6.1, fill);
 page.y += h;
 });
 pages.forEach((pg, idx) => {

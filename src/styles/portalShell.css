@@ -58,6 +58,9 @@
 .portal-dashboard-hero-note { position:absolute; z-index:2; right:19px; top:33px; color:#4c1630; font-family:Georgia,serif; font-size:12px; font-style:italic; line-height:1.2; text-align:center; transform:rotate(-8deg); }
 .portal-dashboard-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; }
 .portal-stat { position:relative; display:flex; align-items:center; gap:10px; min-width:0; min-height:69px; padding:10px 12px; border:1px solid #e4c9d2; border-radius:10px; background:#fff; box-shadow:0 5px 13px rgba(87,19,43,.12); }
+.portal-stat-link { width:100%; font:inherit; text-align:left; cursor:pointer; transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease; }
+.portal-stat-link:hover { transform:translateY(-3px); border-color:#bc8095; box-shadow:0 8px 17px rgba(87,19,43,.18); }
+.portal-stat-link:focus-visible { outline:2px solid #a32852; outline-offset:2px; }
 .portal-stat-icon { display:grid; place-items:center; width:45px; height:45px; flex:0 0 45px; border-radius:50%; font-size:22px; font-weight:800; }
 .portal-stat-icon.rose,.portal-dashboard-link-icon.rose { color:#a20d43; background:#f9e3eb; }.portal-stat-icon.mint,.portal-dashboard-link-icon.mint { color:#079866; background:#def7ed; }.portal-stat-icon.pink,.portal-dashboard-link-icon.pink { color:#a31d4a; background:#fce9e8; }.portal-stat-icon.amber,.portal-dashboard-link-icon.amber { color:#e99400; background:#fff2db; }.portal-dashboard-link-icon.violet { color:#8255bd; background:#f0e8fc; }
 .portal-stat div { display:grid; gap:2px; min-width:0; }
@@ -79,10 +82,10 @@
 .portal-dashboard-link strong { max-width:100%; overflow:hidden; color:#322033; font-size:9.5px; line-height:1.15; text-overflow:ellipsis; }
 .portal-dashboard-link small { max-width:92%; margin-top:4px; color:#8d8085; font-size:8px; line-height:1.25; }
 .portal-dashboard-link-arrow { position:absolute; right:5px; bottom:5px; display:grid; place-items:center; width:15px; height:15px; border-radius:50%; color:#ae315a; background:#fbe4ec; font-size:15px; line-height:1; }
-.portal-imprints { display:flex; align-items:center; gap:18px; min-height:50px; margin-top:2px; padding:7px 18px; border-radius:9px; background:linear-gradient(105deg,#f5cad7,#fff3f6 30%,#f8d9e2 100%); }
-.portal-imprints-title { color:#8c3150; font-size:10px; font-weight:800; letter-spacing:.08em; white-space:nowrap; }
-.portal-imprints > div { display:flex; align-items:center; justify-content:space-around; gap:12px; width:100%; }
-.portal-imprints strong { font-size:13px; letter-spacing:-.04em; }.portal-imprints strong:nth-child(1){color:#ef3340}.portal-imprints strong:nth-child(2){color:#269b6c}.portal-imprints strong:nth-child(3){color:#e9a000}.portal-imprints strong:nth-child(4){color:#a0224c}.portal-imprints strong:nth-child(5){color:#168b60}
+.portal-imprints { display:block; min-height:50px; margin-top:2px; padding:10px; border-radius:9px; background:linear-gradient(105deg,#f5cad7,#fff3f6 30%,#f8d9e2 100%); }
+.portal-imprints-title { display:none; }
+.portal-imprints > div { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px; width:100%; }
+.portal-imprints strong { position:relative; min-width:90px; padding:8px 8px 8px 14px; border:1px solid #d9aebd; border-left:5px double #c49b58; border-radius:5px 9px 9px 5px; background:linear-gradient(160deg,#fff8f8,#f7d4df); box-shadow:2px 3px 5px rgba(85,25,44,.14); font-size:11px; letter-spacing:-.04em; text-align:center; }.portal-imprints strong:nth-child(1){color:#ef3340}.portal-imprints strong:nth-child(2){color:#269b6c;background:linear-gradient(160deg,#f3fff9,#d4f1e1)}.portal-imprints strong:nth-child(3){color:#e9a000;background:linear-gradient(160deg,#fffaf0,#ffe9bd)}.portal-imprints strong:nth-child(4){color:#a0224c;background:linear-gradient(160deg,#fff5f7,#f7c7d4)}.portal-imprints strong:nth-child(5){color:#168b60;background:linear-gradient(160deg,#effff8,#d4f1e5)}
 .marketer-detail-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(185px,1fr)); gap:12px; }
 .marketer-detail-card { display:flex; flex-direction:column; align-items:flex-start; min-width:0; min-height:98px; padding:12px 13px; border:1px solid #6f2338; border-radius:11px; background:#fff; box-shadow:0 3px 7px rgba(63,20,36,.16); text-align:left; cursor:pointer; transition:transform .18s ease,box-shadow .18s ease; }
 .marketer-detail-card:hover { transform:translateY(-2px); box-shadow:0 6px 12px rgba(63,20,36,.2); }

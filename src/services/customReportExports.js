@@ -79,8 +79,8 @@ export async function exportCustomReportPDF(report, rows, marketers = []) {
     margin: { left: 22, right: 22, top: 30, bottom: 42 },
     didDrawPage: ({ pageNumber }) => {
       const bottom = pdf.internal.pageSize.getHeight();
-      pdf.setFillColor(252, 247, 248); pdf.rect(0, bottom - 31, width, 31, "F");
-      pdf.setFontSize(8); pdf.setTextColor(122, 15, 43);
+      pdf.setFillColor(122, 15, 43); pdf.rect(0, bottom - 31, width, 31, "F");
+      pdf.setFontSize(8); pdf.setTextColor(255, 255, 255);
       pdf.text("Created by Ali Ashfaq", width / 2, bottom - 18, { align: "center" });
       pdf.text(`Page ${pageNumber}`, width - 24, bottom - 18, { align: "right" });
     }

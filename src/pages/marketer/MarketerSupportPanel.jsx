@@ -9,8 +9,8 @@ export default function MarketerSupportPanel() {
               <h3 style={{ marginTop: 0, color: "#3b2329", fontSize: "18px", marginBottom: "6px" }}>🎧 Customer Support / Help Center</h3>
               <p style={{ color: "#78686d", fontSize: "13px", marginBottom: "20px" }}>You can contact for assistance using any of the options below:</p>
               <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "14px" }}>
-                <a href="tel:+923068482000" style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.96)", padding: "16px", borderRadius: "14px", border: "1px solid rgba(239,68,68,.35)", textDecoration: "none", color: "#3b2329" }}>
-                  <div style={{ fontSize: "28px", background: "#ef4444", padding: "10px 14px", borderRadius: "10px" }}>📞</div>
+                <a href="tel:+923068482000" style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.96)", padding: "16px", borderRadius: "14px", border: "1px solid rgba(127,16,43,.24)", textDecoration: "none", color: "#3b2329" }}>
+                  <div style={{ fontSize: "28px", background: "#8c1733", padding: "10px 14px", borderRadius: "10px" }}>📞</div>
                   <div><h4 style={{ margin: "0 0 4px 0", fontSize: "16px" }}>Direct Call</h4><p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Call admin directly on SIM</p></div>
                 </a>
                 <a 

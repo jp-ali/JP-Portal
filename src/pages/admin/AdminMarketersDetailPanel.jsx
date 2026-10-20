@@ -1,8 +1,9 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import { marketerCityNames } from "../../domain/marketerCities.js";
 
 export default function AdminMarketersDetailPanel() {
-  const { cardStyle, downloadMarketersExcel, downloadMarketersPDF, handleEditMarketer, inputStyle, marketerSearch, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, reportViewClass, selectedMarketerDetailBox, setAdminView, setMarketerSearch, setSelectedMarketerDetailBox, setSubordinatePickerOpen } = usePortalContext();
+  const { cardStyle, citiesList, downloadMarketersExcel, downloadMarketersPDF, handleEditMarketer, inputStyle, marketerSearch, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, reportViewClass, selectedMarketerDetailBox, setAdminView, setMarketerSearch, setSelectedMarketerDetailBox, setSubordinatePickerOpen } = usePortalContext();
   return (<div className={reportViewClass("marketers-detail")}>
               {renderExpandedReportChrome("marketers-detail")}
               <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", marginBottom: "14px", flexWrap: "wrap" }}>
@@ -29,7 +30,7 @@ return (m.name && m.name.toLowerCase().includes(q)) || (m.email && m.email.toLow
 });
 const selected = visible[0];
 const safeName = String(selected?.name || "All_Marketers").replace(/[^a-z0-9_-]+/gi, "_");
-downloadMarketersExcel(visible, selectedMarketerDetailBox ? `${safeName}_Marketer_Details.xlsx` : "All_Marketers_Details.xlsx");
+downloadMarketersExcel(visible, selectedMarketerDetailBox ? `${safeName}_Marketer_Details.xlsx` : "All_Marketers_Details.xlsx", citiesList);
 }}
 style={{ padding: "6px 12px", background: "#15803d", color: "white", border: "none", borderRadius: "8px", fontWeight: "600", fontSize: "12px", cursor: "pointer" }}
 >
@@ -45,7 +46,7 @@ return (m.name && m.name.toLowerCase().includes(q)) || (m.email && m.email.toLow
 });
 const selected = visible[0];
 const safeName = String(selected?.name || "All_Marketers").replace(/[^a-z0-9_-]+/gi, "_");
-downloadMarketersPDF(visible, selectedMarketerDetailBox ? `${safeName}_Marketer_Details` : "All_Marketers_Details");
+downloadMarketersPDF(visible, selectedMarketerDetailBox ? `${safeName}_Marketer_Details` : "All_Marketers_Details", citiesList);
 }}
 style={{ padding: "6px 12px", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "white", border: "none", borderRadius: "8px", fontWeight: "600", fontSize: "12px", cursor: "pointer" }}
 >
@@ -98,6 +99,7 @@ return (
                           <p style={{ margin: "6px 0", color: "#3b2329" }}><strong>Name:</strong> {m.name}</p>
                           <p style={{ margin: "6px 0", color: "#5c484e" }}><strong>Phone:</strong> {m.phone || "N/A"}</p>
                           <p style={{ margin: "6px 0", color: "#5c484e" }}><strong>Email:</strong> {m.email || "N/A"}</p>
+                          <p style={{ margin: "6px 0", color: "#5c484e" }}><strong>City:</strong> {marketerCityNames(m, citiesList)}</p>
                           <div style={{ margin:"6px 0", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"8px", flexWrap:"wrap" }}>
                             <p style={{ margin:0, color:"#5c484e" }}><strong>Designation:</strong> {m.designation || "Regional Manager"}</p>
                             <button type="button" onClick={async()=>{ await handleEditMarketer(m); setSubordinatePickerOpen(true); }} style={{ padding:"6px 9px", background:"#fff", color:"#7a0f2b", border:"1px solid #ddcbd0", borderRadius:"8px", fontSize:"10.5px", fontWeight:800, cursor:"pointer" }}>+ Add Marketer</button>
