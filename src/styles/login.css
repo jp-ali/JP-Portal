@@ -26,5 +26,5 @@ html,body,#root { margin:0; min-height:100%; }
 .login-error { margin:0; color:#cc294b; font-size:12px; font-weight:700; line-height:1.4; text-align:center; }
 .login-credit { margin:0; color:#8f7e84; font-size:12px; font-weight:600; }
 @media(max-width:950px) { .login-screen { grid-template-columns:50% 50%; }.login-form-panel { padding:25px; } }
-@media(max-width:700px) { .login-screen { grid-template-columns:1fr; min-height:100dvh; overflow:visible; }.login-art-panel { min-height:0; height:min(85vw,450px); }.login-reference-art { min-height:0; height:100%; }.login-form-panel { justify-content:flex-start; gap:23px; padding:18px 15px 26px; }.login-card { max-width:420px; padding:13px; }.login-brand { min-height:115px; margin-bottom:19px; }.login-card form { gap:16px; } }
+@media(max-width:767px) { .login-screen { grid-template-columns:1fr; min-height:100dvh; overflow:visible; }.login-art-panel { display:none; }.login-form-panel { min-height:100dvh; justify-content:center; gap:23px; padding:24px 15px; }.login-card { max-width:420px; padding:13px; }.login-brand { min-height:115px; margin-bottom:19px; }.login-card form { gap:16px; } }
 @media(prefers-reduced-motion:reduce) { .login-input-wrap input,.login-submit { transition:none; } }

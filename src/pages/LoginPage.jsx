@@ -17,7 +17,7 @@ export default function LoginPage({ context }) {
   return <div className="login-screen">
     <style>{loginCss}</style>
     <section className="login-art-panel" aria-label="Javed Publishers">
-      <img className="login-reference-art" src={loginReferencePanel} alt="Knowledge Today, A Brighter Tomorrow — Javed Publishers imprints and books" />
+      <img className="login-reference-art" src={loginReferencePanel} alt="Knowledge Today, A Brighter Tomorrow — Javed Publishers imprints and books" loading="lazy" decoding="async" />
     </section>
     <main className="login-form-panel">
       <div className="login-card">
