@@ -1,77 +1,38 @@
 import React, { useEffect } from "react";
+import loginBooks from "../assets/login-books.webp";
+import loginCss from "../styles/login.css?raw";
+
+function PersonIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4.5 21c.3-4.5 3.2-7 7.5-7s7.2 2.5 7.5 7H4.5Z" fill="currentColor"/></svg>;
+}
+
+function EyeIcon({ visible }) {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-5 9.5-5 9.5 5 9.5 5-3.5 5-9.5 5-9.5-5-9.5-5Z" fill="none" stroke="currentColor" strokeWidth="1.7"/><circle cx="12" cy="12" r="2.4" fill="none" stroke="currentColor" strokeWidth="1.7"/>{visible && <path d="M4 20 20 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>}</svg>;
+}
 
 export default function LoginPage({ context }) {
-  const { btnPrimary, cardStyle, containerStyle, error, footerStyle, globalStyle, handleLogin, identifier, inputStyle, loginPending, password, preloadPortal, renderBackgroundStationary, renderResponsiveStyles, setIdentifier, setPassword, setShowPassword, showPassword } = context;
+  const { error, handleLogin, identifier, loginPending, password, preloadPortal, setIdentifier, setPassword, setShowPassword, showPassword } = context;
   useEffect(() => { preloadPortal().catch(() => {}); }, [preloadPortal]);
 
-return (
-<div style={globalStyle}>
-        {renderResponsiveStyles()}
-        {renderBackgroundStationary()}
-        <style>{`
-          input:focus { border-color: #8c1733 !important; box-shadow: 0 0 0 3px rgba(127,16,43,.20); }
-          button:hover { transform: translateY(-2px); }
-          button:active { transform: translateY(0); }
-        `}</style>
-        <div style={{ ...containerStyle, maxWidth: "420px", margin: "auto" }}>
-          <div style={{ ...cardStyle, background: "rgba(255,255,255,0.98)", border: "1px solid rgba(127,16,43,.24)" }}>
-            <div style={{ textAlign: "center", marginBottom: "24px", background: "linear-gradient(135deg, #650b20 0%, #86172f 100%)", padding: "16px", borderRadius: "14px", border: "1px solid rgba(99,102,241,0.3)" }}>
-              <div style={{ fontFamily: "'Jameel Noori Nastaleeq', 'Amiri', serif", fontSize: "22px", color: "#ffffff", marginBottom: "4px" }}>
-                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-              </div>
-              <h2 style={{ 
-margin: 0, 
-fontSize: "22px", 
-fontWeight: "900", 
-letterSpacing: "1.5px",
-color: "#ffffff",
-textTransform: "uppercase"
-}}>
-                Javed Publishers
-              </h2>
-              <p style={{ color: "#ffffff", fontSize: "12px", margin: "4px 0 0 0", fontWeight: "600" }}>School Visit Portal</p>
-            </div>
-            <form onSubmit={handleLogin} onFocusCapture={() => { preloadPortal().catch(() => {}); }} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#5c484e", marginBottom: "6px" }}>Email or Phone Number</label>
-                <input 
-type="text" 
-placeholder="name@example.com or phone" 
-value={identifier} 
-onChange={(e) => setIdentifier(e.target.value)} 
-required 
-style={inputStyle}
-/>
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#5c484e", marginBottom: "6px" }}>Password</label>
-                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                  <input 
-type={showPassword ? "text" : "password"} 
-placeholder="••••••••" 
-value={password} 
-onChange={(e) => setPassword(e.target.value)} 
-required 
-style={{ ...inputStyle, paddingRight: "45px" }}
-/>
-                  <button 
-type="button" 
-onClick={() => setShowPassword(!showPassword)}
-style={{ position: "absolute", right: "12px", background: "none", border: "none", cursor: "pointer", fontSize: "18px", color: "#78686d", padding: "4px" }}
->
-                    {showPassword ? "👁️‍🗨" : "👁"}
-                  </button>
-                </div>
-              </div>
-              <button type="submit" disabled={loginPending} style={{ ...btnPrimary, marginTop: "6px", opacity: loginPending ? 0.7 : 1 }}>
-                {loginPending ? "Signing In..." : "Sign In"}
-              </button>
-              {error && <p style={{ color: "#f43f5e", textAlign: "center", fontWeight: "600", fontSize: "14px", margin: "4px 0 0 0" }}>{error}</p>}
-            </form>
-          </div>
-        </div>
-        <div style={footerStyle}>Created by Ali Ashfaq</div>
+  return <div className="login-screen">
+    <style>{loginCss}</style>
+    <section className="login-art-panel" aria-label="Javed Publishers">
+      <div className="login-art-wave" aria-hidden="true" />
+      <div className="login-motto"><span>Knowledge</span><em>Today</em><span>A Brighter</span><em>Tomorrow</em><i aria-hidden="true" /></div>
+      <div className="login-imprints" aria-label="Our imprints"><span className="maxford">maxford <b>📚</b></span><span className="vintage">vintage <b>📕</b></span><span className="canon">canon <b>✏️</b></span><span className="marshall">Marshall <b>📖</b></span><span className="stemford">stemford <b>📐</b></span></div>
+      <img className="login-books" src={loginBooks} alt="" />
+    </section>
+    <main className="login-form-panel">
+      <div className="login-card">
+        <div className="login-brand"><div className="login-bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><h1>JAVED PUBLISHERS</h1><p>School Visit Portal</p></div>
+        <form onSubmit={handleLogin} onFocusCapture={() => { preloadPortal().catch(() => {}); }}>
+          <div className="login-field"><label htmlFor="login-identifier">Email or Phone Number</label><div className="login-input-wrap"><input id="login-identifier" type="text" autoComplete="username" placeholder="admin@portal.com" value={identifier} onChange={(event) => setIdentifier(event.target.value)} required /><span className="login-input-icon"><PersonIcon /></span></div></div>
+          <div className="login-field"><label htmlFor="login-password">Password</label><div className="login-input-wrap"><input id="login-password" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Enter your password" value={password} onChange={(event) => setPassword(event.target.value)} required /><button className="login-eye" type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"}><EyeIcon visible={showPassword} /></button></div></div>
+          <button className="login-submit" type="submit" disabled={loginPending}>{loginPending ? "Signing In..." : "Sign In"}</button>
+          {error && <p className="login-error" role="alert">{error}</p>}
+        </form>
       </div>
-);
-
+      <p className="login-credit">Created by Ali Ashfaq</p>
+    </main>
+  </div>;
 }
