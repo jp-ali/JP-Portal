@@ -17,6 +17,8 @@ This repository is in an incremental React + Express refactor. The Vite frontend
 
 ## Development
 
+On Windows, double-click `start-local.cmd` to start both the frontend and API in the background, then open `http://localhost:5173/`. Run it again after restarting the laptop. It leaves already-running servers alone and writes startup logs under `%TEMP%\jp-portal-local`.
+
 Requirements: Node.js 20 or later and npm.
 
 Frontend, from this directory:
