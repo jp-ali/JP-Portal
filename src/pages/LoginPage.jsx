@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import loginBooks from "../assets/login-books-branded.webp";
+import loginReferencePanel from "../assets/login-reference-panel.webp";
 import loginCss from "../styles/login.css?raw";
 
 function PersonIcon() {
@@ -17,10 +17,7 @@ export default function LoginPage({ context }) {
   return <div className="login-screen">
     <style>{loginCss}</style>
     <section className="login-art-panel" aria-label="Javed Publishers">
-      <div className="login-art-wave" aria-hidden="true" />
-      <div className="login-motto"><span>Knowledge</span><em>Today</em><span>A Brighter</span><em>Tomorrow</em><i aria-hidden="true" /></div>
-      <div className="login-imprints" aria-label="Our imprints"><span className="maxford">maxford <b>📚</b></span><span className="vintage">vintage <b>📕</b></span><span className="canon">canon <b>✏️</b></span><span className="marshall">Marshall <b>📖</b></span><span className="stemford">stemford <b>📐</b></span></div>
-      <div className="login-books-scene" aria-hidden="true"><img className="login-books" src={loginBooks} alt="" /></div>
+      <img className="login-reference-art" src={loginReferencePanel} alt="Knowledge Today, A Brighter Tomorrow — Javed Publishers imprints and books" />
     </section>
     <main className="login-form-panel">
       <div className="login-card">

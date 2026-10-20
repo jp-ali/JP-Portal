@@ -2,22 +2,8 @@
 html,body,#root { margin:0; min-height:100%; }
 .login-screen { display:grid; grid-template-columns:54% 46%; min-height:100dvh; overflow:hidden; background:#fffafa; color:#412832; font-family:Inter,'Segoe UI',Arial,sans-serif; }
 .login-screen * { box-sizing:border-box; }
-.login-art-panel { position:relative; isolation:isolate; min-height:100dvh; overflow:hidden; background:radial-gradient(circle at 66% 40%,#fff 0%,#fff8f8 47%,#f9d9e1 100%); }
-.login-art-panel::before { content:""; position:absolute; z-index:-1; left:-26%; top:-69%; width:160%; height:100%; border-radius:50%; background:linear-gradient(120deg,#770b2c,#ad224a 55%,#f393aa); box-shadow:0 24px 0 #f1a8b9,0 48px 0 #f9d4dd; transform:rotate(-9deg); }
-.login-art-panel::after { content:""; position:absolute; z-index:1; right:-35%; top:-19%; width:54%; height:145%; border-left:3px solid #f1a5b9; border-radius:50%; background:#fffafa; transform:rotate(7deg); pointer-events:none; }
-.login-art-wave { position:absolute; z-index:0; left:-15%; right:0; bottom:-20%; height:43%; border-radius:50% 50% 0 0; background:linear-gradient(140deg,#790b2d,#e36888 58%,#f7b4c5); transform:rotate(8deg); }
-.login-motto { position:absolute; z-index:3; left:15%; top:15%; display:flex; flex-direction:column; align-items:flex-start; color:#740923; font-family:'Brush Script MT','Segoe Script',Georgia,cursive; font-style:italic; line-height:.93; transform:rotate(-7deg); text-shadow:0 2px 0 rgba(255,255,255,.4); }
-.login-motto span { font-size:clamp(34px,5vw,67px); font-weight:700; letter-spacing:-.055em; white-space:nowrap; }
-.login-motto em { align-self:center; color:#1d1517; font-size:clamp(29px,3.6vw,49px); font-weight:700; }
-.login-motto i { display:block; align-self:center; width:98px; height:9px; margin-top:8px; border-top:4px solid #ab1740; border-radius:50%; transform:rotate(-6deg); }
-.login-imprints { position:absolute; z-index:3; top:7%; left:57%; display:grid; gap:11px; transform:rotate(-7deg); }
-.login-imprints span { position:relative; isolation:isolate; display:flex; align-items:center; gap:8px; width:max-content; padding:2px 11px 3px; font-size:clamp(16px,2.6vw,31px); font-weight:900; line-height:1.25; text-shadow:0 1px #fff; }
-.login-imprints span::before { content:""; position:absolute; z-index:-1; inset:0 -5px; background:var(--wash); clip-path:polygon(2% 29%,13% 6%,45% 12%,63% 0,84% 12%,100% 6%,96% 70%,81% 83%,56% 80%,33% 100%,4% 88%); transform:rotate(-2deg) skewX(-7deg); }
-.login-imprints span:nth-child(2) { margin-left:13px; }.login-imprints span:nth-child(3) { margin-left:25px; }.login-imprints span:nth-child(4) { margin-left:7px; }.login-imprints span:nth-child(5) { margin-left:34px; }
-.login-imprints b { font-size:.8em; font-weight:400; }
-.login-imprints .maxford { color:#e52e56; --wash:#ffe8ef; }.login-imprints .vintage { color:#21a965; --wash:#e8f8ef; }.login-imprints .canon { color:#f5a800; --wash:#fff3d9; }.login-imprints .marshall { color:#d72e58; --wash:#ffe5ed; }.login-imprints .stemford { color:#159e71; --wash:#e2f8eb; }
-.login-books-scene { position:absolute; z-index:2; bottom:-5%; left:-2%; width:90%; aspect-ratio:3/2; mask-image:linear-gradient(to bottom,transparent,black 18%); }
-.login-books { display:block; width:100%; height:100%; object-fit:contain; }
+.login-art-panel { min-height:100dvh; overflow:hidden; background:#fae9e9; }
+.login-reference-art { display:block; width:100%; height:100%; min-height:100dvh; object-fit:cover; object-position:center; }
 .login-form-panel { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:40px; min-width:0; padding:35px clamp(22px,6vw,85px); background:#fffafa; }
 .login-card { width:min(100%,450px); padding:19px; border:1px solid #edd9df; border-radius:20px; background:#fff; box-shadow:0 11px 28px rgba(92,31,50,.1); }
 .login-brand { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:124px; margin-bottom:25px; padding:15px 10px; border-radius:13px; background:linear-gradient(120deg,#790a29,#a41641); color:#fff; text-align:center; }
@@ -39,7 +25,6 @@ html,body,#root { margin:0; min-height:100%; }
 .login-submit:disabled { opacity:.66; cursor:wait; }
 .login-error { margin:0; color:#cc294b; font-size:12px; font-weight:700; line-height:1.4; text-align:center; }
 .login-credit { margin:0; color:#8f7e84; font-size:12px; font-weight:600; }
-@media(max-width:950px) { .login-screen { grid-template-columns:50% 50%; }.login-motto { left:10%; top:18%; }.login-imprints { left:55%; gap:9px; }.login-form-panel { padding:25px; } }
-@media(max-width:700px) { .login-screen { grid-template-columns:1fr; min-height:100dvh; overflow:visible; }.login-art-panel { min-height:215px; height:215px; }.login-art-panel::before { top:-170%; }.login-art-panel::after { display:none; }.login-art-wave { bottom:-70%; }.login-motto { left:6%; top:25%; }.login-motto span { font-size:32px; }.login-motto em { font-size:25px; }.login-motto i { width:65px; }.login-imprints { display:none; }.login-books-scene { bottom:0; left:23%; width:78%; }.login-books { clip-path:inset(0 0 0 22%); }.login-form-panel { justify-content:flex-start; gap:23px; padding:18px 15px 26px; }.login-card { max-width:420px; padding:13px; }.login-brand { min-height:115px; margin-bottom:19px; }.login-card form { gap:16px; } }
-@media(max-width:390px) { .login-motto span { font-size:27px; }.login-motto em { font-size:22px; } }
+@media(max-width:950px) { .login-screen { grid-template-columns:50% 50%; }.login-form-panel { padding:25px; } }
+@media(max-width:700px) { .login-screen { grid-template-columns:1fr; min-height:100dvh; overflow:visible; }.login-art-panel { min-height:0; height:min(85vw,450px); }.login-reference-art { min-height:0; height:100%; }.login-form-panel { justify-content:flex-start; gap:23px; padding:18px 15px 26px; }.login-card { max-width:420px; padding:13px; }.login-brand { min-height:115px; margin-bottom:19px; }.login-card form { gap:16px; } }
 @media(prefers-reduced-motion:reduce) { .login-input-wrap input,.login-submit { transition:none; } }
