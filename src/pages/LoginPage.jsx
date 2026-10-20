@@ -20,7 +20,7 @@ export default function LoginPage({ context }) {
       <div className="login-art-wave" aria-hidden="true" />
       <div className="login-motto"><span>Knowledge</span><em>Today</em><span>A Brighter</span><em>Tomorrow</em><i aria-hidden="true" /></div>
       <div className="login-imprints" aria-label="Our imprints"><span className="maxford">maxford <b>📚</b></span><span className="vintage">vintage <b>📕</b></span><span className="canon">canon <b>✏️</b></span><span className="marshall">Marshall <b>📖</b></span><span className="stemford">stemford <b>📐</b></span></div>
-      <img className="login-books" src={loginBooks} alt="" />
+      <div className="login-books-scene" aria-hidden="true"><img className="login-books" src={loginBooks} alt="" /><span className="login-book-name maxford">maxford</span><span className="login-book-name vintage">vintage</span><span className="login-book-name canon">canon</span><span className="login-book-name marshall">Marshall</span><span className="login-book-name stemford">stemford</span></div>
     </section>
     <main className="login-form-panel">
       <div className="login-card">
