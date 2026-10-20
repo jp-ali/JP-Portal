@@ -23,6 +23,7 @@ export default function MarketerMultiSelect({ marketers, selected, onChange, inp
             <span>{m.name || m.email || "Marketer"}</span>
           </label>;
         })}
+        {!choices.length && <p style={{ margin: "8px", color: "#78686d", fontSize: "11px" }}>No marketers available.</p>}
       </div>}
     </div>
   );

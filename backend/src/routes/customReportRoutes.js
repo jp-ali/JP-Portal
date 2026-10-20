@@ -59,7 +59,34 @@ function rowValue(value, column, fallbackDate) {
 customReportRoutes.get("/", async (_request, response, next) => {
   try {
     const snapshot = await collection().orderBy("createdAt", "asc").get();
-    response.json({ reports: snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) });
+    response.json({ reports: snapshot.docs.filter((doc) => !doc.data().deletedAt).map((doc) => ({ id: doc.id, ...doc.data() })) });
+  } catch (error) { next(error); }
+});
+
+customReportRoutes.get("/deleted", async (_request, response, next) => {
+  try {
+    const snapshot = await collection().orderBy("createdAt", "asc").get();
+    response.json({ reports: snapshot.docs.filter((doc) => !!doc.data().deletedAt).map((doc) => ({ id: doc.id, ...doc.data() })) });
+  } catch (error) { next(error); }
+});
+
+customReportRoutes.delete("/:id", async (request, response, next) => {
+  try {
+    const ref = collection().doc(request.params.id);
+    const snapshot = await ref.get();
+    if (!snapshot.exists) return response.status(404).json({ error: "Report not found" });
+    await ref.update({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    response.status(204).end();
+  } catch (error) { next(error); }
+});
+
+customReportRoutes.post("/:id/restore", async (request, response, next) => {
+  try {
+    const ref = collection().doc(request.params.id);
+    const snapshot = await ref.get();
+    if (!snapshot.exists) return response.status(404).json({ error: "Report not found" });
+    await ref.update({ deletedAt: FieldValue.delete(), updatedAt: new Date().toISOString() });
+    response.json({ restored: true });
   } catch (error) { next(error); }
 });
 

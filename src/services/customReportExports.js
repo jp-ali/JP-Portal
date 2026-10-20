@@ -4,7 +4,7 @@ const filename = (title) => String(title || "Custom_Report").replace(/[^a-z0-9_-
 const downloadDate = () => new Date().toLocaleDateString("en-GB");
 const display = (row, column, report, marketers) => {
   const value = rowValue(row, column, report);
-  return column.type === "marketer" ? marketers.find((item) => item.id === value)?.name || value : value;
+  return column.type === "marketer" ? marketers.find((item) => [item.id, item.email, item.name].some((identity) => identity && String(identity).toLowerCase() === String(value).toLowerCase()))?.name || value : value;
 };
 const dateGroups = (rows, report) => {
   const groups = [];

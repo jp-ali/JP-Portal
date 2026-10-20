@@ -39,15 +39,15 @@
 .other-report-table-wrap { max-height:65vh; overflow:auto; border:1px solid #dccbd0; border-radius:10px; }
 .other-report-table { width:100%; min-width:790px; border-collapse:separate; border-spacing:0; font-size:12px; }
 .other-report-table th, .other-report-table td { border-right:1px solid #dfd3d6; border-bottom:1px solid #dfd3d6; padding:6px; vertical-align:top; }
-.other-report-table thead th { position:sticky; top:0; z-index:2; background:#f2e7ea; color:#6f0b24; text-align:left; padding:12px 8px; }
+.other-report-table thead th { position:sticky; top:0; z-index:2; background:#7a0f2b; color:#fff; text-align:left; padding:12px 8px; }
 .other-report-table thead .other-report-merged th { top:0; background:#7a0f2b; color:white; }
-.other-report-table thead tr:nth-child(2) th { top:39px; }
+.other-report-table thead tr:nth-child(2) th { top:0; }
 .other-report-table tbody tr:nth-child(even) { background:#fdf7f9; }
 .other-report-table td input, .other-report-table td select { width:100%; min-height:32px; padding:5px 6px; border:1px solid transparent; border-radius:5px; background:transparent; color:#3b2329; font:inherit; }
 .other-report-table td input:focus, .other-report-table td select:focus { background:#fff; border-color:#b6405b; }
 .other-report-table th:nth-child(1) { min-width:150px; } .other-report-table th:nth-child(2) { min-width:140px; } .other-report-table th:nth-child(3) { min-width:130px; } .other-report-table th:nth-child(4) { min-width:180px; } .other-report-table th:nth-child(5) { min-width:240px; }
 .other-report-remark { display:grid; gap:2px; }
-.other-report-delete { border:0; background:#fff0f1; color:#9a1232; border-radius:6px; width:28px; height:28px; cursor:pointer; font-size:20px; }
+.other-report-delete { border:0; background:#7a0f2b; color:#fff; border-radius:6px; width:28px; height:28px; cursor:pointer; font-size:20px; }
 .admin-report-expanded .other-report-table-wrap { max-height:calc(100dvh - 165px); overflow:auto; }
 @media(max-width:767px) { .other-reports-header h2 { font-size:17px; } .other-report-filters input, .other-report-filters select { flex:1 1 100%; } .other-reports-add { grid-template-columns:1fr; } }
           .report-expand-btn { width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border:none; border-radius:8px; background:linear-gradient(135deg,#6f0b24,#86132f); color:#fff; cursor:pointer; box-shadow:0 5px 13px rgba(122,15,43,.24); flex:0 0 auto; }

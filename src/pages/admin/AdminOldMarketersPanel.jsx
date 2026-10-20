@@ -19,7 +19,7 @@ deletedMarketersList.map((m) => (
                       </div>
                       <div style={{ display: "flex", gap: "8px" }}>
                         <button onClick={() => handleRestoreMarketer(m)} style={{ padding: "8px 12px", background: "#86132f", color: "white", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "12px" }}>Restore</button>
-                        <button onClick={() => handlePermanentDeleteMarketer(m)} style={{ padding: "8px 12px", background: "#ef4444", color: "white", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "12px" }}>Delete</button>
+                        <button onClick={() => handlePermanentDeleteMarketer(m)} style={{ padding: "8px 12px", background: "#7a0f2b", color: "white", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "12px" }}>Delete</button>
                       </div>
                     </div>
 ))

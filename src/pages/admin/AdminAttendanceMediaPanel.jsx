@@ -9,7 +9,7 @@ export default function AdminAttendanceMediaPanel() {
                 <button type="button" onClick={() => { setAdminView("attendance"); setAttendanceMediaMarketer(null); setSelectedAttendanceMediaIds([]); fetchAttendanceRecords(); }} style={{ padding:"8px 14px", background:"linear-gradient(135deg,#6f0b24,#86132f)", color:"white", border:"none", borderRadius:"9px", fontWeight:700, cursor:"pointer", fontSize:"12px" }}>← Attendance</button>
                 <div style={{ display:"flex", gap:"7px", flexWrap:"wrap" }}>
                   <button type="button" onClick={() => { setAdminView("media"); setMediaView("deleted"); fetchDeletedMedia(); }} style={{ padding:"8px 10px", background:"#a42243", color:"white", border:"none", borderRadius:"8px", fontWeight:700, cursor:"pointer", fontSize:"11px" }}>♻️ Recently Deleted</button>
-                  {attendanceMediaMarketer && <button type="button" disabled={!selectedAttendanceMediaIds.length} onClick={deleteSelectedAttendanceMedia} style={{ padding:"8px 10px", background:selectedAttendanceMediaIds.length?"#ef4444":"#756369", color:"white", border:"none", borderRadius:"8px", fontWeight:700, cursor:selectedAttendanceMediaIds.length?"pointer":"not-allowed", fontSize:"11px", opacity:selectedAttendanceMediaIds.length?1:.65 }}>🗑 Delete Selected</button>}
+                  {attendanceMediaMarketer && <button type="button" disabled={!selectedAttendanceMediaIds.length} onClick={deleteSelectedAttendanceMedia} style={{ padding:"8px 10px", background:selectedAttendanceMediaIds.length?"#7a0f2b":"#756369", color:"white", border:"none", borderRadius:"8px", fontWeight:700, cursor:selectedAttendanceMediaIds.length?"pointer":"not-allowed", fontSize:"11px", opacity:selectedAttendanceMediaIds.length?1:.65 }}>🗑 Delete Selected</button>}
                   {renderReportExpandButton("attendance-media", "Expand attendance media")}
                 </div>
               </div>
@@ -77,7 +77,7 @@ return (
                                   <label style={{fontSize:"10px",color:"#5c484e",cursor:"pointer",display:"flex",alignItems:"center",gap:"4px"}}><input type="checkbox" checked={selectedAttendanceMediaIds.includes(item.id)} onChange={(e)=>setSelectedAttendanceMediaIds((prev)=>e.target.checked?[...prev,item.id]:prev.filter((id)=>id!==item.id))}/><span>{item.label}</span></label>
                                   {item.amount!==null && <span style={{fontSize:"9.5px",color:"#c78595",fontWeight:700}}>Rs. {item.amount}</span>}
                                 </div>
-                                <button type="button" onClick={()=>softDeleteAttendanceMedia(item)} style={{width:"100%",marginTop:"6px",padding:"5px 7px",background:"#ef4444",color:"white",border:"none",borderRadius:"6px",fontSize:"10px",fontWeight:700,cursor:"pointer"}}>🗑️ Delete</button>
+                                <button type="button" onClick={()=>softDeleteAttendanceMedia(item)} style={{width:"100%",marginTop:"6px",padding:"5px 7px",background:"#7a0f2b",color:"white",border:"none",borderRadius:"6px",fontSize:"10px",fontWeight:700,cursor:"pointer"}}>🗑️ Delete</button>
                               </div>
 ))}
                           </div>

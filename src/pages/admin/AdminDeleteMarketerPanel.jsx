@@ -27,7 +27,7 @@ marketersList
                             <p style={{ margin: "2px 0", color: "#3b2329", fontWeight: "bold" }}>{m.name}</p>
                             <p style={{ margin: "2px 0", color: "#5c484e", fontSize: "12px" }}>{m.email}</p>
                           </div>
-                          <button onClick={() => handleDeleteMarketer(m)} style={{ padding: "8px 14px", background: "#ef4444", color: "white", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "12px" }}>Delete</button>
+                          <button onClick={() => handleDeleteMarketer(m)} style={{ padding: "8px 14px", background: "#7a0f2b", color: "white", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "12px" }}>Delete</button>
                         </div>
 ))
 )}

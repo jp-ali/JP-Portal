@@ -361,7 +361,7 @@ style={{ ...inputStyle, padding: "10px 12px", fontSize: "13px" }}
                                       <span style={{ color: "#3b2329", fontSize: "12px", fontWeight: 600 }}>{sc.name}</span>
                                       <div style={{ display: "flex", gap: "6px" }}>
                                         <button type="button" onClick={() => startEditVisitSchool(sc)} style={{ padding: "7px 9px", background: "#941a39", color: "white", border: 0, borderRadius: "7px", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Edit spelling</button>
-                                        <button type="button" onClick={() => removeOwnVisitSchool(sc)} style={{ padding: "7px 9px", background: "#dc2626", color: "white", border: 0, borderRadius: "7px", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Remove</button>
+                                        <button type="button" onClick={() => removeOwnVisitSchool(sc)} style={{ padding: "7px 9px", background: "#7a0f2b", color: "white", border: 0, borderRadius: "7px", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Remove</button>
                                       </div>
                                     </div>
 )}

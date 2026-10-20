@@ -37,8 +37,8 @@ export default function AdminHomePanel() {
   const openMarketers = () => { c.setAdminView("marketers-detail"); c.fetchMarketers(); c.setSelectedMarketerDetailBox(null); };
   const stats = [
     { label: "All Marketers", value: statsReady.marketers ? (c.marketersList || []).length : "—", icon: "♟", tone: "rose", onClick: openMarketers },
-    { label: "Attendance Today", value: statsReady.attendance ? todayCounts.attendance : "—", icon: "◷", tone: "mint", onClick: openAttendance },
-    { label: "Action Plans Today", value: statsReady.plans ? todayCounts.plans : "—", icon: "▤", tone: "pink", onClick: openActionPlans },
+    { label: "Today's Attendance", value: statsReady.attendance ? todayCounts.attendance : "—", icon: "◷", tone: "mint", onClick: openAttendance },
+    { label: "Today's Action Plan", value: statsReady.plans ? todayCounts.plans : "—", icon: "▤", tone: "pink", onClick: openActionPlans },
     { label: "Today's Visits", value: statsReady.reports ? visits.filter((item) => c.getDateKey(item.createdAt) === today).length : "—", icon: "▦", tone: "amber", onClick: openTodayVisits }
   ];
   const openVisits = () => { c.setAdminView("visits"); c.fetchAllReports(); c.fetchMarketers(); c.setSelectedAdminAllBoxKey(null); c.setAllVisitsFromDate(""); c.setAllVisitsToDate(""); c.setSelectedMarketersFilter([]); };
