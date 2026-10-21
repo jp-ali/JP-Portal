@@ -1,6 +1,7 @@
 import React from "react";
 import { rowValue } from "../../domain/customReportSchema.js";
 import { isPhoneColumn, phoneHref, VERIFICATION_REMARK_OPTIONS } from "../../domain/verificationRemarks.js";
+import { formatActionPlanDate } from "../../domain/dates.js";
 
 const REMARKS = ["Contacted", "Contacted but sample didn't receive", "Didn't contact", "Sample received", "Other"];
 
@@ -12,6 +13,60 @@ export default function CustomReportTable({ report, columns, rows, marketersList
     {phoneHref(value) && <a className="verification-call-link" href={phoneHref(value)} title={`Call ${value}`}>☎ {value}</a>}
     <input type="tel" value={value || ""} onChange={(event) => editValue(row, key, event.target.value)} onBlur={(event) => saveValue(row, key, event.target.value)} aria-label={label} placeholder="Phone number" />
   </div>;
+
+  if (verificationMode) {
+    const detailColumns = columns.filter((column) => column.key !== "date" && column.type !== "marketer");
+    const groups = new Map();
+    rows.forEach((row) => {
+      const identity = String(row.marketer || "").trim();
+      const marketer = marketersList.find((item) => [item.id, item.email, item.name].some((value) => value && String(value).toLowerCase() === identity.toLowerCase()));
+      const personKey = marketer?.id || identity || "general";
+      const personName = marketer?.name || identity || "General";
+      if (!groups.has(personKey)) groups.set(personKey, { name: personName, dates: new Map(), total: 0 });
+      const person = groups.get(personKey);
+      const date = row.date || report.date || "";
+      if (!person.dates.has(date)) person.dates.set(date, []);
+      person.dates.get(date).push(row);
+      person.total += 1;
+    });
+    const people = [...groups.values()];
+    const th = { padding: "9px 7px", border: "1px solid #ddcbd0", background: "#7a0f2b", color: "#fff", fontSize: "10px", fontWeight: 800, textAlign: "center", verticalAlign: "middle", whiteSpace: "nowrap" };
+    const td = { padding: "8px 7px", border: "1px solid #eadde1", color: "#3f3035", fontSize: "10.5px", textAlign: "center", verticalAlign: "middle" };
+    const editColumn = (row, column) => {
+      const value = rowValue(row, column, report);
+      if (column.type === "text" && isPhoneColumn(column)) return numberField(row, column.key, value, column.label);
+      if (column.type === "remarks") return <div className="other-report-remark">
+        <select value={REMARKS.includes(value) ? value : value ? "Other" : ""} onChange={(event) => { editValue(row, column.key, event.target.value); saveValue(row, column.key, event.target.value); }} aria-label={column.label}>
+          <option value="">Select remarks</option>{REMARKS.map((item) => <option key={item}>{item}</option>)}
+        </select>
+        {value && !REMARKS.slice(0, -1).includes(value) && <input value={value === "Other" ? "" : value} placeholder="Custom remark" onChange={(event) => editValue(row, column.key, event.target.value || "Other")} onBlur={(event) => saveValue(row, column.key, event.target.value || "Other")} aria-label={`Custom ${column.label}`} />}
+      </div>;
+      return <input type={column.type === "date" ? "date" : "text"} value={value} onChange={(event) => editValue(row, column.key, event.target.value)} onBlur={(event) => saveValue(row, column.key, event.target.value)} aria-label={column.label} />;
+    };
+    return <div className="table-scroll other-report-verification-wrap" style={{ overflowX: "auto", border: "1px solid #e4d7da", borderRadius: "12px", background: "#fff" }}>
+      <table className="other-report-table other-report-verification-table" style={{ width: "100%", minWidth: "1100px", borderCollapse: "collapse", background: "#fff", fontSize: "11px" }}>
+        <thead><tr>{["Sr.", "Marketer Name", "Date", "Sr#", ...detailColumns.map((column) => column.label), ...(!hasNumberColumn ? ["Number"] : []), "Remarks", "Action"].map((heading, index) => <th key={`${heading}-${index}`} style={th}>{heading}</th>)}</tr></thead>
+        <tbody>{people.flatMap((person, personIndex) => {
+          let personWritten = false;
+          let personSerial = 0;
+          return [...person.dates.entries()].flatMap(([date, entries]) => entries.map((row, itemIndex) => {
+            const showPerson = !personWritten;
+            if (showPerson) personWritten = true;
+            return <tr key={row.id} style={{ background: itemIndex % 2 ? "#fffafb" : "#fff" }}>
+              {showPerson && <><td rowSpan={person.total} style={{ ...td, fontWeight: 800, background: "#fbf5f7", verticalAlign: "top", paddingTop: "10px" }}>{personIndex + 1}</td><td rowSpan={person.total} style={{ ...td, fontWeight: 800, background: "#fbf5f7", verticalAlign: "top", paddingTop: "10px" }}>{person.name}</td></>}
+              {itemIndex === 0 && <td rowSpan={entries.length} style={{ ...td, fontWeight: 700, background: "#fbf5f7", verticalAlign: "top", paddingTop: "10px" }}><input type="date" value={date} onChange={(event) => updateDateGroup(entries.map((item) => item.id), event.target.value)} onBlur={(event) => saveDateGroup(entries.map((item) => item.id), event.target.value)} aria-label="Date" /><span className="verification-date-label">{formatActionPlanDate(date)}</span></td>}
+              <td style={td}>{++personSerial}</td>
+              {detailColumns.map((column) => <td key={column.key} style={td}>{editColumn(row, column)}</td>)}
+              {!hasNumberColumn && <td style={td}>{numberField(row, "verificationNumber", row.verificationNumber, "Number")}</td>}
+              <td style={{ ...td, minWidth: "260px" }}><div className="other-report-remark"><select value={row.verificationRemark || ""} onChange={(event) => { const remark = event.target.value; const changes = { verificationRemark: remark, verificationCustomRemark: remark === "Others" ? row.verificationCustomRemark || "" : "" }; updateRow(row.id, changes); saveRow(row.id, changes); }} aria-label="Verification Remarks"><option value="">Select Remarks</option>{VERIFICATION_REMARK_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}</select>{row.verificationRemark === "Others" && <input type="text" value={row.verificationCustomRemark || ""} placeholder="Type custom remarks..." onChange={(event) => editValue(row, "verificationCustomRemark", event.target.value)} onBlur={(event) => saveValue(row, "verificationCustomRemark", event.target.value)} aria-label="Custom verification remarks" />}</div></td>
+              <td style={td}><button className="other-report-delete" onClick={() => removeRow(row.id)} title="Delete row" aria-label="Delete row">×</button></td>
+            </tr>;
+          }));
+        })}</tbody>
+      </table>
+      {!rows.length && <div className="other-reports-empty">No records found for the selected range / marketers.</div>}
+    </div>;
+  }
 
   return <div className="table-scroll other-report-table-wrap">
     <table className="other-report-table"><thead><tr>

@@ -7,6 +7,8 @@ import CustomReportTable from "./CustomReportTable.jsx";
 import { exportCustomReportExcel, exportCustomReportPDF } from "../../services/customReportExports.js";
 import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
 import { isPhoneColumn } from "../../domain/verificationRemarks.js";
+import { db } from "../../services/firebase.js";
+import { collection, deleteField, doc, getDocs, runTransaction, updateDoc } from "firebase/firestore";
 
 const REMARKS = ["Contacted", "Contacted but sample didn't receive", "Didn't contact", "Sample received", "Other"];
 const today = () => {
@@ -43,33 +45,54 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => { if (!actionOpen) { setActionMode(""); setSelectedReports([]); setConfirmRemoval(false); } }, [actionOpen]);
-  useEffect(() => { setSearch(""); setCityFilter(""); setRemarkFilter(""); setMarketerFilter([]); setFromDate(""); setToDate(""); setExtraFilterValues({}); if (selectedId) fetchMarketers().catch(() => {}); }, [selectedId]);
+  useEffect(() => { setSearch(""); setCityFilter(""); setRemarkFilter(""); setMarketerFilter([]); setFromDate(selectedId && mode === "verification" ? today() : ""); setToDate(selectedId && mode === "verification" ? today() : ""); setExtraFilterValues({}); if (selectedId) fetchMarketers().catch(() => {}); }, [selectedId, mode]);
   const report = reports.find((item) => item.id === selectedId);
   const columns = reportColumns(report);
   const availableFilters = columnsFromHeadings(headings).filter((column) => !["city", "remarks"].includes(column.key) && column.type !== "date");
   const toggleFilter = (key) => setFilterKeys((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
   const resetEditor = () => { setAdding(false); setEditingReportId(""); setTitle(""); setHeadings("Name, Number, City, Institute, Remarks"); setIncludeMarketers(false); setDateRange(false); setFilterKeys([]); };
   const startEdit = (item) => { setEditingReportId(item.id); setTitle(item.title); setHeadings(reportColumns(item).filter((column) => !["date", "marketer"].includes(column.key)).map((column) => column.label).join(", ")); setIncludeMarketers(!!item.options?.includeMarketers); setDateRange(!!item.options?.dateRange); setFilterKeys(item.options?.filterKeys || []); setAdding(true); setActionMode(""); setActionOpen(false); };
-  const loadDeleted = async () => { try { const result = await request("/custom-reports/deleted"); setDeletedReports(result.reports || []); setError(""); } catch (cause) { setError(cause.message); } };
+  const loadDeleted = async () => {
+    try {
+      const result = await request("/custom-reports/deleted");
+      setDeletedReports(result.reports || []); setError("");
+    } catch (cause) {
+      if (!cause.message.includes("(404)")) { setError(cause.message); return; }
+      try {
+        const snapshot = await getDocs(collection(db, "customReports"));
+        setDeletedReports(snapshot.docs.filter((item) => !!item.data().deletedAt).map((item) => ({ id: item.id, ...item.data() })));
+        setError("");
+      } catch (fallbackError) { setError(fallbackError.message); }
+    }
+  };
+  const changeReportDeletion = async (id, deleted) => {
+    try {
+      if (deleted) await request(`/custom-reports/${encodeURIComponent(id)}`, { method: "DELETE" });
+      else await request(`/custom-reports/${encodeURIComponent(id)}/restore`, { method: "POST" });
+    } catch (cause) {
+      if (!cause.message.includes("(404)")) throw cause;
+      await updateDoc(doc(db, "customReports", id), { deletedAt: deleted ? new Date().toISOString() : deleteField(), updatedAt: new Date().toISOString() });
+    }
+  };
   const removeSelected = async () => {
     if (!selectedReports.length || busy) return;
     setBusy(true); setError("");
     const removed = [];
     try {
       for (const id of selectedReports) {
-        await request(`/custom-reports/${encodeURIComponent(id)}`, { method: "DELETE" });
+        await changeReportDeletion(id, true);
         removed.push(id);
       }
       setReports((current) => current.filter((item) => !removed.includes(item.id)));
       setSelectedReports([]); setConfirmRemoval(false); setActionMode(""); setActionOpen(false);
       await reload();
     } catch (cause) {
-      setError(cause.message.includes("(404)") ? "Report delete is unavailable in the running API. Restart the API server and try again." : cause.message);
+      setError(cause.message);
       if (removed.length) setReports((current) => current.filter((item) => !removed.includes(item.id)));
       setSelectedReports((current) => current.filter((id) => !removed.includes(id)));
     } finally { setBusy(false); }
   };
-  const restoreReport = async (id) => { setBusy(true); try { await request(`/custom-reports/${id}/restore`, { method: "POST" }); setDeletedReports((current) => current.filter((item) => item.id !== id)); await reload(); setError(""); } catch (cause) { setError(cause.message); } finally { setBusy(false); } };
+  const restoreReport = async (id) => { setBusy(true); try { await changeReportDeletion(id, false); setDeletedReports((current) => current.filter((item) => item.id !== id)); await reload(); setError(""); } catch (cause) { setError(cause.message); } finally { setBusy(false); } };
   const detail = adminView === "custom-report";
   const back = () => { setSelectedId(""); setAdminView(mode === "verification" ? "verification-reports" : "other-reports"); };
   const updateReport = (id, changes) => setReports((current) => current.map((item) => item.id === id ? { ...item, ...changes } : item));
@@ -81,7 +104,23 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   };
   const saveRow = async (rowId, changes) => {
     try { await request(`/custom-reports/${report.id}/rows/${rowId}`, { method: "PATCH", body: JSON.stringify(changes) }); setError(""); }
-    catch (cause) { setError(cause.message); reload(); }
+    catch (cause) {
+      const verificationKeys = ["verificationNumber", "verificationRemark", "verificationCustomRemark"];
+      if (!cause.message.includes("No row changes provided") || !Object.keys(changes).every((key) => verificationKeys.includes(key))) {
+        setError(cause.message); reload(); return;
+      }
+      try {
+        const ref = doc(db, "customReports", report.id);
+        await runTransaction(db, async (transaction) => {
+          const snapshot = await transaction.get(ref);
+          if (!snapshot.exists()) throw new Error("Report was not found");
+          const rows = snapshot.data().rows || [];
+          if (!rows.some((row) => row.id === rowId)) throw new Error("Report row was not found");
+          transaction.update(ref, { rows: rows.map((row) => row.id === rowId ? { ...row, ...changes } : row), updatedAt: new Date().toISOString() });
+        });
+        setError("");
+      } catch (fallbackError) { setError(fallbackError.message); reload(); }
+    }
   };
   const createReport = async (event) => {
     event.preventDefault();
@@ -146,12 +185,36 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const cities = [...new Set((report?.rows || []).map((row) => row.city).filter(Boolean))].sort();
   const runExport = async (kind) => {
     const verificationMode = mode === "verification";
-    const extraColumns = verificationMode ? [
-      ...(!columns.some((column) => column.type === "text" && isPhoneColumn(column)) ? [{ key: "verificationNumber", label: "Number", type: "text" }] : []),
-      { key: "verificationRemarksText", label: "Verification Remarks", type: "remarks" }
-    ] : [];
-    const exportReport = extraColumns.length ? { ...report, columns: [...columns, ...extraColumns] } : report;
-    const exportRows = verificationMode ? filtered.map((row) => ({ ...row, verificationRemarksText: row.verificationRemark === "Others" ? row.verificationCustomRemark || "Others" : row.verificationRemark || "" })) : filtered;
+    let exportReport = report;
+    let exportRows = filtered;
+    if (verificationMode) {
+      const groups = new Map();
+      filtered.forEach((row) => {
+        const identity = String(row.marketer || "").trim();
+        const marketer = marketersList.find((item) => [item.id, item.email, item.name].some((value) => value && String(value).toLowerCase() === identity.toLowerCase()));
+        const key = marketer?.id || identity || "general";
+        if (!groups.has(key)) groups.set(key, { name: marketer?.name || identity || "General", rows: [] });
+        groups.get(key).rows.push(row);
+      });
+      exportRows = [...groups.entries()].flatMap(([key, person], personIndex) => person.rows.map((row, rowIndex) => ({
+        ...row,
+        date: row.date || report.date,
+        verificationGroup: key,
+        verificationGroupSr: personIndex + 1,
+        verificationMarketerName: person.name,
+        verificationSerial: rowIndex + 1,
+        verificationRemarksText: row.verificationRemark === "Others" ? row.verificationCustomRemark || "Others" : row.verificationRemark || ""
+      })));
+      exportReport = { ...report, verificationLayout: true, columns: [
+        { key: "verificationGroupSr", label: "Sr.", type: "text" },
+        { key: "verificationMarketerName", label: "Marketer Name", type: "text" },
+        { key: "date", label: "Date", type: "date" },
+        { key: "verificationSerial", label: "Sr#", type: "text" },
+        ...columns.filter((column) => column.key !== "date" && column.type !== "marketer"),
+        ...(!columns.some((column) => column.type === "text" && isPhoneColumn(column)) ? [{ key: "verificationNumber", label: "Number", type: "text" }] : []),
+        { key: "verificationRemarksText", label: "Remarks", type: "remarks" }
+      ] };
+    }
     try { if (kind === "excel") exportCustomReportExcel(exportReport, exportRows, marketersList); else await exportCustomReportPDF(exportReport, exportRows, marketersList); setError(""); }
     catch (cause) { setError(cause.message); }
   };

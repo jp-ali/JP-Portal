@@ -30,7 +30,7 @@ function AdminPortalContent({ context }) {
   const [customReportOrigin, setCustomReportOrigin] = useState("other");
   const reloadCustomReports = async () => {
     setCustomReportsLoading(true);
-    try { const result = await request("/custom-reports"); setCustomReports(result.reports || []); setCustomReportsError(""); }
+    try { const result = await request("/custom-reports"); setCustomReports((result.reports || []).filter((report) => !report.deletedAt)); setCustomReportsError(""); }
     catch (error) { setCustomReportsError(error.message); }
     finally { setCustomReportsLoading(false); }
   };

@@ -6,15 +6,17 @@ const display = (row, column, report, marketers) => {
   const value = rowValue(row, column, report);
   return column.type === "marketer" ? marketers.find((item) => [item.id, item.email, item.name].some((identity) => identity && String(identity).toLowerCase() === String(value).toLowerCase()))?.name || value : value;
 };
-const dateGroups = (rows, report) => {
+const contiguousGroups = (rows, getKey) => {
   const groups = [];
   rows.forEach((row, index) => {
-    const date = row.date || report.date;
-    if (groups.at(-1)?.date === date) groups.at(-1).end = index;
-    else groups.push({ date, start: index, end: index });
+    const key = getKey(row);
+    if (groups.at(-1)?.key === key) groups.at(-1).end = index;
+    else groups.push({ key, start: index, end: index });
   });
   return groups;
 };
+const dateGroups = (rows, report) => contiguousGroups(rows, (row) => `${report.verificationLayout ? `${row.verificationGroup}\u0000` : ""}${row.date || report.date}`);
+const personGroups = (rows) => contiguousGroups(rows, (row) => row.verificationGroup);
 
 export function exportCustomReportExcel(report, rows, marketers = []) {
   if (!window.XLSX) throw new Error("Excel exporter is still loading. Please try again.");
@@ -33,6 +35,12 @@ export function exportCustomReportExcel(report, rows, marketers = []) {
   const dateColumn = columns.findIndex((column) => column.key === "date");
   if (dateColumn >= 0) dateGroups(rows, report).forEach(({ start, end }) => {
     if (end > start) merges.push({ s: { r: start + 3, c: dateColumn }, e: { r: end + 3, c: dateColumn } });
+  });
+  if (report.verificationLayout) personGroups(rows).forEach(({ start, end }) => {
+    if (end > start) for (const key of ["verificationGroupSr", "verificationMarketerName"]) {
+      const column = columns.findIndex((item) => item.key === key);
+      if (column >= 0) merges.push({ s: { r: start + 3, c: column }, e: { r: end + 3, c: column } });
+    }
   });
   sheet["!merges"] = merges;
   sheet["!cols"] = columns.map((column) => ({ wch: column.type === "remarks" ? 45 : column.type === "date" ? 16 : Math.max(18, Math.min(34, column.label.length + 10)) }));
@@ -68,6 +76,16 @@ export async function exportCustomReportPDF(report, rows, marketers = []) {
       for (let index = start + 1; index <= end; index++) body[index].splice(dateIndex, 1);
     }
   });
+  if (report.verificationLayout) for (const key of ["verificationMarketerName", "verificationGroupSr"]) {
+    const column = columns.findIndex((item) => item.key === key);
+    if (column < 0) continue;
+    personGroups(rows).forEach(({ start, end }) => {
+      if (end > start) {
+        body[start][column] = { content: body[start][column], rowSpan: end - start + 1, styles: { valign: "middle", halign: "center" } };
+        for (let index = start + 1; index <= end; index++) body[index].splice(column, 1);
+      }
+    });
+  }
   autoTable(pdf, {
     startY: 80,
     head: [columns.map((column) => column.label)],
