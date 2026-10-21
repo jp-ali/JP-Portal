@@ -68,7 +68,8 @@ export default function AdminHomePanel() {
     ] }
   ];
   sections.push({ title: "Card Studio", icon: "🎨", description: "Create printable cards", items: [
-    { title: "Card Designer", description: "Add details to your card design", icon: "🎨", tone: "rose", onClick: () => c.setAdminView("card-designer") }
+    { title: "Card Designer", description: "Create and edit card designs", icon: "🎨", tone: "rose", onClick: () => c.setAdminView("card-designer") },
+    { title: "Saved Cards", description: "Find, download or restore cards", icon: "🪪", tone: "violet", onClick: () => c.setAdminView("saved-cards") }
   ] });
   return <DashboardHome role="admin" stats={stats} sections={sections} />;
 }

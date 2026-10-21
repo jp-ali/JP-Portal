@@ -65,6 +65,17 @@ test("custom reports require admin authentication and validate input", async () 
   assert.equal(invalid.status, 400);
 });
 
+test("saved card creation requires admin authentication and a valid card", async () => {
+  assert.equal((await fetch(`${baseUrl}/api/cards`)).status, 401);
+  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const invalid = await fetch(`${baseUrl}/api/cards`, {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
+    body: JSON.stringify({ template: {}, values: {} })
+  });
+  assert.equal(invalid.status, 400);
+});
+
 test("forwarded local login requests are accepted", async () => {
   const response = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",

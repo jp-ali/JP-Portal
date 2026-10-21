@@ -1,18 +1,43 @@
 const escapeXml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[char]);
 
 export const defaultCardFields = [
-  { id: "name", label: "Name", x: 8.7, y: 32, fontSize: 54, color: "#242424", align: "left", bold: false },
-  { id: "designation", label: "Designation", x: 8.7, y: 40, fontSize: 44, color: "#555555", align: "left", bold: false },
-  { id: "phone", label: "Phone", x: 13.3, y: 67.5, fontSize: 43, color: "#242424", align: "left", bold: false },
-  { id: "address", label: "Address", x: 13.5, y: 89, fontSize: 40, color: "#242424", align: "left", bold: false }
+  { id: "depotName", label: "Book depot name", x: 8.5, y: 24, fontSize: 68, color: "#242424", align: "left", bold: false },
+  { id: "name", label: "Name", x: 8.5, y: 33, fontSize: 58, color: "#242424", align: "left", bold: false },
+  { id: "designation", label: "Designation", x: 8.5, y: 41, fontSize: 45, color: "#555555", align: "left", bold: false },
+  { id: "phone", label: "Phone", x: 13.2, y: 65.5, fontSize: 42, color: "#242424", align: "left", bold: false },
+  { id: "email", label: "Email", x: 13.2, y: 75, fontSize: 42, color: "#242424", align: "left", bold: false },
+  { id: "website", label: "Website", x: 64.5, y: 75, fontSize: 42, color: "#242424", align: "left", bold: false },
+  { id: "address", label: "Address", x: 13.2, y: 87, fontSize: 42, color: "#242424", align: "left", bold: false }
 ];
 
 export const defaultCardValues = {
-  name: "Muhammad Ali Ashfaq",
+  depotName: "Muhammad Ali Ashfaq",
+  name: "",
   designation: "Marketing Coordinator",
   phone: "+92-3068482000",
+  phone2: "",
+  email: "info@javedpublishers.com",
+  website: "javedpublishers.com",
   address: "Main outfall road, sanint nagar, Lahore, Punjab"
 };
+
+export function cardRenderEntries(template, values) {
+  return template.fields.map((field) => {
+    let value = String(values[field.id] || "");
+    let y = field.y;
+    let x = field.x;
+    if (field.id === "phone2") {
+      if (!value) return { field, value: "" };
+      const first = template.fields.find((item) => item.id === "phone");
+      if (!first || !values.phone) return { field, value: "" };
+      x = Math.min(98, first.x + String(values.phone).length * first.fontSize * 0.55 / template.imageWidth * 100 + 1.2);
+      y = first.y;
+      value = `| ${value}`;
+    }
+    if (field.id === "designation" && !values.name && field.y === 41) y = 33;
+    return { field: { ...field, x, y }, value };
+  }).filter((entry) => entry.value);
+}
 
 export async function prepareCardImage(file) {
   if (!file?.type?.startsWith("image/")) throw new Error("Choose a card image (PNG, JPEG or WebP).");
@@ -43,7 +68,7 @@ function linesFor(value) { return String(value ?? "").split(/\r?\n/).filter((lin
 export function cardSvg(template, values) {
   const { image, imageWidth: width, imageHeight: height, widthMm, fields } = template;
   const heightMm = widthMm * height / width;
-  const labels = fields.flatMap((field) => linesFor(values[field.id]).map((line, index) => {
+  const labels = cardRenderEntries(template, values).flatMap(({ field, value }) => linesFor(value).map((line, index) => {
     const x = field.x * width / 100;
     const y = field.y * height / 100 + index * field.fontSize * 1.2;
     const anchor = { left: "start", center: "middle", right: "end" }[field.align];
@@ -68,9 +93,7 @@ export async function downloadCardPdf(template, values) {
   const heightMm = widthMm * height / width;
   const pdf = new jsPDF({ unit: "mm", format: [widthMm, heightMm], orientation: widthMm >= heightMm ? "landscape" : "portrait" });
   pdf.addImage(image, "JPEG", 0, 0, widthMm, heightMm);
-  fields.forEach((field) => {
-    const value = String(values[field.id] || "");
-    if (!value) return;
+  cardRenderEntries(template, values).forEach(({ field, value }) => {
     const rgb = field.color.match(/[0-9a-f]{2}/gi).map((part) => parseInt(part, 16));
     pdf.setTextColor(...rgb);
     pdf.setFont("helvetica", field.bold ? "bold" : "normal");

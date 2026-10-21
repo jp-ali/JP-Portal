@@ -1,41 +1,70 @@
 import React, { useEffect, useRef, useState } from "react";
 import { request } from "../../services/authApi.js";
-import { defaultCardFields, defaultCardValues, downloadCardPdf, downloadCardSvg, prepareCardImage } from "../../services/cardDesigner.js";
-import defaultCardArt from "../../assets/bin-eisa-card-template.png";
+import { cardRenderEntries, defaultCardFields, defaultCardValues, downloadCardPdf, downloadCardSvg, prepareCardImage } from "../../services/cardDesigner.js";
+import defaultCardArt from "../../assets/card-blank-template.png";
 import "../../styles/cardDesigner.css";
 
-const blank = () => ({ image: "", imageWidth: 1200, imageHeight: 750, widthMm: 85.6, fields: defaultCardFields.map((field) => ({ ...field })) });
+const newTemplate = () => ({ image: "", imageWidth: 1658, imageHeight: 951, widthMm: 85.6, fields: defaultCardFields.map((field) => ({ ...field })) });
 
-export default function AdminCardDesignerPanel() {
-  const [template, setTemplate] = useState(blank);
+export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSaved }) {
+  const [template, setTemplate] = useState(newTemplate);
   const [values, setValues] = useState(() => ({ ...defaultCardValues }));
-  const [selected, setSelected] = useState("name");
+  const stateRef = useRef({ template: newTemplate(), values: { ...defaultCardValues } });
+  const historyRef = useRef([]);
+  const [undoCount, setUndoCount] = useState(0);
+  const [editingId, setEditingId] = useState(cardId);
+  const [selected, setSelected] = useState("depotName");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const uploadRef = useRef(null);
+  const install = (nextTemplate, nextValues, id = "") => {
+    stateRef.current = { template: nextTemplate, values: nextValues };
+    setTemplate(nextTemplate); setValues(nextValues); setEditingId(id);
+    historyRef.current = []; setUndoCount(0); setDirty(false);
+  };
   useEffect(() => {
     let active = true;
+    setLoading(true); setError(""); setMessage("");
     (async () => {
       try {
-        const { template: saved } = await request("/card-template");
-        if (saved) { if (active) setTemplate(saved); return; }
-      } catch (problem) { if (active) setError(problem.message); }
-      try {
-        const imageFile = await fetch(defaultCardArt).then((response) => response.blob());
-        const image = await prepareCardImage(imageFile);
-        if (active) setTemplate((current) => ({ ...current, ...image }));
+        if (cardId) {
+          const { card } = await request(`/cards/${encodeURIComponent(cardId)}`);
+          if (active) install({ image: card.image, imageWidth: card.imageWidth, imageHeight: card.imageHeight, widthMm: card.widthMm, fields: card.fields }, card.values, card.id);
+        } else {
+          const blob = await fetch(defaultCardArt).then((response) => response.blob());
+          const image = await prepareCardImage(blob);
+          if (active) install({ ...newTemplate(), ...image }, { ...defaultCardValues });
+        }
       } catch (problem) { if (active) setError(problem.message); }
     })().finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
-  const changeTemplate = (update) => { setTemplate((current) => ({ ...current, ...update })); setDirty(true); setMessage(""); };
-  const changeField = (id, update) => {
-    setTemplate((current) => ({ ...current, fields: current.fields.map((field) => field.id === id ? { ...field, ...update } : field) }));
-    setDirty(true); setMessage("");
+  }, [cardId]);
+  const change = (nextTemplate, nextValues) => {
+    historyRef.current.push({ template: { ...stateRef.current.template, fields: stateRef.current.template.fields.map((field) => ({ ...field })) }, values: { ...stateRef.current.values } });
+    if (historyRef.current.length > 100) historyRef.current.shift();
+    setUndoCount(historyRef.current.length);
+    stateRef.current = { template: nextTemplate, values: nextValues };
+    setTemplate(nextTemplate); setValues(nextValues); setDirty(true); setMessage("");
   };
+  const undo = () => {
+    const previous = historyRef.current.pop();
+    if (!previous) return;
+    stateRef.current = previous;
+    setTemplate(previous.template); setValues(previous.values);
+    setUndoCount(historyRef.current.length); setDirty(true); setMessage("");
+  };
+  const undoRef = useRef(undo); undoRef.current = undo;
+  useEffect(() => {
+    const onKey = (event) => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z" && !event.shiftKey) { event.preventDefault(); undoRef.current(); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  const changeTemplate = (update) => change({ ...stateRef.current.template, ...update }, stateRef.current.values);
+  const changeValue = (id, value) => change(stateRef.current.template, { ...stateRef.current.values, [id]: value });
+  const changeField = (id, update) => changeTemplate({ fields: stateRef.current.template.fields.map((field) => field.id === id ? { ...field, ...update } : field) });
   const upload = async (file) => {
     if (!file) return;
     setError("");
@@ -44,67 +73,66 @@ export default function AdminCardDesignerPanel() {
     if (uploadRef.current) uploadRef.current.value = "";
   };
   const save = async () => {
-    if (!template.image) return setError("Upload a card image first.");
+    if (!template.image) return setError("Card image is still loading.");
     setSaving(true); setError(""); setMessage("");
     try {
-      const result = await request("/card-template", { method: "PUT", body: JSON.stringify(template) });
-      setTemplate(result.template); setDirty(false); setMessage("Card template saved. It will appear here next time.");
+      const { card } = await request(editingId ? `/cards/${encodeURIComponent(editingId)}` : "/cards", { method: editingId ? "PUT" : "POST", body: JSON.stringify({ template, values }) });
+      setEditingId(card.id); setDirty(false); setMessage("Card saved. It is available in Saved Cards."); onSaved?.(card.id);
     } catch (problem) { setError(problem.message); }
     finally { setSaving(false); }
   };
   const exportCard = async (kind) => {
-    if (!template.image) return setError("Upload a card image first.");
-    setError("");
+    if (!template.image) return setError("Card image is still loading.");
     try { if (kind === "svg") downloadCardSvg(template, values); else await downloadCardPdf(template, values); }
     catch (problem) { setError(`Could not export card: ${problem.message}`); }
   };
   const addField = () => {
     const id = `field-${Date.now()}`;
-    changeTemplate({ fields: [...template.fields, { id, label: "New field", x: 50, y: 50, fontSize: 30, color: "#73102b", align: "center", bold: false }] });
+    changeTemplate({ fields: [...template.fields, { id, label: "New field", x: 50, y: 50, fontSize: 34, color: "#242424", align: "center", bold: false }] });
     setSelected(id);
   };
+  const addPhone = () => {
+    const index = template.fields.findIndex((field) => field.id === "phone");
+    if (index < 0 || template.fields.some((field) => field.id === "phone2")) return;
+    const fields = [...template.fields];
+    fields.splice(index + 1, 0, { ...fields[index], id: "phone2", label: "Second phone" });
+    changeTemplate({ fields }); setSelected("phone2");
+  };
+  const moveField = (id, direction) => {
+    const fields = [...template.fields];
+    const index = fields.findIndex((field) => field.id === id);
+    const next = index + direction;
+    if (next < 0 || next >= fields.length) return;
+    [fields[index], fields[next]] = [fields[next], fields[index]];
+    changeTemplate({ fields });
+  };
+  const removeField = (id) => { changeTemplate({ fields: template.fields.filter((field) => field.id !== id) }); if (selected === id) setSelected(""); };
   const selectedField = template.fields.find((field) => field.id === selected);
   const place = (event) => {
     if (!selectedField) return;
     const rect = event.currentTarget.getBoundingClientRect();
-    changeField(selected, { x: Math.round(Math.max(0, Math.min(100, (event.clientX - rect.left) / rect.width * 100)) * 10) / 10,
+    changeField(selected === "phone2" ? "phone" : selected, { x: Math.round(Math.max(0, Math.min(100, (event.clientX - rect.left) / rect.width * 100)) * 10) / 10,
       y: Math.round(Math.max(0, Math.min(100, (event.clientY - rect.top) / rect.height * 100)) * 10) / 10 });
   };
-  return <section className="card-designer">
-    <div className="card-designer-head">
-      <div><h2>🎨 Card Designer</h2><p>Upload your card artwork, enter details, then place each field on the preview.</p></div>
-      <div className="card-designer-actions">
-        <button type="button" onClick={() => uploadRef.current?.click()}>Upload card image</button>
-        <button type="button" className="primary" onClick={save} disabled={saving || !template.image}>{saving ? "Saving…" : dirty ? "Save template *" : "Save template"}</button>
-      </div>
-    </div>
+
+  return <section className="card-designer card-designer-v2">
+    <header className="card-designer-head"><div><h2>Card Designer</h2><p>{editingId ? "Edit your saved card" : "Create a new card"} · Choose a field, then click the card to place its text.</p></div><div className="card-designer-actions"><button type="button" onClick={onOpenSaved}>Saved Cards</button><button type="button" onClick={() => uploadRef.current?.click()}>Change artwork</button><button type="button" onClick={undo} disabled={!undoCount}>Undo (Ctrl+Z)</button></div></header>
     <input ref={uploadRef} className="card-designer-hidden" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => upload(event.target.files?.[0])} />
-    {loading && <p>Loading card template…</p>}
-    {error && <p className="card-designer-error" role="alert">{error}</p>}
-    {message && <p className="card-designer-success" role="status">{message}</p>}
-    {dirty && <p className="card-designer-tip">Template changes are unsaved. Save to use this layout next time.</p>}
-    <div className="card-designer-layout">
-      <div className="card-designer-preview-area">
-        <div className="card-designer-preview-head"><strong>Live preview</strong><span>{selectedField ? `Click card to place “${selectedField.label}”` : "Select a field to place it"}</span></div>
-        {template.image ? <div className="card-designer-preview" onClick={place} role="presentation" style={{ aspectRatio: `${template.imageWidth} / ${template.imageHeight}` }}>
-          <img src={template.image} alt="Card template" draggable="false" />
-          {template.fields.map((field) => values[field.id] && <span key={field.id} className={`card-designer-overlay ${field.id === selected ? "selected" : ""}`} style={{ left: `${field.x}%`, top: `${field.y}%`, color: field.color, fontSize: `${field.fontSize / template.imageWidth * 100}cqw`, fontWeight: field.bold ? 700 : 400, transform: `translate(${field.align === "center" ? "-50%" : field.align === "right" ? "-100%" : "0"}, -100%)`, textAlign: field.align }}>{values[field.id]}</span>)}
-        </div> : <div className="card-designer-empty">Upload a picture of the card to start. It will be shown here whenever you open Card Designer.</div>}
-        <div className="card-designer-export">
-          <button type="button" onClick={() => exportCard("pdf")} disabled={!template.image}>Download PDF</button>
-          <button type="button" onClick={() => exportCard("svg")} disabled={!template.image}>Download Corel editable SVG</button>
-        </div>
-        <p className="card-designer-tip">Open the SVG in CorelDRAW to edit the name, role, phone and address, then save it as a CDR file. The card artwork stays an image layer.</p>
-      </div>
-      <div className="card-designer-controls">
-        <div className="card-designer-preview-head"><strong>Card details</strong><button type="button" onClick={addField}>+ Add field</button></div>
-        {template.fields.map((field) => <div className={`card-designer-field ${selected === field.id ? "active" : ""}`} key={field.id}>
-          <div className="card-designer-field-title"><input aria-label="Field label" value={field.label} maxLength={60} onFocus={() => setSelected(field.id)} onChange={(event) => changeField(field.id, { label: event.target.value })} /><button type="button" onClick={() => setSelected(field.id)}>{selected === field.id ? "Selected" : "Place"}</button><button type="button" aria-label={`Remove ${field.label}`} title="Remove field" onClick={() => { changeTemplate({ fields: template.fields.filter((item) => item.id !== field.id) }); if (selected === field.id) setSelected(""); }}>×</button></div>
-          <textarea aria-label={`${field.label} text`} placeholder={`Type ${field.label.toLowerCase()} here`} rows={2} value={values[field.id] || ""} onFocus={() => setSelected(field.id)} onChange={(event) => setValues((current) => ({ ...current, [field.id]: event.target.value }))} />
-          {selected === field.id && <div className="card-designer-field-settings"><label>Size <input type="number" min="8" max="200" value={field.fontSize} onChange={(event) => changeField(field.id, { fontSize: Number(event.target.value) })} /></label><label>Color <input type="color" value={field.color} onChange={(event) => changeField(field.id, { color: event.target.value })} /></label><label>Align <select value={field.align} onChange={(event) => changeField(field.id, { align: event.target.value })}><option>left</option><option>center</option><option>right</option></select></label><label className="card-designer-check"><input type="checkbox" checked={field.bold} onChange={(event) => changeField(field.id, { bold: event.target.checked })} /> Bold</label></div>}
-        </div>)}
-        <label className="card-designer-print-width">Print width (mm) <input type="number" min="30" max="300" step="0.1" value={template.widthMm} onChange={(event) => changeTemplate({ widthMm: Number(event.target.value) })} /></label>
-      </div>
+    {loading && <p>Loading card…</p>}{error && <p className="card-designer-error" role="alert">{error}</p>}{message && <p className="card-designer-success" role="status">{message}</p>}
+    <div className="card-designer-preview-area"><div className="card-designer-preview-head"><strong>Live card preview</strong><span>{selectedField ? `Selected: ${selectedField.label}` : "Select a field below"}</span></div>
+      {template.image ? <div className="card-designer-preview" onClick={place} role="presentation" style={{ aspectRatio: `${template.imageWidth} / ${template.imageHeight}` }}><img src={template.image} alt="Card background" draggable="false" />
+        {cardRenderEntries(template, values).map(({ field, value }) => <span key={field.id} className={`card-designer-overlay ${field.id === selected ? "selected" : ""}`} style={{ left: `${field.x}%`, top: `${field.y}%`, color: field.color, fontSize: `${field.fontSize / template.imageWidth * 100}cqw`, fontWeight: field.bold ? 700 : 400, transform: `translate(${field.align === "center" ? "-50%" : field.align === "right" ? "-100%" : "0"}, -100%)`, textAlign: field.align }}>{value}</span>)}
+      </div> : <div className="card-designer-empty">Loading default card artwork…</div>}
+      <div className="card-designer-export"><button type="button" onClick={() => exportCard("pdf")} disabled={!template.image}>Download PDF</button><button type="button" onClick={() => exportCard("svg")} disabled={!template.image}>Download Corel SVG</button></div>
+    </div>
+    <div className="card-designer-controls"><div className="card-designer-controls-head"><div><h3>Card details</h3><p>Change text, style and order. The preview updates as you type.</p></div><button type="button" onClick={addField}>+ Add field</button></div>
+      <div className="card-designer-fields">{template.fields.map((field, index) => <div className={`card-designer-field ${selected === field.id ? "active" : ""}`} key={field.id}>
+        <div className="card-designer-field-title"><input aria-label="Field label" value={field.label} maxLength={60} onFocus={() => setSelected(field.id)} onChange={(event) => changeField(field.id, { label: event.target.value })} /><div className="card-designer-field-buttons"><button type="button" title="Move up" disabled={index === 0} onClick={() => moveField(field.id, -1)}>↑</button><button type="button" title="Move down" disabled={index === template.fields.length - 1} onClick={() => moveField(field.id, 1)}>↓</button><button type="button" onClick={() => setSelected(field.id)}>{selected === field.id ? "Placing" : "Place"}</button><button type="button" title="Remove field" aria-label={`Remove ${field.label}`} onClick={() => removeField(field.id)}>×</button></div></div>
+        <div className="card-designer-value-row"><textarea aria-label={`${field.label} text`} placeholder={`Enter ${field.label.toLowerCase()}`} rows={1} value={values[field.id] || ""} onFocus={() => setSelected(field.id)} onChange={(event) => changeValue(field.id, event.target.value)} />{field.id === "phone" && !template.fields.some((item) => item.id === "phone2") && <button type="button" aria-label="Add second phone number" title="Add second phone number" onClick={addPhone}>+</button>}</div>
+        <div className="card-designer-field-settings"><label>Font size <input type="number" min="8" max="200" value={field.fontSize} onChange={(event) => changeField(field.id, { fontSize: Number(event.target.value) })} /></label><label>Color <input type="color" value={field.color} onChange={(event) => changeField(field.id, { color: event.target.value })} /></label><label>Align <select value={field.align} onChange={(event) => changeField(field.id, { align: event.target.value })}><option>left</option><option>center</option><option>right</option></select></label><label className="card-designer-check"><input type="checkbox" checked={field.bold} onChange={(event) => changeField(field.id, { bold: event.target.checked })} /> Bold</label></div>
+      </div>)}</div>
+      <div className="card-designer-bottom"><label className="card-designer-print-width">Print width (mm) <input type="number" min="30" max="300" step="0.1" value={template.widthMm} onChange={(event) => changeTemplate({ widthMm: Number(event.target.value) })} /></label><button type="button" className="primary" onClick={save} disabled={saving || !template.image}>{saving ? "Saving…" : editingId ? "Save changes" : "Save card"}</button></div>
+      {dirty && <p className="card-designer-tip">Unsaved changes · Ctrl+Z to undo the last edit.</p>}
     </div>
   </section>;
 }

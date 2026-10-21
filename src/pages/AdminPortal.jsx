@@ -5,6 +5,7 @@ import AdminCataloguesPanel from "./admin/AdminCataloguesPanel.jsx";
 import AdminVerificationCallsPanel from "./admin/AdminVerificationCallsPanel.jsx";
 import AdminOtherReportsPanel from "./admin/AdminOtherReportsPanel.jsx";
 import AdminCardDesignerPanel from "./admin/AdminCardDesignerPanel.jsx";
+import AdminSavedCardsPanel from "./admin/AdminSavedCardsPanel.jsx";
 import AdminAttendanceMediaPanel from "./admin/AdminAttendanceMediaPanel.jsx";
 import AdminActionPlansPanel from "./admin/AdminActionPlansPanel.jsx";
 import AdminMediaPanel from "./admin/AdminMediaPanel.jsx";
@@ -29,6 +30,8 @@ function AdminPortalContent({ context }) {
   const [customReportsLoading, setCustomReportsLoading] = useState(false);
   const [customReportsError, setCustomReportsError] = useState("");
   const [customReportOrigin, setCustomReportOrigin] = useState("other");
+  const [selectedSavedCardId, setSelectedSavedCardId] = useState("");
+  useEffect(() => { if (context.adminView === "home") setSelectedSavedCardId(""); }, [context.adminView]);
   const reloadCustomReports = async () => {
     setCustomReportsLoading(true);
     try { const result = await request("/custom-reports"); setCustomReports((result.reports || []).filter((report) => !report.deletedAt)); setCustomReportsError(""); }
@@ -108,7 +111,12 @@ setAdminView("other-reports");
 return;
 }
 if (key === "card-designer") {
+setSelectedSavedCardId("");
 setAdminView("card-designer");
+return;
+}
+if (key === "saved-cards") {
+setAdminView("saved-cards");
 return;
 }
 if (key === "marketers-detail") {
@@ -183,7 +191,8 @@ const adminSidebarItems = [
 { key: "other-reports", icon: "📋", label: "Other Reports", active: adminView === "other-reports" || adminView === "custom-report" },
 { key: "media-active", icon: "🖼️", label: "Media", active: adminView === "media" && mediaView === "active" },
 { key: "media-deleted", icon: "♻️", label: "Recently Deleted", active: adminView === "media" && mediaView === "deleted" },
-{ key: "card-designer", icon: "🎨", label: "Card Designer", active: adminView === "card-designer" }
+{ key: "card-designer", icon: "🎨", label: "Card Designer", active: adminView === "card-designer" },
+{ key: "saved-cards", icon: "🪪", label: "Saved Cards", active: adminView === "saved-cards" }
 ];
 return (
 <div className="portal-shell portal-admin-shell" style={globalStyle}>
@@ -238,7 +247,8 @@ onClick={() => openAdminSidebarSection(item.key)}
           {["other-reports", "verification-reports", "custom-report"].includes(adminView) && (
 <AdminOtherReportsPanel mode={adminView === "custom-report" ? customReportOrigin : adminView === "verification-reports" ? "verification" : "other"} reports={customReports} setReports={setCustomReports} selectedId={selectedCustomReportId} setSelectedId={setSelectedCustomReportId} loading={customReportsLoading} loadError={customReportsError} reload={reloadCustomReports} onOrigin={setCustomReportOrigin} />
 )}
-          {adminView === "card-designer" && <AdminCardDesignerPanel />}
+          {adminView === "card-designer" && <AdminCardDesignerPanel cardId={selectedSavedCardId} onSaved={setSelectedSavedCardId} onOpenSaved={() => setAdminView("saved-cards")} />}
+          {adminView === "saved-cards" && <AdminSavedCardsPanel onEdit={(id) => { setSelectedSavedCardId(id); setAdminView("card-designer"); }} onNew={() => { setSelectedSavedCardId(""); setAdminView("card-designer"); }} />}
           {adminView === "attendance-media" && (
 <AdminAttendanceMediaPanel />
 )}
