@@ -294,6 +294,9 @@ useEffect(() => {
       homeEscapeCountRef.current = { count: 0, lastAt: 0 };
       setFullScreenImage(null);
       setFullScreenMediaRecord(null);
+    } else if (document.querySelector('[data-escape-close][aria-expanded="true"]')) {
+      homeEscapeCountRef.current = { count: 0, lastAt: 0 };
+      document.querySelector('[data-escape-close][aria-expanded="true"]').click();
     } else if (editingVisit) {
       homeEscapeCountRef.current = { count: 0, lastAt: 0 };
       setEditingVisit(null);
