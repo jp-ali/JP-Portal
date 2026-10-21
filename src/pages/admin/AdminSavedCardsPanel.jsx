@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { request } from "../../services/authApi.js";
-import { downloadCardSheetPdf, downloadCardSheetSvg, downloadCardSheetShareZip } from "../../services/cardDesigner.js";
+import { downloadCardSheetCdr, downloadCardSheetPdf, downloadCardSheetSvg, downloadCardSheetShareZip } from "../../services/cardDesigner.js";
 import "../../styles/cardDesigner.css";
 
 export default function AdminSavedCardsPanel({ onEdit, onNew }) {
@@ -32,9 +32,9 @@ export default function AdminSavedCardsPanel({ onEdit, onNew }) {
     if (["remove", "permanent"].includes(kind) && !window.confirm(kind === "permanent" ? `Permanently delete ${selected.length} card(s)?` : `Move ${selected.length} card(s) to Old Cards?`)) return;
     setBusy(true); setError(""); setMessage("");
     try {
-      if (["pdf", "svg", "zip"].includes(kind)) {
-        const fullCards = await Promise.all(selected.map(async ({ id }) => (await request(`/cards/${encodeURIComponent(id)}`)).card));
-        const fileName = kind === "pdf" ? await downloadCardSheetPdf(fullCards) : kind === "zip" ? downloadCardSheetShareZip(fullCards) : downloadCardSheetSvg(fullCards);
+      if (["pdf", "svg", "zip", "cdr"].includes(kind)) {
+        const fullCards = kind === "cdr" ? null : await Promise.all(selected.map(async ({ id }) => (await request(`/cards/${encodeURIComponent(id)}`)).card));
+        const fileName = kind === "cdr" ? await downloadCardSheetCdr(selected.map(({ id }) => id), selected[0]?.values) : kind === "pdf" ? await downloadCardSheetPdf(fullCards) : kind === "zip" ? downloadCardSheetShareZip(fullCards) : downloadCardSheetSvg(fullCards);
         setMessage(`${selected.length} card(s) downloaded in ${fileName}. ${kind === "zip" ? "Send the ZIP as a WhatsApp Document. Extract its SVG and open it in CorelDRAW." : "Check your browser's Downloads folder."}`);
       } else {
         for (const card of selected) {
@@ -54,7 +54,7 @@ export default function AdminSavedCardsPanel({ onEdit, onNew }) {
       <button type="button" onClick={selectVisible} disabled={!visible.length}>{visible.length && visible.every((card) => selectedIds.includes(card.id)) ? "Clear selection" : "Select all"}</button>
       <div className="saved-cards-menu-wrap"><button type="button" className="primary" onClick={() => setMenu((current) => current === "action" ? "" : "action")}>Action ▾</button>
         {menu === "action" && <div className="saved-cards-menu">{showOld ? <><button type="button" onClick={() => act("restore")}>Restore selected</button><button type="button" onClick={() => act("permanent")}>Delete permanently</button><button type="button" onClick={() => act("old")}>← Active cards</button></> : <><button type="button" onClick={() => act("edit")}>Edit one card</button><button type="button" onClick={() => act("remove")}>Remove selected</button><button type="button" onClick={() => act("old")}>Old cards</button><button type="button" onClick={() => setMenu("download")}>Download sheet ▸</button></>}</div>}
-        {menu === "download" && <div className="saved-cards-menu"><button type="button" onClick={() => setMenu("action")}>← Back</button><button type="button" onClick={() => act("pdf")}>PDF print sheet</button><button type="button" onClick={() => act("svg")}>Corel editable sheet (.svg)</button><button type="button" onClick={() => act("zip")}>WhatsApp Corel ZIP</button></div>}
+        {menu === "download" && <div className="saved-cards-menu"><button type="button" onClick={() => setMenu("action")}>← Back</button><button type="button" onClick={() => act("pdf")}>PDF print sheet</button><button type="button" onClick={() => act("svg")}>Corel editable sheet (.svg)</button><button type="button" onClick={() => act("cdr")}>Corel CDR sheet</button><button type="button" onClick={() => act("zip")}>WhatsApp Corel ZIP</button></div>}
       </div>
     </div>
     <div className="saved-cards-section-title"><h3>{showOld ? "Old Cards" : "Your Cards"}</h3><span>{selected.length} selected · {visible.length} shown</span></div><p className="card-designer-tip">WhatsApp par ZIP ko Document ki tarah bhejein. Andar ki SVG file extract karke CorelDRAW mein edit ho sakti hai.</p>

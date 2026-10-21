@@ -149,6 +149,40 @@ export function downloadCardSheetShareZip(cards) {
   return saveDownload(corelShareFile(cardSheetSvg(cards), "Cards-Corel-Sheet.svg"), "Cards-Corel-Share.zip");
 }
 
+async function requestCdr(body) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 135000);
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "/api"}/cards/export-cdr`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      throw new Error(result?.error || `CDR export failed (${response.status}).`);
+    }
+    const file = await response.blob();
+    if (file.size < 100) throw new Error("CorelDRAW returned an empty CDR file.");
+    return file;
+  } catch (error) {
+    if (error.name === "AbortError") throw new Error("CDR export timed out. Open CorelDRAW on the API computer and try again.");
+    throw error;
+  } finally { clearTimeout(timeout); }
+}
+
+export async function downloadCardCdr(template, values) {
+  const file = await requestCdr({ template, values });
+  return saveDownload(file, cardFileName(values, "cdr"));
+}
+
+export async function downloadCardSheetCdr(ids, values = {}) {
+  const file = await requestCdr({ ids });
+  return saveDownload(file, ids.length === 1 ? cardFileName(values, "cdr") : "Cards-Corel-Sheet.cdr");
+}
+
 function drawPdfCard(pdf, template, values, x, y, width, height) {
   pdf.addImage(template.image, "JPEG", x, y, width, height);
   cardRenderEntries(template, values).forEach(({ field, value }) => {

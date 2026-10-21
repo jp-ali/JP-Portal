@@ -38,6 +38,8 @@ npm run dev
 
 The frontend uses `http://localhost:5173` and proxies `/api` to port `3001`. Vite keeps port `5173` fixed so the API can check the configured development origin. The API defaults to port `3001`; set `PORT` in `backend/.env` to choose another port. `GET /api/health` returns `{ "status": "ok" }`.
 
+The card designer can download PDF, editable SVG, and a WhatsApp ZIP containing SVG without CorelDRAW on the API computer. Native CDR download needs a working CorelDRAW installation on the Windows computer running the API. Set `CORELDRAW_PROG_ID` in `backend/.env` if its installed version differs from 2024 (`CorelDRAW.Application.25`). If CorelDRAW cannot start, the CDR button shows an error and SVG remains available for manual Save As in CorelDRAW.
+
 For phone testing, connect the phone and computer to the same Wi-Fi and open `http://<computer-Wi-Fi-IP>:5173` on the phone. The Vite server listens on the local network, and its `/api` proxy passes same-origin mobile login requests to the local API. Keep both frontend and API running on the computer. The phone's own `localhost` points to the phone, so use the computer's Wi-Fi IP.
 
 ## Environment variables
