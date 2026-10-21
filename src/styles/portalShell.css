@@ -135,7 +135,6 @@ body.report-fullscreen-active .portal-shell .admin-desktop-content,body.report-f
 .portal-admin-shell .portal-stat-wrap:hover .portal-stat-link,.portal-admin-shell .portal-dashboard-link-wrap:hover .portal-dashboard-link { transform:none; border-color:#bc8095; box-shadow:0 8px 17px rgba(87,19,43,.18); }
 .portal-dashboard-group-actions { display:flex; align-items:center; justify-content:flex-end; gap:8px; min-width:0; }
 .portal-shell .portal-dashboard-hide { position:absolute; z-index:3; top:4px; right:4px; display:grid; place-items:center; width:16px; height:16px; padding:0; border:1px solid #e2c5cf; border-radius:4px; color:#7a0f2b; background:#fff9fb; cursor:pointer; box-shadow:0 2px 5px #51102218; transition:background .18s ease,color .18s ease,transform .18s ease; }
-.portal-shell .portal-dashboard-hide::before { content:""; position:absolute; inset:-4px; }
 .portal-dashboard-hide svg { transition:transform .18s ease; }
 .portal-admin-shell .portal-stat-wrap:hover .portal-dashboard-hide svg,.portal-admin-shell .portal-dashboard-link-wrap:hover .portal-dashboard-hide svg { transform:scale(1.16); }
 .portal-shell .portal-dashboard-hide:hover { color:#fff; background:#7a0f2b; border-color:#7a0f2b; }
