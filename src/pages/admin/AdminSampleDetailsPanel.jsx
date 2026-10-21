@@ -3,7 +3,7 @@ import React from "react";
 import ReportMarketerFilterBar from "../../ui/ReportMarketerFilterBar.jsx";
 
 export default function AdminSampleDetailsPanel() {
-  const { adminSampleFromDate, adminSampleMarketersFilter, adminSampleToDate, cardStyle, downloadExcel, downloadPDF, downloadSingleSample, fetchAllSamples, fetchMarketers, getDateKey, getMarketerName, handleDeleteSample, inputStyle, isDateInRange, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, renderSampleReportTable, reportViewClass, samples, selectedAdminSampleMarketerBox, selectedAdminSampleSchoolBox, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminView, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox } = usePortalContext();
+  const { adminSampleFromDate, adminSampleMarketersFilter, adminSampleToDate, cardStyle, downloadExcel, downloadPDF, downloadSingleSample, fetchAllSamples, fetchMarketers, getMarketerName, handleDeleteSample, inputStyle, isDateInRange, marketersList, renderExpandedReportChrome, renderReportExpandButton, renderSampleReportTable, reportViewClass, samples, selectedAdminSampleSchoolBox, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminView, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox } = usePortalContext();
   return (<div className={reportViewClass("sample-details")}>
               {renderExpandedReportChrome("sample-details")}
               <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px", alignItems: "center" }}>
@@ -11,7 +11,6 @@ export default function AdminSampleDetailsPanel() {
 onClick={() => {
 if (selectedAdminSampleSchoolBox) {
 setSelectedAdminSampleSchoolBox(null);
-} else if (selectedAdminSampleMarketerBox) {
 setSelectedAdminSampleMarketerBox(null);
 } else {
 setAdminView("home");
@@ -26,9 +25,7 @@ style={{ padding: "8px 14px", background: "linear-gradient(135deg,#6f0b24,#86132
                     {(() => {
 const filteredList = samples.filter(s => {
 if (!s.createdAt) return false;
-const sDateStr = getDateKey(s.createdAt);
 if (!isDateInRange(s.createdAt, adminSampleFromDate, adminSampleToDate)) return false;
-if (selectedAdminSampleMarketerBox && s.marketerEmail !== selectedAdminSampleMarketerBox) return false;
 if (adminSampleMarketersFilter.length > 0 && !adminSampleMarketersFilter.includes(s.marketerEmail)) return false;
 return true;
 });
@@ -55,70 +52,13 @@ style={{ padding: "6px 12px", background: "linear-gradient(135deg,#6f0b24,#86132
                 {!((adminSampleFromDate || adminSampleToDate || adminSampleMarketersFilter.length > 0)) && <div className="report-normal-actions" style={{ marginLeft:"auto" }}>{renderReportExpandButton("sample-details", "Expand sample details")}</div>}
               </div>
               <div style={cardStyle}>
-                {!selectedAdminSampleMarketerBox && !selectedAdminSampleSchoolBox ? (
+                {!selectedAdminSampleSchoolBox ? (
 <>
                     <h3 style={{ marginTop: 0, color: "#3b2329", fontSize: "17px", marginBottom: "14px" }}>📦 All Sample Details</h3>
                     <ReportMarketerFilterBar fromDate={adminSampleFromDate} toDate={adminSampleToDate} onFromDate={setAdminSampleFromDate} onToDate={setAdminSampleToDate} onClear={() => { setAdminSampleFromDate(""); setAdminSampleToDate(""); }} marketers={marketersList} selected={adminSampleMarketersFilter} onSelected={setAdminSampleMarketersFilter} onRefresh={() => Promise.all([fetchAllSamples(), fetchMarketers()])} inputStyle={inputStyle} />
-                    <h4 style={{ color: "#5c484e", fontSize: "15px", marginBottom: "10px" }}>Marketers Sample Summary:</h4>
-                    {(() => {
-const filteredSamples = samples.filter(s => {
-if (!s.createdAt) return false;
-const sDateStr = getDateKey(s.createdAt);
-if (!isDateInRange(s.createdAt, adminSampleFromDate, adminSampleToDate)) return false;
-if (adminSampleMarketersFilter.length > 0 && !adminSampleMarketersFilter.includes(s.marketerEmail)) return false;
-return true;
-});
-const counts = {};
-filteredSamples.forEach(s => {
-counts[s.marketerEmail] = (counts[s.marketerEmail] || 0) + 1;
-});
-if (Object.keys(counts).length === 0) {
-return <p style={{ color: "#78686d", fontSize: "14px" }}>No sample records match the criteria.</p>;
-}
-return (
-<div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "14px" }}>
-                          {Object.entries(counts).map(([mEmail, count]) => {
-const mObj = marketersList.find(m => m.email === mEmail);
-const mDisplayName = mObj ? mObj.name : mEmail;
-return (
-<div 
-key={mEmail}
-onClick={() => setSelectedAdminSampleMarketerBox(mEmail)}
-style={{ 
-background: "rgba(255,255,255,0.96)", 
-border: "1px solid rgba(245, 158, 11, 0.3)", 
-borderRadius: "14px", 
-padding: "16px", 
-cursor: "pointer"
-}}
->
-                                <h4 style={{ margin: "0 0 6px 0", color: "#77102a", fontSize: "15px" }}><span style={{display:"inline-flex",verticalAlign:"middle",marginRight:"6px"}}>{renderMarketerPersonIcon(18)}</span>{mDisplayName}</h4>
-                                <p style={{ margin: "0 0 10px 0", fontSize: "12px", color: "#78686d" }}>{mEmail}</p>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                  <span style={{ background: "rgba(143,21,50,.12)", color: "#77102a", padding: "4px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>
-                                    Samples: {count}
-                                  </span>
-                                  <span style={{ fontSize: "13px", color: "#5c484e" }}>View →</span>
-                                </div>
-                              </div>
-);
-})}
-                        </div>
-);
-})()}
                     {(() => {
 const filteredSamples = samples.filter(s => s.createdAt && isDateInRange(s.createdAt, adminSampleFromDate, adminSampleToDate) && (!adminSampleMarketersFilter.length || adminSampleMarketersFilter.includes(s.marketerEmail)));
-return filteredSamples.length ? <div style={{marginTop:"18px"}}><h4 style={{margin:"0 0 9px",color:"#5c484e",fontSize:"14px"}}>Merged Sample Report</h4>{renderSampleReportTable(filteredSamples,(s)=>{setSelectedAdminSampleMarketerBox(s.marketerEmail);setSelectedAdminSampleSchoolBox(s.id);})}</div> : null;
-})()}
-                  </>
-) : selectedAdminSampleMarketerBox && !selectedAdminSampleSchoolBox ? (
-<>
-                    <h3 style={{ marginTop: 0, color: "#77102a", fontSize: "17px", marginBottom: "14px" }}>
-                      Samples by Marketer: {marketersList.find(m => m.email === selectedAdminSampleMarketerBox)?.name || selectedAdminSampleMarketerBox}
-                    </h3>
-                    {(() => {
-const filtered = samples.filter(s => s.marketerEmail === selectedAdminSampleMarketerBox && s.createdAt && isDateInRange(s.createdAt, adminSampleFromDate, adminSampleToDate));
-return filtered.length ? renderSampleReportTable(filtered,(s)=>setSelectedAdminSampleSchoolBox(s.id)) : <p style={{color:"#78686d",fontSize:"13px"}}>No sample records found for this marketer.</p>;
+return filteredSamples.length ? <div style={{marginTop:"18px"}}><h4 style={{margin:"0 0 9px",color:"#5c484e",fontSize:"14px"}}>Merged Sample Report</h4>{renderSampleReportTable(filteredSamples,(s)=>setSelectedAdminSampleSchoolBox(s.id))}</div> : <p style={{color:"#78686d",fontSize:"13px"}}>No sample records match the selected filters.</p>;
 })()}
                   </>
 ) : (
