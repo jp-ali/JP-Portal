@@ -590,6 +590,27 @@ resetAttendanceForm();
 await fetchTodayAttendance();
 setMarketerview("attendance");
 };
+const attendanceExportValues = (r) => {
+const petrolExpense = getAttendancePetrolExpense(r);
+const rate = getAttendancePetrolRate(r);
+const assignedKms = getAttendanceAssignedKms(r);
+return [
+r.areaName || "-",
+`${formatActionPlanDate(r.date)}${r.startTime ? ` ${formatTime12(r.startTime)}` : ""}`,
+r.endTime ? `${formatActionPlanDate(r.date)} ${formatTime12(r.endTime)}` : "-",
+r.startReading ?? "-",
+r.endReading ?? "-",
+assignedKms === "—" ? "-" : assignedKms,
+r.endMarked ? getAttendanceTotalKms(r) : "-",
+rate === null ? "-" : `Rs. ${rate}`,
+petrolExpense === "—" ? "-" : `Rs. ${petrolExpense}`,
+Number(r.transportExpense || 0),
+Number(r.nightStayExpense || 0),
+Number(r.foodExpense || 0),
+Number(r.otherExpense || 0),
+`Rs. ${getAttendanceTotalOtherExpense(r)}`
+];
+};
 const downloadAttendanceExcel = () => {
 const rows = getFilteredAttendance();
 if (!rows.length) {
@@ -600,34 +621,34 @@ if (!window.XLSX) {
 alert("Excel library is still loading. Please try again in a moment.");
 return;
 }
-const formatted = rows.map((r, idx) => ({
-"SR#": idx + 1,
-"SALE OFFICER": r.marketerName || r.marketerEmail || "Marketer",
-"AREA NAME": r.areaName || "N/A",
-"DAY IN": `${formatActionPlanDate(r.date)}${r.startTime ? ` ${formatTime12(r.startTime)}` : ""}`,
-"DAY OUT": r.endTime ? `${formatActionPlanDate(r.date)} ${formatTime12(r.endTime)}` : "N/A",
-"START": r.startReading ?? "N/A",
-"END": r.endReading ?? "N/A",
-"KMS": r.endMarked ? getAttendanceTotalKms(r) : "N/A",
-"ASSIGNED KMS": getAttendanceAssignedKms(r),
-"RATE": getAttendancePetrolRate(r) === null ? "N/A" : getAttendancePetrolRate(r),
-"PETROL EXPENSE": getAttendancePetrolExpense(r),
-"TRANSPORT": Number(r.transportExpense || 0),
-"NIGHT STAY": Number(r.nightStayExpense || 0),
-"FOOD": Number(r.foodExpense || 0),
-"OTHER EXPENSE": Number(r.otherExpense || 0),
-"TOTAL OTHER EXPENSE": getAttendanceTotalOtherExpense(r),
-"DAY IN PROOF": r.startPhoto ? "Available" : "Not uploaded",
-"DAY OUT PROOF": r.endPhoto ? "Available" : "Not uploaded",
-"TRANSPORT PROOF": r.transportExpensePhoto ? "Available" : "Not uploaded",
-"NIGHT STAY PROOF": r.nightStayExpensePhoto ? "Available" : "Not uploaded",
-"FOOD PROOF": r.foodExpensePhoto ? "Available" : "Not uploaded",
-"OTHER PROOF": r.otherExpensePhoto ? "Available" : "Not uploaded"
-}));
+const columns = ["SR#", "SALE OFFICER", "AREA NAME", "DAY IN", "DAY OUT", "START", "END", "ASSIGNED KMS", "KMS", "RATE", "PETROL EXPENSE", "TRANSPORT", "NIGHT STAY", "FOOD", "OTHER", "TOTAL OTHER EXPENSE"];
+const formatted = [];
+const personRanges = [];
+const people = groupRowsByMarketerAndDate(rows, { getDateValue: (r) => r?.date });
+people.forEach((person, personIndex) => {
+const start = formatted.length;
+for (const entries of person.dates.values()) for (const r of entries) {
+const values = attendanceExportValues(r);
+formatted.push(Object.fromEntries(columns.map((column, index) => [column, index < 2 ? (index === 0 ? personIndex + 1 : person.name) : values[index - 2]])));
+}
+personRanges.push({ start, count: formatted.length - start });
+});
 const worksheet = mergedReportSheet(window.XLSX, formatted, "Attendance Report");
-worksheet["!cols"] = Object.keys(formatted[0]).map((key) => ({
-wch: key.includes("PROOF") ? 18 : key === "SALE OFFICER" ? 22 : key === "AREA NAME" ? 20 : 14
-}));
+worksheet["!merges"] = worksheet["!merges"].filter((merge) => merge.s.r < 3 || merge.s.c !== 1);
+personRanges.filter(({ count }) => count > 1).forEach(({ start, count }) => {
+for (const c of [0, 1]) worksheet["!merges"].push({ s: { r: start + 3, c }, e: { r: start + count + 2, c } });
+});
+worksheet["!cols"] = columns.map((key) => ({ wch: key === "SALE OFFICER" ? 24 : key === "AREA NAME" ? 20 : key.includes("EXPENSE") ? 23 : key.includes("DAY") ? 25 : 17 }));
+const total = Array(columns.length).fill("");
+total[7] = "TOTAL";
+total[8] = rows.reduce((sum, r) => r?.endMarked ? sum + (Number(getAttendanceTotalKms(r)) || 0) : sum, 0).toFixed(1).replace(/\.0$/, "");
+total[10] = `Rs. ${rows.reduce((sum, r) => sum + (Number(getAttendancePetrolExpense(r)) || 0), 0).toFixed(2)}`;
+total[15] = `Rs. ${rows.reduce((sum, r) => sum + (Number(getAttendanceTotalOtherExpense(r)) || 0), 0).toFixed(2)}`;
+window.XLSX.utils.sheet_add_aoa(worksheet, [total], { origin: { r: formatted.length + 3, c: 0 } });
+for (let c = 0; c < columns.length; c++) {
+const cell = worksheet[window.XLSX.utils.encode_cell({ r: formatted.length + 3, c })];
+if (cell) cell.s = { font: { bold: true, color: { rgb: "7A0F2B" } }, fill: { fgColor: { rgb: "FCEFF2" } }, alignment: { horizontal: "center", vertical: "top" } };
+}
 const workbook = window.XLSX.utils.book_new();
 window.XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
 window.XLSX.writeFile(workbook, `Attendance_${adminAttendanceFromDate || "All"}_to_${adminAttendanceToDate || "All"}.xlsx`);
@@ -645,7 +666,7 @@ const pages=[],rangeLabel=`${adminAttendanceFromDate?formatActionPlanDate(adminA
 const makeHeader=()=>{const c=[];c.push(rectCmd(LEFT,5,RIGHT-LEFT,24,.55,PDF_BANNER),drawText(148.5,9,"JAVED PUBLISHERS",18,"center",true),drawText(148.5,15.5,"DAILY ATTENDANCE REPORT",11.5,"center",true),drawText(10,22.5,`Report Date: ${new Date().toLocaleDateString("en-GB")}`,6.5,"left"),drawText(148.5,22.5,`Total Records: ${rows.length}`,6.5,"center"),drawText(287,22.5,`Range: ${rangeLabel}`,6.0,"right"),drawText(148.5,32.2,"Petrol Expense = Total KMs / Assigned KMs per Litre x Petrol Rate for that date",5.2,"center"));const topH=6,subH=8;let x=LEFT;[0,1,2,3,4].forEach(idx=>{const[h,w]=columns[idx];c.push(rectCmd(x,TABLE_TOP,w,topH+subH,.55,PDF_TABLE_HEAD),drawWrapped(x,TABLE_TOP,w,topH+subH,h,4.75,true));x+=w;});const readingsW=columns.slice(5,9).reduce((a,b)=>a+b[1],0);c.push(rectCmd(x,TABLE_TOP,readingsW,topH,.55,PDF_TABLE_HEAD),drawWrapped(x,TABLE_TOP,readingsW,topH,"READINGS",4.8,true));let sx=x;columns.slice(5,9).forEach(([h,w])=>{c.push(rectCmd(sx,TABLE_TOP+topH,w,subH,.55,PDF_TABLE_SUBHEAD),drawWrapped(sx,TABLE_TOP+topH,w,subH,h,4.35,true));sx+=w;});x+=readingsW;const petrolW=columns.slice(9,11).reduce((a,b)=>a+b[1],0);c.push(rectCmd(x,TABLE_TOP,petrolW,topH,.55,PDF_TABLE_HEAD),drawWrapped(x,TABLE_TOP,petrolW,topH,"PETROL",4.8,true));sx=x;columns.slice(9,11).forEach(([h,w])=>{c.push(rectCmd(sx,TABLE_TOP+topH,w,subH,.55,PDF_TABLE_SUBHEAD),drawWrapped(sx,TABLE_TOP+topH,w,subH,h,4.2,true));sx+=w;});x+=petrolW;const expenseW=columns.slice(11,16).reduce((a,b)=>a+b[1],0);c.push(rectCmd(x,TABLE_TOP,expenseW,topH,.55,PDF_TABLE_HEAD),drawWrapped(x,TABLE_TOP,expenseW,topH,"EXPENSES",4.8,true));sx=x;columns.slice(11,16).forEach(([h,w])=>{c.push(rectCmd(sx,TABLE_TOP+topH,w,subH,.55,PDF_TABLE_SUBHEAD),drawWrapped(sx,TABLE_TOP+topH,w,subH,h,4.15,true));sx+=w;});return{content:c,y:TABLE_TOP+topH+subH};};
 let page=makeHeader();pages.push(page);const drawCell=(x,top,w,h,val,bold=false,size=4.35,fill=null)=>{page.content.push(rectCmd(x,top,w,h,.42,fill),drawWrapped(x,top,w,h,val,size,bold));};
 const people=groupRowsByMarketerAndDate(rows,{getDateValue:(r)=>r?.date});
-people.forEach((person,personIndex)=>{const flat=[];[...person.dates.entries()].forEach(([dateKey,entries])=>entries.forEach((item,itemIndex)=>flat.push({dateKey,item,itemIndex})));let offset=0;while(offset<flat.length){let available=CONTENT_BOTTOM-page.y;if(available<8.8){page=makeHeader();pages.push(page);available=CONTENT_BOTTOM-page.y;}const chunk=[];let used=0;for(let i=offset;i<flat.length;i++){const e=flat[i],r=e.item,petrolExpense=getAttendancePetrolExpense(r),vals=[r.areaName||"-",`${formatActionPlanDate(r.date)}${r.startTime?` ${formatTime12(r.startTime)}`:""}`,r.endTime?`${formatActionPlanDate(r.date)} ${formatTime12(r.endTime)}`:"-",r.startReading??"-",r.endReading??"-",getAttendanceAssignedKms(r),r.endMarked?getAttendanceTotalKms(r):"-",getAttendancePetrolRate(r)===null?"-":`Rs. ${getAttendancePetrolRate(r)}`,petrolExpense==="—"?"-":`Rs. ${petrolExpense}`,Number(r.transportExpense||0),Number(r.nightStayExpense||0),Number(r.foodExpense||0),Number(r.otherExpense||0),`Rs. ${getAttendanceTotalOtherExpense(r)}`],widths=columns.slice(2).map(c=>c[1]),h=Math.min(19,Math.max(8.8,...vals.map((v,k)=>3.2+wrapText(v,Math.max(2*MM,widths[k]*MM-4.6*MM),4.35).length*2.75)));if(chunk.length&&used+h>available)break;if(!chunk.length&&h>available)break;chunk.push({...e,h,vals});used+=h;}if(!chunk.length){page=makeHeader();pages.push(page);continue;}drawCell(LEFT,page.y,7,used,personIndex+1,true,4.45,[.985,.985,.985]);drawCell(LEFT+7,page.y,32,used,person.name,true,4.45,[.985,.985,.985]);let yy=page.y;chunk.forEach((e,idx)=>{let x=LEFT+39,fill=idx%2?[.995,.995,.995]:null;e.vals.forEach((v,k)=>{drawCell(x,yy,columns[k+2][1],e.h,v,false,4.35,fill);x+=columns[k+2][1];});yy+=e.h;});page.y+=used;offset+=chunk.length;}});
+people.forEach((person,personIndex)=>{const flat=[];[...person.dates.entries()].forEach(([dateKey,entries])=>entries.forEach((item,itemIndex)=>flat.push({dateKey,item,itemIndex})));let offset=0;while(offset<flat.length){let available=CONTENT_BOTTOM-page.y;if(available<8.8){page=makeHeader();pages.push(page);available=CONTENT_BOTTOM-page.y;}const chunk=[];let used=0;for(let i=offset;i<flat.length;i++){const e=flat[i],r=e.item,vals=attendanceExportValues(r),widths=columns.slice(2).map(c=>c[1]),h=Math.min(19,Math.max(8.8,...vals.map((v,k)=>3.2+wrapText(v,Math.max(2*MM,widths[k]*MM-4.6*MM),4.35).length*2.75)));if(chunk.length&&used+h>available)break;if(!chunk.length&&h>available)break;chunk.push({...e,h,vals});used+=h;}if(!chunk.length){page=makeHeader();pages.push(page);continue;}drawCell(LEFT,page.y,7,used,personIndex+1,true,4.45,[.985,.985,.985]);drawCell(LEFT+7,page.y,32,used,person.name,true,4.45,[.985,.985,.985]);let yy=page.y;chunk.forEach((e,idx)=>{let x=LEFT+39,fill=idx%2?[.995,.995,.995]:null;e.vals.forEach((v,k)=>{drawCell(x,yy,columns[k+2][1],e.h,v,false,4.35,fill);x+=columns[k+2][1];});yy+=e.h;});page.y+=used;offset+=chunk.length;}});
 const totalKms=rows.reduce((sum,row)=>{if(!row?.endMarked)return sum;const value=Number(getAttendanceTotalKms(row));return Number.isFinite(value)?sum+value:sum;},0),totalPetrolExpense=rows.reduce((sum,row)=>{const value=Number(getAttendancePetrolExpense(row));return Number.isFinite(value)?sum+value:sum;},0),totalOtherExpense=rows.reduce((sum,row)=>{const value=Number(getAttendanceTotalOtherExpense(row));return Number.isFinite(value)?sum+value:sum;},0),totalRowH=8.5;if(page.y+totalRowH>CONTENT_BOTTOM){page=makeHeader();pages.push(page);}const totalStartIndex=7;let totalX=LEFT+columns.slice(0,totalStartIndex).reduce((sum,col)=>sum+col[1],0);for(let i=totalStartIndex;i<columns.length;i++){let value="";if(i===7)value="TOTAL";else if(i===8)value=totalKms.toFixed(1).replace(/\.0$/,"");else if(i===10)value=`Rs. ${totalPetrolExpense.toFixed(2)}`;else if(i===15)value=`Rs. ${totalOtherExpense.toFixed(2)}`;page.content.push(rectCmd(totalX,page.y,columns[i][1],totalRowH,.55,[.995,.945,.955]));if(value)page.content.push(drawWrapped(totalX,page.y,columns[i][1],totalRowH,value,4.7,true));totalX+=columns[i][1];}page.y+=totalRowH;
 pages.forEach((pg,idx)=>{pg.content.push(rectCmd(LEFT,197,RIGHT-LEFT,10,.45,PDF_FOOTER),drawText(148.5,203,"Created by Ali Ashfaq",7.5,"center",true),drawText(10,203,"Daily Attendance Report",6.3,"left"),drawText(287,203,`Page ${idx+1} of ${pages.length}`,6.3,"right"));});
 const objects=[],addObject=(body)=>{objects.push(body);return objects.length;},f1=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"),f2=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"),contentIds=[],pageIds=[];pages.forEach(pg=>{const stream=pg.content.join("\n")+"\n";contentIds.push(addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`));pageIds.push(0);});const pagesId=addObject("");pages.forEach((pg,i)=>{pageIds[i]=addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${PAGE_W.toFixed(2)} ${PAGE_H.toFixed(2)}] /Resources << /Font << /F1 ${f1} 0 R /F2 ${f2} 0 R >> >> /Contents ${contentIds[i]} 0 R >>`);});objects[pagesId-1]=`<< /Type /Pages /Kids [${pageIds.map(id=>`${id} 0 R`).join(" ")}] /Count ${pages.length} >>`;const catalogId=addObject(`<< /Type /Catalog /Pages ${pagesId} 0 R >>`);let pdf="%PDF-1.4\n%\xE2\xE3\xCF\xD3\n",offsets=[0];objects.forEach((obj,i)=>{offsets[i+1]=pdf.length;pdf+=`${i+1} 0 obj\n${obj}\nendobj\n`;});const xref=pdf.length;pdf+=`xref\n0 ${objects.length+1}\n0000000000 65535 f \n`;for(let i=1;i<=objects.length;i++)pdf+=`${String(offsets[i]).padStart(10,"0")} 00000 n \n`;pdf+=`trailer\n<< /Size ${objects.length+1} /Root ${catalogId} 0 R >>\nstartxref\n${xref}\n%%EOF`;const bytes=new Uint8Array(pdf.length);for(let i=0;i<pdf.length;i++)bytes[i]=pdf.charCodeAt(i)&0xff;const blob=new Blob([bytes],{type:"application/pdf"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`Attendance_Report_${new Date().toISOString().slice(0,10)}.pdf`;a.style.display="none";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);

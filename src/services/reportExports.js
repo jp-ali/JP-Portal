@@ -25,6 +25,9 @@ const formattedData = dataList.map((item, idx) => ({
 "Date": item.createdAt && item.createdAt.toDate ? item.createdAt.toDate().toLocaleDateString() : "N/A"
 }));
 const worksheet = mergedReportSheet(window.XLSX, formattedData, "School Visits Report");
+worksheet["!cols"] = Object.keys(formattedData[0] || {}).map((key) => ({
+  wch: key === "Details / Purpose" || key === "Remarks" ? 36 : key === "School Name" || key === "Marketer" ? 24 : key === "Branches" || key === "Strength" || key === "Session" ? 15 : 19
+}));
 const workbook = window.XLSX.utils.book_new();
 window.XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
 window.XLSX.writeFile(workbook, filename);
@@ -54,9 +57,11 @@ const columns = [
 ["Contact Person", 25],
 ["Phone No", 20],
 ["Visit Time", 15],
-["Session / B / S", 16],
-["Purpose / Details", 34],
-["Remarks", 42]
+["Session", 10],
+["Branches", 12],
+["Strength", 12],
+["Purpose / Details", 28],
+["Remarks", 30]
 ];
 const esc = (v) => ascii(v).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 const textWidth = (txt, size) => ascii(txt).length * size * 0.50;
@@ -140,14 +145,16 @@ item.schoolName || "N/A",
 item.principalName || "N/A",
 item.phone || "N/A",
 formatTime(item),
-`${item.session || "N/A"} / ${item.branches || "-"} / ${item.strength || "-"}`,
+item.session || "N/A",
+item.branches || "N/A",
+item.strength || "N/A",
 item.purpose || item.sampleDetails || "N/A",
 item.notes || "N/A"
 ];
-const widths = [20, 24, 30, 25, 20, 15, 16, 34, 42];
-const sizes = [5.5, 5.5, 5.6, 5.6, 5.5, 5.4, 5.4, 5.5, 5.5];
+const widths = [20, 24, 30, 25, 20, 15, 10, 12, 12, 28, 30];
+const sizes = [5.5, 5.5, 5.6, 5.6, 5.5, 5.4, 5.1, 5.1, 5.1, 5.3, 5.3];
 const lineCounts = values.map((v, i) => wrapText(v, widths[i] * MM - 4 * MM, sizes[i]).length);
-return Math.min(22, Math.max(8, 2.8 + Math.max(...lineCounts) * 3.15));
+return Math.min(36, Math.max(8, 2.8 + Math.max(...lineCounts) * 3.15));
 };
 const pages = [];
 const newPage = () => {
@@ -247,9 +254,11 @@ drawCell(108, yy, 30, entry.height, item.schoolName || "N/A", "left", false, 5.5
 drawCell(138, yy, 25, entry.height, item.principalName || "N/A", "left", false, 5.5, fill);
 drawCell(163, yy, 20, entry.height, item.phone || "N/A", "left", false, 5.4, fill);
 drawCell(183, yy, 15, entry.height, formatTime(item), "center", false, 5.3, fill);
-drawCell(198, yy, 16, entry.height, `${item.session || "N/A"} / ${item.branches || "-"} / ${item.strength || "-"}`, "center", false, 5.3, fill);
-drawCell(214, yy, 34, entry.height, item.purpose || item.sampleDetails || "N/A", "left", false, 5.4, fill);
-drawCell(248, yy, 42, entry.height, item.notes || "N/A", "left", false, 5.4, fill);
+drawCell(198, yy, 10, entry.height, item.session || "N/A", "center", false, 5.1, fill);
+drawCell(208, yy, 12, entry.height, item.branches || "N/A", "center", false, 5.1, fill);
+drawCell(220, yy, 12, entry.height, item.strength || "N/A", "center", false, 5.1, fill);
+drawCell(232, yy, 28, entry.height, item.purpose || item.sampleDetails || "N/A", "left", false, 5.3, fill);
+drawCell(260, yy, 30, entry.height, item.notes || "N/A", "left", false, 5.3, fill);
 y += entry.height;
 }
 cursor = end;
