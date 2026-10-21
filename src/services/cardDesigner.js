@@ -1,4 +1,4 @@
-import { gzipSync, strToU8 } from "fflate";
+import { strToU8, zipSync } from "fflate";
 
 const escapeXml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[char]);
 
@@ -106,12 +106,12 @@ export function downloadCardSvg(template, values) {
   return saveDownload(blob, cardFileName(values, "svg"));
 }
 
-export function corelShareFile(svg) {
-  return new Blob([gzipSync(strToU8(svg), { level: 6 })], { type: "application/octet-stream" });
+export function corelShareFile(svg, svgFileName = "Card-Corel.svg") {
+  return new Blob([zipSync({ [svgFileName]: strToU8(svg) }, { level: 6 })], { type: "application/zip" });
 }
 
-export function downloadCardSvgz(template, values) {
-  return saveDownload(corelShareFile(cardSvg(template, values)), cardFileName(values, "svgz"));
+export function downloadCardShareZip(template, values) {
+  return saveDownload(corelShareFile(cardSvg(template, values), cardFileName(values, "svg")), cardFileName(values, "zip"));
 }
 
 const SHEET_WIDTH = 210;
@@ -145,8 +145,8 @@ export function downloadCardSheetSvg(cards) {
   return saveDownload(new Blob([cardSheetSvg(cards)], { type: "image/svg+xml;charset=utf-8" }), "Cards-Corel-Sheet.svg");
 }
 
-export function downloadCardSheetSvgz(cards) {
-  return saveDownload(corelShareFile(cardSheetSvg(cards)), "Cards-Corel-Share.svgz");
+export function downloadCardSheetShareZip(cards) {
+  return saveDownload(corelShareFile(cardSheetSvg(cards), "Cards-Corel-Sheet.svg"), "Cards-Corel-Share.zip");
 }
 
 function drawPdfCard(pdf, template, values, x, y, width, height) {

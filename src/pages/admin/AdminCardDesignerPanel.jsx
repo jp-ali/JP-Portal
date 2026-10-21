@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { request } from "../../services/authApi.js";
-import { cardRenderEntries, defaultCardFields, defaultCardValues, downloadCardPdf, downloadCardSvg, downloadCardSvgz, prepareCardImage } from "../../services/cardDesigner.js";
+import { cardRenderEntries, defaultCardFields, defaultCardValues, downloadCardPdf, downloadCardSvg, downloadCardShareZip, prepareCardImage } from "../../services/cardDesigner.js";
 import defaultCardArt from "../../assets/card-blank-template.png";
 import "../../styles/cardDesigner.css";
 
@@ -97,7 +97,7 @@ export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSav
   const exportCard = async (kind) => {
     if (!template.image) return setError("Card image is still loading.");
     setError("");
-    try { const fileName = kind === "svgz" ? downloadCardSvgz(template, values) : kind === "svg" ? downloadCardSvg(template, values) : await downloadCardPdf(template, values); setMessage(`${fileName} downloaded. ${kind === "svgz" ? "Send it on WhatsApp as a Document; the receiver can open it in CorelDRAW." : "Check your browser's Downloads folder."}`); }
+    try { const fileName = kind === "zip" ? downloadCardShareZip(template, values) : kind === "svg" ? downloadCardSvg(template, values) : await downloadCardPdf(template, values); setMessage(`${fileName} downloaded. ${kind === "zip" ? "Send the ZIP on WhatsApp as a Document. The receiver can extract the SVG and open it in CorelDRAW." : "Check your browser's Downloads folder."}`); }
     catch (problem) { setError(`Could not export card: ${problem.message}`); }
   };
   const addField = () => {
@@ -138,7 +138,7 @@ export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSav
     {loading && <p>Loading card…</p>}{error && <p className="card-designer-error" role="alert">{error}</p>}{message && <p className="card-designer-success" role="status">{message}</p>}
     <div className="card-designer-preview-area"><div className="card-designer-preview-head"><div className="card-designer-preview-title"><strong>Live card preview</strong><span>{selectedField ? `Selected: ${selectedField.label}` : "Select a field below"}</span></div><button type="button" onClick={() => setPreviewExpanded(true)} disabled={!template.image} aria-label="Expand card preview">Expand ↗</button></div>
       {template.image ? renderPreview() : <div className="card-designer-empty">Loading default card artwork…</div>}
-      <div className="card-designer-export"><button type="button" onClick={() => exportCard("pdf")} disabled={!template.image}>Download PDF</button><button type="button" onClick={() => exportCard("svg")} disabled={!template.image}>Download Corel SVG</button><button type="button" onClick={() => exportCard("svgz")} disabled={!template.image}>Shareable Corel (.svgz)</button></div><p className="card-designer-tip">For WhatsApp, send the .svgz file as a Document. It stays editable when opened in CorelDRAW.</p>
+      <div className="card-designer-export"><button type="button" onClick={() => exportCard("pdf")} disabled={!template.image}>Download PDF</button><button type="button" onClick={() => exportCard("svg")} disabled={!template.image}>Download Corel SVG</button><button type="button" onClick={() => exportCard("zip")} disabled={!template.image}>WhatsApp Corel ZIP</button></div><p className="card-designer-tip">Send the ZIP as a WhatsApp Document. Extract the SVG inside and open it in CorelDRAW to edit.</p>
     </div>
     {previewExpanded && template.image && createPortal(<div className="card-designer-preview-modal" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreviewExpanded(false); }} role="presentation"><div className="card-designer-preview-dialog" role="dialog" aria-modal="true" aria-label="Expanded card preview"><div className="card-designer-preview-dialog-head"><strong>Card preview</strong><button type="button" onClick={() => setPreviewExpanded(false)} aria-label="Close card preview">Close ×</button></div>{renderPreview()}</div></div>, document.body)}
     <div className="card-designer-controls"><div className="card-designer-controls-head"><div><h3>Card details</h3><p>Change text, style and order. The preview updates as you type.</p></div><button type="button" onClick={addField}>+ Add field</button></div>

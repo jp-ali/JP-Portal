@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { request } from "../../services/authApi.js";
-import { downloadCardSheetPdf, downloadCardSheetSvg, downloadCardSheetSvgz } from "../../services/cardDesigner.js";
+import { downloadCardSheetPdf, downloadCardSheetSvg, downloadCardSheetShareZip } from "../../services/cardDesigner.js";
 import "../../styles/cardDesigner.css";
 
 export default function AdminSavedCardsPanel({ onEdit, onNew }) {
@@ -32,10 +32,10 @@ export default function AdminSavedCardsPanel({ onEdit, onNew }) {
     if (["remove", "permanent"].includes(kind) && !window.confirm(kind === "permanent" ? `Permanently delete ${selected.length} card(s)?` : `Move ${selected.length} card(s) to Old Cards?`)) return;
     setBusy(true); setError(""); setMessage("");
     try {
-      if (["pdf", "svg", "svgz"].includes(kind)) {
+      if (["pdf", "svg", "zip"].includes(kind)) {
         const fullCards = await Promise.all(selected.map(async ({ id }) => (await request(`/cards/${encodeURIComponent(id)}`)).card));
-        const fileName = kind === "pdf" ? await downloadCardSheetPdf(fullCards) : kind === "svgz" ? downloadCardSheetSvgz(fullCards) : downloadCardSheetSvg(fullCards);
-        setMessage(`${selected.length} card(s) downloaded in ${fileName}. ${kind === "svgz" ? "Share it on WhatsApp as a Document, then open it in CorelDRAW." : "Check your browser's Downloads folder."}`);
+        const fileName = kind === "pdf" ? await downloadCardSheetPdf(fullCards) : kind === "zip" ? downloadCardSheetShareZip(fullCards) : downloadCardSheetSvg(fullCards);
+        setMessage(`${selected.length} card(s) downloaded in ${fileName}. ${kind === "zip" ? "Send the ZIP as a WhatsApp Document. Extract its SVG and open it in CorelDRAW." : "Check your browser's Downloads folder."}`);
       } else {
         for (const card of selected) {
           const path = `/cards/${encodeURIComponent(card.id)}${kind === "restore" ? "/restore" : kind === "permanent" ? "/permanent" : ""}`;
@@ -54,10 +54,10 @@ export default function AdminSavedCardsPanel({ onEdit, onNew }) {
       <button type="button" onClick={selectVisible} disabled={!visible.length}>{visible.length && visible.every((card) => selectedIds.includes(card.id)) ? "Clear selection" : "Select all"}</button>
       <div className="saved-cards-menu-wrap"><button type="button" className="primary" onClick={() => setMenu((current) => current === "action" ? "" : "action")}>Action ▾</button>
         {menu === "action" && <div className="saved-cards-menu">{showOld ? <><button type="button" onClick={() => act("restore")}>Restore selected</button><button type="button" onClick={() => act("permanent")}>Delete permanently</button><button type="button" onClick={() => act("old")}>← Active cards</button></> : <><button type="button" onClick={() => act("edit")}>Edit one card</button><button type="button" onClick={() => act("remove")}>Remove selected</button><button type="button" onClick={() => act("old")}>Old cards</button><button type="button" onClick={() => setMenu("download")}>Download sheet ▸</button></>}</div>}
-        {menu === "download" && <div className="saved-cards-menu"><button type="button" onClick={() => setMenu("action")}>← Back</button><button type="button" onClick={() => act("pdf")}>PDF print sheet</button><button type="button" onClick={() => act("svg")}>Corel editable sheet (.svg)</button><button type="button" onClick={() => act("svgz")}>WhatsApp/Corel share (.svgz)</button></div>}
+        {menu === "download" && <div className="saved-cards-menu"><button type="button" onClick={() => setMenu("action")}>← Back</button><button type="button" onClick={() => act("pdf")}>PDF print sheet</button><button type="button" onClick={() => act("svg")}>Corel editable sheet (.svg)</button><button type="button" onClick={() => act("zip")}>WhatsApp Corel ZIP</button></div>}
       </div>
     </div>
-    <div className="saved-cards-section-title"><h3>{showOld ? "Old Cards" : "Your Cards"}</h3><span>{selected.length} selected · {visible.length} shown</span></div><p className="card-designer-tip">WhatsApp par editable card bhejne ke liye .svgz ko Document ki tarah attach karein.</p>
+    <div className="saved-cards-section-title"><h3>{showOld ? "Old Cards" : "Your Cards"}</h3><span>{selected.length} selected · {visible.length} shown</span></div><p className="card-designer-tip">WhatsApp par ZIP ko Document ki tarah bhejein. Andar ki SVG file extract karke CorelDRAW mein edit ho sakti hai.</p>
     {error && <p className="card-designer-error" role="alert">{error}</p>}{message && <p className="card-designer-success" role="status">{message}</p>}{busy && <p>Working…</p>}
     {visible.length ? <div className="saved-cards-grid">{visible.map((card) => <label key={card.id} className={`saved-card-tile ${selectedIds.includes(card.id) ? "selected" : ""}`}><input className="saved-card-check" type="checkbox" checked={selectedIds.includes(card.id)} onChange={() => { toggleSelected(card.id); setMenu(""); }} aria-label={`Select ${card.title}`} /><span className="saved-card-art"><strong>{card.values?.depotName || card.title}</strong><span>{card.values?.name || card.values?.designation || "Card design"}</span><small>{card.values?.phone || ""}</small><i /></span><span className="saved-card-meta"><strong>{card.title}</strong><small>{card.values?.email || card.values?.website || ""}</small><small>Updated {card.updatedAt ? new Date(card.updatedAt).toLocaleDateString() : "today"}</small></span></label>)}</div> : <div className="saved-cards-empty">{search ? "No cards match your search." : showOld ? "No removed cards." : "No saved cards yet. Create your first card."}</div>}
   </section>;
