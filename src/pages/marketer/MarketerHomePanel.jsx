@@ -39,5 +39,5 @@ export default function MarketerHomePanel() {
       { title: "Support", description: "Contact admin for help", icon: "☎", tone: "violet", onClick: () => c.setMarketerview("support") }
     ] }
   ];
-  return <DashboardHome role="marketer" stats={stats} sections={sections} />;
+  return <DashboardHome role="marketer" accountId={c.user?.id || c.user?.email} stats={stats} sections={sections} />;
 }

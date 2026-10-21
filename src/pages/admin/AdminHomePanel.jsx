@@ -71,5 +71,5 @@ export default function AdminHomePanel() {
     { title: "Card Designer", description: "Create and edit card designs", icon: "🎨", tone: "rose", onClick: () => c.setAdminView("card-designer") },
     { title: "Saved Cards", description: "Find, download or restore cards", icon: "🪪", tone: "violet", onClick: () => c.setAdminView("saved-cards") }
   ] });
-  return <DashboardHome role="admin" stats={stats} sections={sections} />;
+  return <DashboardHome role="admin" accountId={c.user?.id || c.user?.email || "admin"} stats={stats} sections={sections} />;
 }

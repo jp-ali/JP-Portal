@@ -6,6 +6,7 @@ import AdminVerificationCallsPanel from "./admin/AdminVerificationCallsPanel.jsx
 import AdminOtherReportsPanel from "./admin/AdminOtherReportsPanel.jsx";
 import AdminCardDesignerPanel from "./admin/AdminCardDesignerPanel.jsx";
 import AdminSavedCardsPanel from "./admin/AdminSavedCardsPanel.jsx";
+import DashboardHiddenPanel from "../ui/DashboardHiddenPanel.jsx";
 import AdminAttendanceMediaPanel from "./admin/AdminAttendanceMediaPanel.jsx";
 import AdminActionPlansPanel from "./admin/AdminActionPlansPanel.jsx";
 import AdminMediaPanel from "./admin/AdminMediaPanel.jsx";
@@ -119,6 +120,10 @@ if (key === "saved-cards") {
 setAdminView("saved-cards");
 return;
 }
+if (key === "hidden") {
+setAdminView("hidden");
+return;
+}
 if (key === "marketers-detail") {
 setAdminView("marketers-detail");
 fetchMarketers();
@@ -192,7 +197,8 @@ const adminSidebarItems = [
 { key: "media-active", icon: "🖼️", label: "Media", active: adminView === "media" && mediaView === "active" },
 { key: "media-deleted", icon: "♻️", label: "Recently Deleted", active: adminView === "media" && mediaView === "deleted" },
 { key: "card-designer", icon: "🎨", label: "Card Designer", active: adminView === "card-designer" },
-{ key: "saved-cards", icon: "🪪", label: "Saved Cards", active: adminView === "saved-cards" }
+{ key: "saved-cards", icon: "🪪", label: "Saved Cards", active: adminView === "saved-cards" },
+{ key: "hidden", icon: "🙈", label: "Hidden", active: adminView === "hidden" }
 ];
 return (
 <div className="portal-shell portal-admin-shell" style={globalStyle}>
@@ -249,6 +255,7 @@ onClick={() => openAdminSidebarSection(item.key)}
 )}
           {adminView === "card-designer" && <AdminCardDesignerPanel cardId={selectedSavedCardId} onSaved={setSelectedSavedCardId} onOpenSaved={() => setAdminView("saved-cards")} />}
           {adminView === "saved-cards" && <AdminSavedCardsPanel onEdit={(id) => { setSelectedSavedCardId(id); setAdminView("card-designer"); }} onNew={() => { setSelectedSavedCardId(""); setAdminView("card-designer"); }} />}
+          {adminView === "hidden" && <DashboardHiddenPanel role="admin" accountId={context.user?.id || context.user?.email || "admin"} onBack={() => setAdminView("home")} />}
           {adminView === "attendance-media" && (
 <AdminAttendanceMediaPanel />
 )}
