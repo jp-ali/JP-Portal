@@ -1,8 +1,9 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import ReportMarketerFilterBar from "../../ui/ReportMarketerFilterBar.jsx";
 
 export default function AdminActionPlansPanel() {
-  const { adminActionPlanFromDate, adminActionPlanSearch, adminActionPlanToDate, cardStyle, downloadActionPlanExcel, downloadActionPlanPDF, fetchActionPlans, getFilteredActionPlans, inputStyle, renderActionPlanReportTable, renderExpandedReportChrome, renderReportExpandButton, reportViewClass, setAdminActionPlanFromDate, setAdminActionPlanSearch, setAdminActionPlanToDate, setAdminView } = usePortalContext();
+  const { adminActionPlanFromDate, adminActionPlanMarketerIds, adminActionPlanToDate, cardStyle, downloadActionPlanExcel, downloadActionPlanPDF, fetchActionPlans, fetchMarketers, getFilteredActionPlans, inputStyle, marketersList, renderActionPlanReportTable, renderExpandedReportChrome, renderReportExpandButton, reportViewClass, setAdminActionPlanFromDate, setAdminActionPlanMarketerIds, setAdminActionPlanToDate, setAdminView } = usePortalContext();
   return (<div className={reportViewClass("action-plans")}>
               {renderExpandedReportChrome("action-plans")}
               <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
@@ -35,20 +36,7 @@ style={{ padding: "6px 12px", background: "linear-gradient(135deg,#6f0b24,#86132
                   <h3 style={{ margin: 0, color: "#3b2329", fontSize: "18px" }}>🗓️ Daily Action Plans</h3>
                   <p style={{ margin: "4px 0 0", color: "#78686d", fontSize: "12px" }}>View, filter, download or delete submitted action plans.</p>
                 </div>
-                <div className="action-plan-range-row">
-                  <div>
-                    <label style={{ display: "block", color: "#78686d", fontSize: "10.5px", fontWeight: 700, marginBottom: "4px" }}>From Date</label>
-                    <input className="action-plan-date-input" type="date" lang="en-GB" value={adminActionPlanFromDate} onChange={(e) => setAdminActionPlanFromDate(e.target.value)} style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={{ display: "block", color: "#78686d", fontSize: "10.5px", fontWeight: 700, marginBottom: "4px" }}>To Date</label>
-                    <input className="action-plan-date-input" type="date" lang="en-GB" value={adminActionPlanToDate} onChange={(e) => setAdminActionPlanToDate(e.target.value)} style={inputStyle} />
-                  </div>
-                  <button type="button" className="action-plan-refresh-icon" onClick={fetchActionPlans} title="Refresh action plans" aria-label="Refresh action plans">↻</button>
-                </div>
-                <div className="action-plan-search-row">
-                  <input type="text" value={adminActionPlanSearch} onChange={(e) => setAdminActionPlanSearch(e.target.value)} placeholder="🔍 Search marketer / area / purpose" style={inputStyle} />
-                </div>
+                <ReportMarketerFilterBar fromDate={adminActionPlanFromDate} toDate={adminActionPlanToDate} onFromDate={setAdminActionPlanFromDate} onToDate={setAdminActionPlanToDate} onClear={() => { setAdminActionPlanFromDate(""); setAdminActionPlanToDate(""); }} marketers={marketersList} selected={adminActionPlanMarketerIds} onSelected={setAdminActionPlanMarketerIds} onRefresh={() => Promise.all([fetchActionPlans(), fetchMarketers()])} inputStyle={inputStyle} valueKey="id" />
                 {(() => {
 const rows = getFilteredActionPlans();
 return rows.length === 0 ? (

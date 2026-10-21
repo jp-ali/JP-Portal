@@ -338,7 +338,7 @@ useEffect(() => {
   window.addEventListener("keydown", onKeyDown, true);
   return () => window.removeEventListener("keydown", onKeyDown, true);
 }, [editingVisit, fullScreenImage, expandedReportKey, adminSidebarOpen, marketerSidebarOpen, user?.role, adminView, marketerView, setFullScreenImage, setFullScreenMediaRecord, stopAttendanceCamera, stopCamera, onLogout]);
-const { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanSearch, setAdminActionPlanSearch, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan } = useActionPlans({ user, setUser, setMarketerview, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId });
+const { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanMarketerIds, setAdminActionPlanMarketerIds, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan } = useActionPlans({ user, setUser, setMarketerview, marketersList, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId });
 const { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, getMarketerExpensePetrol, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerIds, setAdminExpenseMarketerIds, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, getAdminExpenseMarketerName, downloadAdminExpenseExcel, downloadAdminExpensePDF } = useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12, groupRowsByMarketerAndDate });
 const { renderVisitReportTable, renderSampleReportTable, renderActionPlanReportTable, renderVerificationReportTable, renderAttendanceReportTable } = createReportTables({ formatActionPlanDate, formatTime12, getAttendanceAssignedKms, getAttendancePetrolExpense, getAttendanceTotalKms, getAttendanceTotalOtherExpense, getTodayInputDate, groupRowsByMarketerAndDate, handleDeleteActionPlan, inputStyle, saveAttendanceAssignedKms, saveVerificationRemark, setFullScreenImage, setReports, verificationRemarkOptions, verificationSavingId });
 const reportViewClass = (key) => expandedReportKey === key ? "admin-report-view admin-report-expanded" : "admin-report-view";
@@ -417,7 +417,7 @@ return (
 if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminPortal context={{
     activeMedia,
     adminActionPlanFromDate,
-    adminActionPlanSearch,
+    adminActionPlanMarketerIds,
     adminActionPlanToDate,
     adminAreaAssignOpen,
     adminAreaSearch,
@@ -584,7 +584,7 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     selectedMarketersFilter,
     selectedMediaIds,
     setAdminActionPlanFromDate,
-    setAdminActionPlanSearch,
+    setAdminActionPlanMarketerIds,
     setAdminActionPlanToDate,
     setAdminAreaAssignOpen,
     setAdminAreaSearch,

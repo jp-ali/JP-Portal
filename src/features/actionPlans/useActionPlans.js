@@ -6,7 +6,7 @@ import { formatActionPlanDate } from "../../domain/dates.js";
 import { mergedReportSheet } from "../../services/mergedReportSheet.js";
 import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill } from "../../services/pdfTheme.js";
 
-export function useActionPlans({ user, setUser, setMarketerview, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId }) {
+export function useActionPlans({ user, setUser, setMarketerview, marketersList, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId }) {
 const [actionPlanDate, setActionPlanDate] = useState(getTodayInputDate());
 const [actionPlanAreaText, setActionPlanAreaText] = useState("");
 const [actionPlanPurpose, setActionPlanPurpose] = useState("");
@@ -15,7 +15,7 @@ const [actionPlanSuccess, setActionPlanSuccess] = useState("");
 const [actionPlans, setActionPlans] = useState([]);
 const [adminActionPlanFromDate, setAdminActionPlanFromDate] = useState(getTodayInputDate());
 const [adminActionPlanToDate, setAdminActionPlanToDate] = useState(getTodayInputDate());
-const [adminActionPlanSearch, setAdminActionPlanSearch] = useState("");
+const [adminActionPlanMarketerIds, setAdminActionPlanMarketerIds] = useState([]);
 const copyTextToClipboard = async (value) => {
 const textValue = String(value || "");
 if (navigator.clipboard && window.isSecureContext) {
@@ -57,21 +57,16 @@ return [];
 }
 };
 const getFilteredActionPlans = () => {
-const q = adminActionPlanSearch.trim().toLowerCase();
 return actionPlans.filter((p) => {
 const planDate = String(p.date || "");
 const matchesFrom = !adminActionPlanFromDate || (planDate && planDate >= adminActionPlanFromDate);
 const matchesTo = !adminActionPlanToDate || (planDate && planDate <= adminActionPlanToDate);
-const matchesSearch = !q || [
-p.marketerName,
-p.marketerEmail,
-p.designation,
-p.areaName,
-p.cityName,
-p.purpose,
-p.whatsappGroupName
-].some((v) => String(v || "").toLowerCase().includes(q));
-return matchesFrom && matchesTo && matchesSearch;
+const matchesMarketer = !adminActionPlanMarketerIds.length || adminActionPlanMarketerIds.some((id) => {
+const marketer = marketersList.find((item) => item.id === id);
+return [id, marketer?.email, marketer?.name].some((identity) => identity &&
+[p.marketerId, p.marketerEmail, p.marketerName].some((value) => value && String(value).toLowerCase() === String(identity).toLowerCase()));
+});
+return matchesFrom && matchesTo && matchesMarketer;
 });
 };
 const downloadActionPlanExcel = () => {
@@ -234,5 +229,5 @@ alert("Error saving action plan: " + err.message);
 setActionPlanSubmitting(false);
 }
 };
-return { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanSearch, setAdminActionPlanSearch, formatActionPlanDate, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan };
+return { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanMarketerIds, setAdminActionPlanMarketerIds, formatActionPlanDate, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan };
 }

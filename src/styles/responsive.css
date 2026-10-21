@@ -377,33 +377,6 @@
         .admin-expense-refresh-btn { grid-column: 2; justify-self: end; width: 42px !important; }
       }
       
-      .action-plan-range-row {
-        display: grid;
-        grid-template-columns: minmax(0,1fr) minmax(0,1fr) 42px;
-        gap: 8px;
-        align-items: end;
-        margin-bottom: 10px;
-      }
-      .action-plan-range-row > div { min-width: 0; }
-      .action-plan-refresh-icon {
-        width: 42px;
-        min-width: 42px;
-        height: 42px;
-        min-height: 42px;
-        padding: 0 !important;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-        border: 1px solid rgba(143,21,50,.22) !important;
-        background: #ffffff !important;
-        color: #7a0f2b !important;
-        font-size: 19px !important;
-        font-weight: 800;
-        cursor: pointer;
-        box-shadow: 0 5px 14px rgba(30,58,138,.24);
-      }
-      .action-plan-search-row { margin-bottom: 14px; }
       .pdf-table th, .pdf-table td {
         text-align: center !important;
         vertical-align: middle !important;
@@ -434,7 +407,6 @@
       .app-responsive .square-grid .square-card:nth-child(8n+8) { --card-accent:#db2777; }
       
       .attendance-filter-grid,
-      .action-plan-range-row,
       .attendance-media-range {
         background:#ffffff !important;
         border:1px solid #eadde1 !important;
@@ -444,7 +416,6 @@
       }
       .attendance-clear-range-btn,
       .attendance-refresh-btn,
-      .action-plan-refresh-icon,
       .white-range-btn,
       .white-refresh-btn {
         background:#ffffff !important;
@@ -454,7 +425,6 @@
       }
       .attendance-clear-range-btn:hover,
       .attendance-refresh-btn:hover,
-      .action-plan-refresh-icon:hover,
       .white-range-btn:hover,
       .white-refresh-btn:hover {
         background:#fff7f9 !important;
@@ -559,25 +529,6 @@
         table { display: block; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
         th, td { white-space: nowrap; font-size: 11px !important; padding: 7px !important; }
         .mobile-footer-area { padding-left: 8px !important; padding-right: 8px !important; }
-        .action-plan-range-row {
-          grid-template-columns: minmax(0,1fr) minmax(0,1fr) 36px !important;
-          gap: 5px !important;
-          align-items: end !important;
-        }
-        .action-plan-range-row label { font-size: 9.5px !important; margin-bottom: 3px !important; }
-        .action-plan-range-row input[type="date"] {
-          width: 100% !important;
-          min-width: 0 !important;
-          height: 38px !important;
-          padding: 7px 4px !important;
-          font-size: 11px !important;
-          border-radius: 9px !important;
-        }
-        .action-plan-refresh-icon {
-          width: 36px !important; min-width: 36px !important; height: 38px !important; min-height: 38px !important;
-          border-radius: 9px !important; font-size: 18px !important;
-        }
-        .action-plan-search-row input { height: 40px !important; padding: 9px 10px !important; }
         
         .floating-word {
           display: block !important;

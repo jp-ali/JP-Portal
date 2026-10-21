@@ -32,7 +32,7 @@ export default function AdminHomePanel() {
   const today = c.getDateKey(new Date());
   const visits = c.reports || [];
   const openAttendance = () => { const day = c.getTodayInputDate(); c.setAdminAttendanceFromDate(day); c.setAdminAttendanceToDate(day); c.setAdminAttendanceSearch(""); c.setAdminView("attendance"); c.fetchAttendanceRecords(); };
-  const openActionPlans = () => { const day = c.getTodayInputDate(); c.setAdminActionPlanFromDate(day); c.setAdminActionPlanToDate(day); c.setAdminActionPlanSearch(""); c.setAdminView("action-plans"); c.fetchActionPlans(); };
+  const openActionPlans = () => { const day = c.getTodayInputDate(); c.setAdminActionPlanFromDate(day); c.setAdminActionPlanToDate(day); c.setAdminActionPlanMarketerIds([]); c.setAdminView("action-plans"); c.fetchActionPlans(); };
   const openTodayVisits = () => { c.setAdminView("today-visits"); c.fetchAllReports(); c.setSelectedAdminMarketerBox(null); };
   const openMarketers = () => { c.setAdminView("marketers-detail"); c.fetchMarketers(); c.setSelectedMarketerDetailBox(null); };
   const stats = [
