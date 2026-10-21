@@ -29,6 +29,20 @@ export async function deleteOwnPhoto(request, response, next) {
     response.json({ profilePhoto: null });
   } catch (error) { next(error); }
 }
+export async function saveMarketerPhoto(request, response, next) {
+  try {
+    const marketer = await updateOwnProfilePhoto(request.params.id, request.body?.photo);
+    if (!marketer) return response.status(404).json({ error: "Marketer not found" });
+    response.json({ marketer });
+  } catch (error) { next(error); }
+}
+export async function deleteMarketerPhoto(request, response, next) {
+  try {
+    const marketer = await updateOwnProfilePhoto(request.params.id, null);
+    if (!marketer) return response.status(404).json({ error: "Marketer not found" });
+    response.json({ marketer });
+  } catch (error) { next(error); }
+}
 export async function create(request, response, next) {
   try { response.status(201).json({ marketer: await createMarketer(request.body) }); } catch (error) { handle(error, next); }
 }

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import defaultAvatar from "../../assets/default-marketer-avatar.svg";
+import MarketerPhotoControl from "../../ui/MarketerPhotoControl.jsx";
 
 export default function AdminAddMarketerPanel() {
   const c = usePortalContext();
@@ -49,7 +50,7 @@ export default function AdminAddMarketerPanel() {
 
   return <div className="marketer-form-page">
     <button type="button" className="marketer-form-back" onClick={cancel}>← Back</button>
-    <div className="marketer-form-hero"><button type="button" className="marketer-form-avatar" onClick={() => c.setFullScreenImage(marketer?.profilePhoto || defaultAvatar)} title="Expand profile photo"><img src={marketer?.profilePhoto || defaultAvatar} alt="" /></button><span className="marketer-form-hero-icon">♟</span><div><h2>{editing ? "Edit Marketer Details" : "Add Marketer"}</h2><p>{editing ? "Update the information of this marketer." : "Create a marketer account and assign its areas."}</p></div></div>
+    <div className="marketer-form-hero">{editing ? <MarketerPhotoControl marketer={marketer} setMarketersList={c.setMarketersList} onExpand={c.setFullScreenImage} variant="form" /> : <span className="marketer-form-avatar"><img src={defaultAvatar} alt="" /></span>}<span className="marketer-form-hero-icon">♟</span><div><h2>{editing ? "Edit Marketer Details" : "Add Marketer"}</h2><p>{editing ? "Update the information of this marketer." : "Create a marketer account and assign its areas."}</p></div></div>
     <form onSubmit={submit}>
       <section className="marketer-form-section"><h3><span>♟</span> Basic Information</h3><div className="marketer-form-grid">
         {field("♟", "Name *", <input aria-label="Name" type="text" value={c.marketerName} onChange={(e) => c.setMarketerName(e.target.value)} required placeholder="Full name" />)}

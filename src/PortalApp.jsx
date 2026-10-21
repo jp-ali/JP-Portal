@@ -542,6 +542,7 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     marketerPhone,
     marketerSearch,
     marketersList,
+    setMarketersList,
     mediaMarketer,
     mediaView,
     newAreaName,

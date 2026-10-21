@@ -52,6 +52,16 @@ test("admin cannot change a marketer profile photo", async () => {
   assert.equal(response.status, 403);
 });
 
+test("admin photo edit route validates image content", async () => {
+  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const response = await fetch(`${baseUrl}/api/marketers/example/photo`, {
+    method: "PUT",
+    headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
+    body: JSON.stringify({ photo: "data:image/svg+xml;base64,PHN2Zy8+" })
+  });
+  assert.equal(response.status, 400);
+});
+
 test("invalid admin password is rejected", async () => {
   const response = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",

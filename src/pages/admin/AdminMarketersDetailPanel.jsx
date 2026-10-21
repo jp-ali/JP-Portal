@@ -1,10 +1,10 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
 import { marketerCityNames } from "../../domain/marketerCities.js";
-import defaultAvatar from "../../assets/default-marketer-avatar.svg";
+import MarketerPhotoControl from "../../ui/MarketerPhotoControl.jsx";
 
 export default function AdminMarketersDetailPanel() {
-  const { cardStyle, citiesList, downloadMarketersExcel, downloadMarketersPDF, handleEditMarketer, inputStyle, marketerSearch, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, reportViewClass, selectedMarketerDetailBox, setAdminView, setFullScreenImage, setMarketerSearch, setSelectedMarketerDetailBox, setSubordinatePickerOpen } = usePortalContext();
+  const { cardStyle, citiesList, downloadMarketersExcel, downloadMarketersPDF, handleEditMarketer, inputStyle, marketerSearch, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, reportViewClass, selectedMarketerDetailBox, setAdminView, setFullScreenImage, setMarketerSearch, setMarketersList, setSelectedMarketerDetailBox, setSubordinatePickerOpen } = usePortalContext();
   return (<div className={reportViewClass("marketers-detail")}>
               {renderExpandedReportChrome("marketers-detail")}
               <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", marginBottom: "14px", flexWrap: "wrap" }}>
@@ -96,7 +96,7 @@ if (!m) return <p style={{ color: "#78686d" }}>Marketer details not found.</p>;
 return <div className="marketer-profile">
   <div className="marketer-profile-main">
     <aside className="marketer-profile-side">
-      <button type="button" className="marketer-profile-photo" onClick={() => setFullScreenImage(m.profilePhoto || defaultAvatar)} title="Expand profile picture" aria-label={`Expand ${m.name || "marketer"} profile picture`}><img src={m.profilePhoto || defaultAvatar} alt="" /></button>
+      <MarketerPhotoControl marketer={m} setMarketersList={setMarketersList} onExpand={setFullScreenImage} />
       <h2>{m.name || "Unnamed Marketer"}</h2><p>{m.designation || "Regional Manager"}</p><span className="marketer-profile-status">● Active</span>
     </aside>
     <div className="marketer-profile-content">

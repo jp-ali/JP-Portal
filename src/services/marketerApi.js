@@ -10,3 +10,5 @@ export const restoreMarketer = (id) => request(`/marketers/deleted/${encodeURICo
 export const removeDeletedMarketer = (id) => request(`/marketers/deleted/${encodeURIComponent(id)}`, { method: "DELETE" });
 export const saveOwnProfilePhoto = (photo) => request("/marketers/me/photo", { method: "PUT", body: JSON.stringify({ photo }) });
 export const deleteOwnProfilePhoto = () => request("/marketers/me/photo", { method: "DELETE" });
+export const saveMarketerProfilePhoto = (id, photo) => request(`/marketers/${encodeURIComponent(id)}/photo`, { method: "PUT", body: JSON.stringify({ photo }) });
+export const deleteMarketerProfilePhoto = (id) => request(`/marketers/${encodeURIComponent(id)}/photo`, { method: "DELETE" });

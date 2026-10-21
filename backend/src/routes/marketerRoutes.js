@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { accessible, archive, create, deleteOwnPhoto, list, removeArchived, restore, saveOwnPhoto, update } from "../controllers/marketerController.js";
+import { accessible, archive, create, deleteMarketerPhoto, deleteOwnPhoto, list, removeArchived, restore, saveMarketerPhoto, saveOwnPhoto, update } from "../controllers/marketerController.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 
 export const marketerRoutes = Router();
@@ -11,6 +11,8 @@ marketerRoutes.use(requireAdmin);
 marketerRoutes.get("/", list);
 marketerRoutes.get("/deleted", list);
 marketerRoutes.post("/", create);
+marketerRoutes.put("/:id/photo", saveMarketerPhoto);
+marketerRoutes.delete("/:id/photo", deleteMarketerPhoto);
 marketerRoutes.patch("/:id", update);
 marketerRoutes.delete("/:id", archive);
 marketerRoutes.post("/deleted/:id/restore", restore);
