@@ -1,3 +1,5 @@
+import { gzipSync, strToU8 } from "fflate";
+
 const escapeXml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[char]);
 
 export const defaultCardFields = [
@@ -104,6 +106,14 @@ export function downloadCardSvg(template, values) {
   return saveDownload(blob, cardFileName(values, "svg"));
 }
 
+export function corelShareFile(svg) {
+  return new Blob([gzipSync(strToU8(svg), { level: 6 })], { type: "application/octet-stream" });
+}
+
+export function downloadCardSvgz(template, values) {
+  return saveDownload(corelShareFile(cardSvg(template, values)), cardFileName(values, "svgz"));
+}
+
 const SHEET_WIDTH = 210;
 const SHEET_HEIGHT = 297;
 const CELL_WIDTH = 90;
@@ -133,6 +143,10 @@ export function cardSheetSvg(cards) {
 
 export function downloadCardSheetSvg(cards) {
   return saveDownload(new Blob([cardSheetSvg(cards)], { type: "image/svg+xml;charset=utf-8" }), "Cards-Corel-Sheet.svg");
+}
+
+export function downloadCardSheetSvgz(cards) {
+  return saveDownload(corelShareFile(cardSheetSvg(cards)), "Cards-Corel-Share.svgz");
 }
 
 function drawPdfCard(pdf, template, values, x, y, width, height) {

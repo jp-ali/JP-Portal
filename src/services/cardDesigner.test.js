@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { cardRenderEntries, cardSheetSvg, cardSvg, defaultCardFields, defaultCardValues } from "./cardDesigner.js";
+import { gunzipSync, strFromU8 } from "fflate";
+import { cardRenderEntries, cardSheetSvg, cardSvg, corelShareFile, defaultCardFields, defaultCardValues } from "./cardDesigner.js";
 
 test("Corel SVG embeds the art and keeps entered text as escaped vector text", () => {
   const svg = cardSvg({ image: "data:image/jpeg;base64,AAAA", imageWidth: 1200, imageHeight: 750, widthMm: 85.6, fields: [defaultCardFields[0]] }, { depotName: "Ali & Co <JP>" });
@@ -27,4 +28,12 @@ test("Corel sheet keeps several cards and their text as separate editable groups
   assert.match(sheet, />Ali &amp; Co<\/text>/);
   assert.match(sheet, />JP Books<\/text>/);
   assert.equal((sheet.match(/<image /g) || []).length, 2);
+});
+
+test("Corel share file is a compressed SVG that retains editable text", async () => {
+  const card = { image: "data:image/jpeg;base64,AAAA", imageWidth: 1200, imageHeight: 750, widthMm: 85.6, fields: [defaultCardFields[0]], values: { depotName: "Ali & Co" } };
+  const compressed = corelShareFile(cardSheetSvg([card]));
+  const svg = strFromU8(gunzipSync(new Uint8Array(await compressed.arrayBuffer())));
+  assert.match(svg, /<svg /);
+  assert.match(svg, /Ali &amp; Co<\/text>/);
 });
