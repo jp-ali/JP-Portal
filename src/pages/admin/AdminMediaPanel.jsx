@@ -10,13 +10,13 @@ export default function AdminMediaPanel() {
   });
   return (<div className={reportViewClass("media")}>
               {renderExpandedReportChrome("media")}
-              <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", gap: "8px", flexWrap: "wrap" }}>
-                <button onClick={() => { setAdminView("home"); setMediaMarketer(null); }} style={{ padding: "8px 14px", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }}>← Back</button>
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                  <button onClick={() => setMediaView("active")} style={{ padding: "8px 12px", background: mediaView === "active" ? "#8c1733" : "#5e4b50", color: "white", border: "none", borderRadius: "8px", fontWeight: "700", cursor: "pointer" }}>🖼️ Active Media</button>
-                  <button onClick={() => { setMediaView("deleted"); fetchDeletedMedia(); setMediaMarketer(null); setSelectedDeletedMediaIds([]); }} style={{ padding: "8px 12px", background: mediaView === "deleted" ? "#77102a" : "#5e4b50", color: "white", border: "none", borderRadius: "8px", fontWeight: "700", cursor: "pointer" }}>♻️ Recently Deleted ({deletedMedia.length})</button>
-                  {mediaView === "active" && <button onClick={() => bulkDeleteMedia(activeMedia)} style={{ padding: "8px 12px", background: "#7a0f2b", color: "white", border: "none", borderRadius: "8px", fontWeight: "700", cursor: "pointer" }}>🗑️ Delete All Media</button>}
-                  {mediaView === "deleted" && <button onClick={permanentlyDeleteAllMedia} style={{ padding: "8px 12px", background: "#7a0f2b", color: "white", border: "none", borderRadius: "8px", fontWeight: "700", cursor: "pointer" }}>🗑️ Empty Recently Deleted</button>}
+              <div className="report-normal-toolbar media-manager-toolbar">
+                <button type="button" className="media-toolbar-back" onClick={() => { setAdminView("home"); setMediaMarketer(null); }}>← Back</button>
+                <div className="media-toolbar-actions">
+                  <button type="button" className={`media-toolbar-tab ${mediaView === "active" ? "is-active" : ""}`} onClick={() => setMediaView("active")}>🖼️ Active Media</button>
+                  <button type="button" className={`media-toolbar-tab ${mediaView === "deleted" ? "is-active" : ""}`} onClick={() => { setMediaView("deleted"); fetchDeletedMedia(); setMediaMarketer(null); setSelectedDeletedMediaIds([]); }}>♻️ Recently Deleted ({deletedMedia.length})</button>
+                  {mediaView === "active" && <button type="button" className="media-toolbar-danger" onClick={() => bulkDeleteMedia(activeMedia)}>🗑️ Delete All Media</button>}
+                  {mediaView === "deleted" && <button type="button" className="media-toolbar-danger" onClick={permanentlyDeleteAllMedia}>🗑️ Empty Recently Deleted</button>}
                   {renderReportExpandButton("media", "Expand media manager")}
                 </div>
               </div>

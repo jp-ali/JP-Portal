@@ -6,11 +6,11 @@ export default function AdminAttendanceMediaPanel() {
   const { attendanceMediaFromDate, attendanceMediaMarketer, attendanceMediaToDate, cardStyle, deleteSelectedAttendanceMedia, fetchAttendanceRecords, fetchDeletedMedia, formatActionPlanDate, getFilteredAttendanceMedia, inputStyle, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, reportViewClass, selectedAttendanceMediaIds, setAdminView, setAttendanceMediaFromDate, setAttendanceMediaMarketer, setAttendanceMediaToDate, setFullScreenImage, setMediaView, setSelectedAttendanceMediaIds, softDeleteAttendanceMedia } = usePortalContext();
   return (<div className={reportViewClass("attendance-media")}>
               {renderExpandedReportChrome("attendance-media")}
-              <div className="report-normal-toolbar" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:"8px", flexWrap:"wrap", marginBottom:"14px" }}>
-                <button type="button" onClick={() => { setAdminView("attendance"); setAttendanceMediaMarketer(null); setSelectedAttendanceMediaIds([]); fetchAttendanceRecords(); }} style={{ padding:"8px 14px", background:"linear-gradient(135deg,#6f0b24,#86132f)", color:"white", border:"none", borderRadius:"9px", fontWeight:700, cursor:"pointer", fontSize:"12px" }}>← Attendance</button>
-                <div style={{ display:"flex", gap:"7px", flexWrap:"wrap" }}>
-                  <button type="button" onClick={() => { setAdminView("media"); setMediaView("deleted"); fetchDeletedMedia(); }} style={{ padding:"8px 10px", background:"#a42243", color:"white", border:"none", borderRadius:"8px", fontWeight:700, cursor:"pointer", fontSize:"11px" }}>♻️ Recently Deleted</button>
-                  {attendanceMediaMarketer && <button type="button" disabled={!selectedAttendanceMediaIds.length} onClick={deleteSelectedAttendanceMedia} style={{ padding:"8px 10px", background:selectedAttendanceMediaIds.length?"#7a0f2b":"#756369", color:"white", border:"none", borderRadius:"8px", fontWeight:700, cursor:selectedAttendanceMediaIds.length?"pointer":"not-allowed", fontSize:"11px", opacity:selectedAttendanceMediaIds.length?1:.65 }}>🗑 Delete Selected</button>}
+              <div className="report-normal-toolbar media-manager-toolbar">
+                <button type="button" className="media-toolbar-back" onClick={() => { setAdminView("attendance"); setAttendanceMediaMarketer(null); setSelectedAttendanceMediaIds([]); fetchAttendanceRecords(); }}>← Attendance</button>
+                <div className="media-toolbar-actions">
+                  <button type="button" className="media-toolbar-tab" onClick={() => { setAdminView("media"); setMediaView("deleted"); fetchDeletedMedia(); }}>♻️ Recently Deleted</button>
+                  {attendanceMediaMarketer && <button type="button" className="media-toolbar-danger" disabled={!selectedAttendanceMediaIds.length} onClick={deleteSelectedAttendanceMedia}>🗑 Delete Selected</button>}
                   {renderReportExpandButton("attendance-media", "Expand attendance media")}
                 </div>
               </div>
