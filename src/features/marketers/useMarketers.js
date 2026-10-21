@@ -142,12 +142,10 @@ setAdminView("marketers-detail");
 alert("Error saving marketer: " + err.message);
 }
 };
-const handleEditMarketer = async (m) => {
-await fetchLocationCatalog();
+const handleEditMarketer = (m) => {
 const cityIds = Array.isArray(m.assignedCityIds) ? m.assignedCityIds : [];
 const areaIds = Array.isArray(m.assignedAreaIds) ? m.assignedAreaIds : [];
 const schoolIds = Array.isArray(m.assignedSchoolIds) ? m.assignedSchoolIds : [];
-const loadedAreas = await fetchAreasForCities(cityIds);
 setEditingId(m.id);
 setMarketerName(m.name || "");
 setMarketerPhone(m.phone || "");
@@ -164,7 +162,7 @@ setAssignedCityIds(cityIds);
 setAssignedAreaIds(areaIds);
 setAssignedSchoolIds(schoolIds);
 setAssignmentCityFocusId(cityIds[0] || "");
-setAssignmentAreaFocusId(areaIds.find(id => loadedAreas.find(a => a.id === id)?.cityId === cityIds[0]) || "");
+setAssignmentAreaFocusId(areaIds[0] || "");
 setAdminCitySearch("");
 setAdminAreaSearch("");
 setAdminSchoolSearch("");
@@ -175,6 +173,10 @@ setAdminCityAssignOpen(false);
 setAdminAreaAssignOpen(false);
 setEditingReturnToMarketerDetails(true);
 setAdminView("add-marketer");
+setTimeout(() => {
+fetchLocationCatalog().catch((error) => console.error("Could not load location catalog:", error));
+if (cityIds.length) fetchAreasForCities(cityIds).catch((error) => console.error("Could not load assigned areas:", error));
+}, 0);
 };
 const handleDeleteMarketer = async (m) => {
 if (window.confirm(`Are you sure you want to delete ${m.name}?`)) {

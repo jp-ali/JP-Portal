@@ -20,7 +20,6 @@ style={{ padding: "8px 14px", background: "linear-gradient(135deg,#6f0b24,#86132
 >
                   ← Back
                 </button>
-                {(adminSampleFromDate || adminSampleToDate || adminSampleMarketersFilter.length > 0) && (
 <div style={{ display: "flex", gap: "8px" }}>
                     {(() => {
 const filteredList = samples.filter(s => {
@@ -48,8 +47,6 @@ style={{ padding: "6px 12px", background: "linear-gradient(135deg,#6f0b24,#86132
 })()}
                     {renderReportExpandButton("sample-details", "Expand sample details")}
                   </div>
-)}
-                {!((adminSampleFromDate || adminSampleToDate || adminSampleMarketersFilter.length > 0)) && <div className="report-normal-actions" style={{ marginLeft:"auto" }}>{renderReportExpandButton("sample-details", "Expand sample details")}</div>}
               </div>
               <div style={cardStyle}>
                 {!selectedAdminSampleSchoolBox ? (
