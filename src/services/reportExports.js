@@ -74,15 +74,14 @@ worksheet["!merges"] = merges;
 worksheet["!cols"] = [7, 20, 17, 7, 17, 21, 26, 22, 18, 16, 12, 13, 13, 36, 40].map((wch) => ({ wch }));
 worksheet["!rows"] = [{ hpt: 32 }, { hpt: 24 }, { hpt: 32 }, ...body.map((row) => ({ hpt: Math.min(72, Math.max(28, Math.ceil(Math.max(String(row[13]).length / 32, String(row[14]).length / 36)) * 15)) }))];
 worksheet["!autofilter"] = { ref: `A3:O${Math.max(3, body.length + 3)}` };
-const border = { top: { style: "thin", color: { rgb: "442C33" } }, bottom: { style: "thin", color: { rgb: "442C33" } }, left: { style: "thin", color: { rgb: "442C33" } }, right: { style: "thin", color: { rgb: "442C33" } } };
+const border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
 for (let r = 0; r < body.length + 3; r++) for (let c = 0; c < headings.length; c++) {
 const address = XLSX.utils.encode_cell({ r, c });
 const cell = worksheet[address] || (worksheet[address] = { t: "s", v: "" });
 cell.s = {
 alignment: { horizontal: "center", vertical: "top", wrapText: true },
 border,
-font: { bold: r < 3 || (r >= 3 && c < 3), color: { rgb: r < 3 ? "FFFFFF" : "6F0B24" } },
-fill: { fgColor: { rgb: r < 3 ? "7A0F2B" : c < 3 ? "F8F5F6" : r % 2 ? "FFFFFF" : "FBF6F7" } }
+font: { bold: r < 3 || (r >= 3 && c < 3) }
 };
 }
 const workbook = window.XLSX.utils.book_new();

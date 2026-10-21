@@ -27,6 +27,7 @@ test("School Visits Excel follows the PDF columns and merged person/date groups"
   assert.deepEqual(rows.slice(3).map((row) => row.slice(10, 13)), [["Morning", "2", "200"], ["Morning", "3", "300"], ["Evening", "4", "400"], ["Morning", "1", "100"]]);
   assert.ok(sheet["!merges"].some((merge) => merge.s.r === 3 && merge.e.r === 5 && merge.s.c === 0));
   assert.ok(sheet["!merges"].some((merge) => merge.s.r === 4 && merge.e.r === 5 && merge.s.c === 2));
-  assert.equal(sheet.A3.s.fill.fgColor.rgb, "7A0F2B");
-  assert.equal(sheet.A3.s.font.color.rgb, "FFFFFF");
+  assert.equal(sheet.A3.s.fill, undefined);
+  assert.equal(sheet.E4.s.fill, undefined);
+  assert.equal(sheet.A3.s.font.bold, true);
 });
