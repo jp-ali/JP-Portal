@@ -24,6 +24,7 @@ import { request } from "../services/authApi.js";
 import PhotoViewer from "../ui/PhotoViewer.jsx";
 import VisitEditDialog from "../ui/VisitEditDialog.jsx";
 import PortalTopBar from "../ui/PortalTopBar.jsx";
+import DesktopSectionBanner from "../ui/DesktopSectionBanner.jsx";
 
 function AdminPortalContent({ context }) {
   const [customReports, setCustomReports] = useState([]);
@@ -237,6 +238,7 @@ onClick={() => openAdminSidebarSection(item.key)}
         <div className={`app-responsive admin-desktop-content ${adminSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
           {renderResponsiveStyles()}
           <PortalTopBar role="admin" name="Admin" items={adminSidebarItems} onNavigate={openAdminSidebarSection} onMenu={() => setAdminSidebarOpen(true)} onLogout={handleLogout} />
+          <DesktopSectionBanner view={adminView} title={adminView === "media" && mediaView === "deleted" ? "Recently Deleted" : undefined} />
           {portalSkeletonLoading && renderRedSkeleton()}
           {adminView === "home" && (
 <AdminHomePanel />

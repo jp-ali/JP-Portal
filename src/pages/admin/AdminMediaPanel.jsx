@@ -1,8 +1,13 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import MediaOverview from "../../ui/MediaOverview.jsx";
 
 export default function AdminMediaPanel() {
   const { activeMedia, bulkDeleteMedia, cardStyle, db, deleteDoc, deletedMedia, doc, fetchDeletedMedia, formatActionPlanDate, getMarketerName, marketersList, mediaMarketer, mediaView, permanentlyDeleteAllMedia, permanentlyDeleteMedia, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, reportViewClass, restoreMedia, restoreSelectedMedia, selectedDeletedMediaIds, selectedMediaIds, setAdminView, setFullScreenImage, setFullScreenMediaRecord, setMediaMarketer, setMediaView, setSelectedDeletedMediaIds, setSelectedMediaIds, softDeleteMedia } = usePortalContext();
+  const mediaPeople = [...new Set([...marketersList.map((marketer) => marketer.email).filter(Boolean), ...activeMedia.map((item) => item.marketerEmail).filter(Boolean)])].map((email) => {
+    const marketer = marketersList.find((item) => item.email === email);
+    return { key: email, name: marketer?.name || email, email, area: marketer?.cityName || marketer?.areaName || "", items: activeMedia.filter((item) => item.marketerEmail === email) };
+  });
   return (<div className={reportViewClass("media")}>
               {renderExpandedReportChrome("media")}
               <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", gap: "8px", flexWrap: "wrap" }}>
@@ -19,9 +24,10 @@ export default function AdminMediaPanel() {
                 {mediaView === "active" ? (
 !mediaMarketer ? (
 <>
-                      <h3 style={{ marginTop: 0, color: "#8b1731", fontSize: "18px" }}>🖼️ Marketers' Visit Pictures</h3>
-                      <p style={{ color: "#78686d", fontSize: "13px" }}>Open a marketer to see all pictures uploaded in their visits.</p>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: "12px" }}>
+                      <h3 className="media-panel-intro" style={{ marginTop: 0, color: "#8b1731", fontSize: "18px" }}>🖼️ Marketers' Visit Pictures</h3>
+                      <p className="media-panel-intro" style={{ color: "#78686d", fontSize: "13px" }}>Open a marketer to see all pictures uploaded in their visits.</p>
+                      <MediaOverview people={mediaPeople} onOpen={(person) => { setMediaMarketer(person.key); setSelectedMediaIds([]); }} />
+                      <div className="media-overview-legacy" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: "12px" }}>
                         {[...new Set([...marketersList.map(m => m.email), ...activeMedia.map(r => r.marketerEmail).filter(Boolean)])].map(email => {
 const m = marketersList.find(x => x.email === email);
 const count = activeMedia.filter(r => r.marketerEmail === email).length;

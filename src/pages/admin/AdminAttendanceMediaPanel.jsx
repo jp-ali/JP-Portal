@@ -1,5 +1,6 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import MediaOverview from "../../ui/MediaOverview.jsx";
 
 export default function AdminAttendanceMediaPanel() {
   const { attendanceMediaFromDate, attendanceMediaMarketer, attendanceMediaToDate, cardStyle, deleteSelectedAttendanceMedia, fetchAttendanceRecords, fetchDeletedMedia, formatActionPlanDate, getFilteredAttendanceMedia, inputStyle, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, reportViewClass, selectedAttendanceMediaIds, setAdminView, setAttendanceMediaFromDate, setAttendanceMediaMarketer, setAttendanceMediaToDate, setFullScreenImage, setMediaView, setSelectedAttendanceMediaIds, softDeleteAttendanceMedia } = usePortalContext();
@@ -14,7 +15,7 @@ export default function AdminAttendanceMediaPanel() {
                 </div>
               </div>
               <div style={cardStyle}>
-                <div style={{ marginBottom:"12px" }}>
+                <div className="attendance-media-intro" style={{ marginBottom:"12px" }}>
                   <h3 style={{ margin:0, color:"#9a2844", fontSize:"18px" }}>🖼️ Attendance Media</h3>
                   <p style={{ margin:"5px 0 0", color:"#78686d", fontSize:"11px" }}>{attendanceMediaMarketer ? "Select and manage this marketer's attendance pictures." : "Select a marketer to view attendance pictures."}</p>
                 </div>
@@ -34,7 +35,10 @@ peopleMap.get(key).items.push(item);
 });
 const people = [...peopleMap.values()].sort((a,b)=>String(a.name).localeCompare(String(b.name)));
 if (!attendanceMediaMarketer) {
-return people.length ? (
+return <>
+<MediaOverview people={people} onOpen={(person) => { setAttendanceMediaMarketer(person.key); setSelectedAttendanceMediaIds([]); }} />
+<div className="media-overview-legacy">
+{people.length ? (
 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:"14px"}}>
                         {people.map((person) => (
 <div key={person.key} onClick={()=>{setAttendanceMediaMarketer(person.key);setSelectedAttendanceMediaIds([]);}} style={{padding:"18px",borderRadius:"14px",background:"linear-gradient(135deg,rgba(236,72,153,.18),rgba(255,255,255,.98))",border:"1px solid rgba(236,72,153,.35)",cursor:"pointer",boxShadow:"0 8px 20px rgba(0,0,0,.14)"}}>
@@ -45,7 +49,9 @@ return people.length ? (
                           </div>
 ))}
                       </div>
-) : <div style={{padding:"22px",textAlign:"center",color:"#78686d",border:"1px dashed rgba(236,72,153,.25)",borderRadius:"12px"}}>No attendance pictures found in this date range.</div>;
+) : <div style={{padding:"22px",textAlign:"center",color:"#78686d",border:"1px dashed rgba(236,72,153,.25)",borderRadius:"12px"}}>No attendance pictures found in this date range.</div>}
+</div>
+</>;
 }
 const selectedPerson = peopleMap.get(String(attendanceMediaMarketer));
 const personItems = selectedPerson?.items || [];

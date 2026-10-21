@@ -14,6 +14,7 @@ import React from "react";
 import PhotoViewer from "../ui/PhotoViewer.jsx";
 import VisitEditDialog from "../ui/VisitEditDialog.jsx";
 import PortalTopBar from "../ui/PortalTopBar.jsx";
+import DesktopSectionBanner from "../ui/DesktopSectionBanner.jsx";
 
 function MarketerPortalContent({ context }) {
   const { containerStyle, fetchCatalogues, fetchMarketerReports, fetchMarketerSamples, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getMarketerName, globalStyle, handleLogout, marketerCss, marketerSidebarOpen, marketerView, notes, openActionPlanForm, openAddVisit, openAttendanceForm, openExpenseReport, openVisitHistory, pdfExportData, pdfTemplateRef, phone, portalSkeletonLoading, principalName, purpose, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderRedSkeleton, renderResponsiveStyles, restoreMedia, setCatalogueSearch, setFullScreenImage, setFullScreenMediaRecord, setMarketerSidebarOpen, setMarketerview, setSampleDetailsText, setSampleHistoryFromDate, setSampleHistorySearch, setSampleHistoryToDate, setSamplePhone, setSamplePrincipalName, setSampleSchoolName, setSampleSuccessMsg, setSelectedAdminMarketerBox, softDeleteMedia, user } = context;
@@ -70,6 +71,7 @@ return (
       <div className={`app-responsive marketer-portal-content ${marketerSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
         {renderResponsiveStyles()}
         <PortalTopBar role="marketer" name={user?.name || "Marketer"} items={marketerSidebarItems} onNavigate={openMarketerSidebarSection} onMenu={() => setMarketerSidebarOpen(true)} onLogout={handleLogout} />
+        <DesktopSectionBanner view={marketerView} />
         {portalSkeletonLoading && renderRedSkeleton()}
         {marketerView === "home" && (
 <MarketerHomePanel />
