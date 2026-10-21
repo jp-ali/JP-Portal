@@ -6,6 +6,7 @@ import { blankRow, columnsFromHeadings, parseCustomReportText, reportColumns, ro
 import CustomReportTable from "./CustomReportTable.jsx";
 import { exportCustomReportExcel, exportCustomReportPDF } from "../../services/customReportExports.js";
 import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
+import { isPhoneColumn } from "../../domain/verificationRemarks.js";
 
 const REMARKS = ["Contacted", "Contacted but sample didn't receive", "Didn't contact", "Sample received", "Other"];
 const today = () => {
@@ -63,7 +64,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
       setSelectedReports([]); setConfirmRemoval(false); setActionMode(""); setActionOpen(false);
       await reload();
     } catch (cause) {
-      setError(cause.message);
+      setError(cause.message.includes("(404)") ? "Report delete is unavailable in the running API. Restart the API server and try again." : cause.message);
       if (removed.length) setReports((current) => current.filter((item) => !removed.includes(item.id)));
       setSelectedReports((current) => current.filter((id) => !removed.includes(id)));
     } finally { setBusy(false); }
@@ -134,17 +135,24 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const filtered = useMemo(() => (report?.rows || []).filter((row) => {
     const q = search.toLowerCase();
     const date = row.date || report.date;
-    return (!q || columns.some((column) => String(rowValue(row, column, report)).toLowerCase().includes(q)))
+    return (!q || columns.some((column) => String(rowValue(row, column, report)).toLowerCase().includes(q)) || (mode === "verification" && [row.verificationNumber, row.verificationRemark, row.verificationCustomRemark].some((value) => String(value || "").toLowerCase().includes(q))))
       && (!cityFilter || row.city === cityFilter)
       && (!remarkFilter || row.remarks === remarkFilter)
       && (!marketerFilter.length || marketerFilter.some((id) => { const marketer = marketersList.find((item) => item.id === id); return [id, marketer?.email, marketer?.name].some((value) => value && String(value).toLowerCase() === String(row.marketer || "").toLowerCase()); }))
       && (!fromDate || date >= fromDate)
       && (!toDate || date <= toDate)
       && Object.entries(extraFilterValues).every(([key, value]) => !value || String(row[key] || "") === value);
-  }).sort((a, b) => String(a.date || report.date).localeCompare(String(b.date || report.date))), [report, search, cityFilter, remarkFilter, marketerFilter, marketersList, fromDate, toDate, extraFilterValues]);
+  }).sort((a, b) => String(a.date || report.date).localeCompare(String(b.date || report.date))), [report, mode, search, cityFilter, remarkFilter, marketerFilter, marketersList, fromDate, toDate, extraFilterValues]);
   const cities = [...new Set((report?.rows || []).map((row) => row.city).filter(Boolean))].sort();
   const runExport = async (kind) => {
-    try { if (kind === "excel") exportCustomReportExcel(report, filtered, marketersList); else await exportCustomReportPDF(report, filtered, marketersList); setError(""); }
+    const verificationMode = mode === "verification";
+    const extraColumns = verificationMode ? [
+      ...(!columns.some((column) => column.type === "text" && isPhoneColumn(column)) ? [{ key: "verificationNumber", label: "Number", type: "text" }] : []),
+      { key: "verificationRemarksText", label: "Verification Remarks", type: "remarks" }
+    ] : [];
+    const exportReport = extraColumns.length ? { ...report, columns: [...columns, ...extraColumns] } : report;
+    const exportRows = verificationMode ? filtered.map((row) => ({ ...row, verificationRemarksText: row.verificationRemark === "Others" ? row.verificationCustomRemark || "Others" : row.verificationRemark || "" })) : filtered;
+    try { if (kind === "excel") exportCustomReportExcel(exportReport, exportRows, marketersList); else await exportCustomReportPDF(exportReport, exportRows, marketersList); setError(""); }
     catch (cause) { setError(cause.message); }
   };
 
@@ -203,10 +211,10 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
       {error && <p className="other-reports-error" role="alert">{error}</p>}
       <div className="other-report-filter-bar">
         <label className="other-report-search"><span aria-hidden="true">⌕</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search" aria-label="Search report" /></label>
-        {report.options?.dateRange && <><label className="other-report-date-field">From Date<input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label><label className="other-report-date-field">To Date<input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label></>}
+        {(mode === "verification" || report.options?.dateRange) && <><label className="other-report-date-field">From Date<input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label><label className="other-report-date-field">To Date<input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label></>}
         <button className="other-reports-btn" onClick={() => { setSearch(""); setCityFilter(""); setRemarkFilter(""); setMarketerFilter([]); setFromDate(""); setToDate(""); setExtraFilterValues({}); }}>Clear</button>
-        {(report.options?.includeMarketers || report.options?.filterKeys?.length > 0) && <div className="other-report-addon-controls">
-        {report.options?.includeMarketers && <MarketerMultiSelect marketers={marketersList} selected={marketerFilter} onChange={setMarketerFilter} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" />}
+        {(mode === "verification" || report.options?.includeMarketers || report.options?.filterKeys?.length > 0) && <div className="other-report-addon-controls">
+        {(mode === "verification" || report.options?.includeMarketers) && <MarketerMultiSelect marketers={marketersList} selected={marketerFilter} onChange={setMarketerFilter} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" />}
         {report.options?.filterKeys?.includes("city") && <select value={cityFilter} onChange={(event) => setCityFilter(event.target.value)} aria-label="Filter city"><option value="">All cities</option>{cities.map((city) => <option key={city}>{city}</option>)}</select>}
         {report.options?.filterKeys?.includes("remarks") && <select value={remarkFilter} onChange={(event) => setRemarkFilter(event.target.value)} aria-label="Filter remarks"><option value="">All remarks</option>{REMARKS.slice(0, -1).map((item) => <option key={item}>{item}</option>)}</select>}
         {(report.options?.filterKeys || []).filter((key) => !["city", "remarks"].includes(key)).map((key) => { const column = columns.find((item) => item.key === key); if (!column) return null; const values = [...new Set((report.rows || []).map((row) => row[key]).filter(Boolean))].sort(); return <select key={key} value={extraFilterValues[key] || ""} onChange={(event) => setExtraFilterValues((current) => ({ ...current, [key]: event.target.value }))} aria-label={`Filter ${column.label}`}><option value="">All {column.label}</option>{values.map((value) => <option key={value}>{value}</option>)}</select>; })}
@@ -215,7 +223,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
       </div>
       <div className="other-reports-actions other-report-add-actions"><button className="other-reports-btn primary" onClick={() => addRow(blankRow(report))} disabled={busy}>＋ Add Row</button><button className="other-reports-btn" onClick={() => setQuickOpen((value) => !value)}>＋ Quick Add</button></div>
       {quickOpen && <form className="other-report-quick" onSubmit={(event) => { event.preventDefault(); if (quickText.trim()) addRow(parseCustomReportText(quickText, columns, parseQuickContact)); }}><label>Paste contact details<textarea value={quickText} onChange={(event) => setQuickText(event.target.value)} placeholder={"Hassan Saif\nCity: Karachi\nCompany name: Merchant Navy\nWhatsApp number: +923052192103"} /></label><button className="other-reports-btn primary" disabled={!quickText.trim() || busy}>Parse and Add</button></form>}
-      <CustomReportTable report={report} columns={columns} rows={filtered} marketersList={marketersList} updateRow={updateRow} saveRow={saveRow} updateDateGroup={updateDateGroup} saveDateGroup={saveDateGroup} removeRow={removeRow} />
+      <CustomReportTable report={report} columns={columns} rows={filtered} marketersList={marketersList} updateRow={updateRow} saveRow={saveRow} updateDateGroup={updateDateGroup} saveDateGroup={saveDateGroup} removeRow={removeRow} verificationMode={mode === "verification"} />
     </div>
   </div>;
 }

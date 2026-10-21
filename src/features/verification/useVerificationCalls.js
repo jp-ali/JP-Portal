@@ -4,6 +4,7 @@ import { db } from "../../services/firebase";
 import { formatActionPlanDate } from "../../domain/dates.js";
 import { mergedReportSheet } from "../../services/mergedReportSheet.js";
 import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill } from "../../services/pdfTheme.js";
+import { VERIFICATION_REMARK_OPTIONS } from "../../domain/verificationRemarks.js";
 
 export function useVerificationCalls({ reports, setReports, marketersList, fetchAllReports, fetchMarketers, formatTime12, getMarketerName, getTodayInputDate, groupRowsByMarketerAndDate, setAdminView, setExpandedReportKey, isDateInRange }) {
 const [verificationFromDate, setVerificationFromDate] = useState("");
@@ -11,17 +12,7 @@ const [verificationToDate, setVerificationToDate] = useState("");
 const [verificationMarketerIds, setVerificationMarketerIds] = useState([]);
 const [verificationPickerOpen, setVerificationPickerOpen] = useState(false);
 const [verificationSavingId, setVerificationSavingId] = useState("");
-const verificationRemarkOptions = [
-"Sample Required",
-"Verified & Confirmed",
-"Unreachable / No Answer",
-"Busy / Line Engaged",
-"Invalid / Wrong Number",
-"Callback Requested",
-"Marketer Did Not Arrive",
-"Meeting Not Held",
-"Others"
-];
+const verificationRemarkOptions = VERIFICATION_REMARK_OPTIONS;
 const openVerificationCalls = async () => {
 setExpandedReportKey("");
 const today = getTodayInputDate();

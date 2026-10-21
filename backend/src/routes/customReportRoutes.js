@@ -136,10 +136,16 @@ customReportRoutes.post("/:id/rows", async (request, response, next) => {
     const result = await firestore().runTransaction(async (transaction) => {
       const snapshot = await transaction.get(ref);
       if (!snapshot.exists) return { missing: true };
-      const row = { id: collection().doc().id };
+      const row = { id: collection().doc().id, verificationNumber: "", verificationRemark: "", verificationCustomRemark: "" };
       for (const column of reportColumns(snapshot.data())) {
         row[column.key] = rowValue(request.body?.[column.key], column, snapshot.data().date);
         if (row[column.key] === null) return { invalid: column.label };
+      }
+      for (const key of ["verificationNumber", "verificationRemark", "verificationCustomRemark"]) {
+        if (key in (request.body || {})) {
+          row[key] = text(request.body[key], key === "verificationCustomRemark" ? 1000 : 300);
+          if (row[key] === null) return { invalid: key };
+        }
       }
       transaction.update(ref, { rows: FieldValue.arrayUnion(row), updatedAt: new Date().toISOString() });
       return { row };
@@ -160,6 +166,10 @@ customReportRoutes.patch("/:id/rows/:rowId", async (request, response, next) => 
       for (const column of reportColumns(snapshot.data())) if (column.key in (request.body || {})) {
         changes[column.key] = rowValue(request.body[column.key], column, snapshot.data().date);
         if (changes[column.key] === null) return `invalid:${column.label}`;
+      }
+      for (const key of ["verificationNumber", "verificationRemark", "verificationCustomRemark"]) if (key in (request.body || {})) {
+        changes[key] = text(request.body[key], key === "verificationCustomRemark" ? 1000 : 300);
+        if (changes[key] === null) return `invalid:${key}`;
       }
       if (!Object.keys(changes).length) return "no-changes";
       const rows = snapshot.data().rows || [];

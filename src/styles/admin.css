@@ -47,6 +47,8 @@
 .other-report-table td input:focus, .other-report-table td select:focus { background:#fff; border-color:#b6405b; }
 .other-report-table th:nth-child(1) { min-width:150px; } .other-report-table th:nth-child(2) { min-width:140px; } .other-report-table th:nth-child(3) { min-width:130px; } .other-report-table th:nth-child(4) { min-width:180px; } .other-report-table th:nth-child(5) { min-width:240px; }
 .other-report-remark { display:grid; gap:2px; }
+.other-report-phone-field { display:grid; gap:4px; }
+.other-report-phone-field .verification-call-link { width:max-content; max-width:100%; overflow-wrap:anywhere; }
 .other-report-delete { border:0; background:#7a0f2b; color:#fff; border-radius:6px; width:28px; height:28px; cursor:pointer; font-size:20px; }
 .admin-report-expanded .other-report-table-wrap { max-height:calc(100dvh - 165px); overflow:auto; }
 @media(max-width:767px) { .other-reports-header h2 { font-size:17px; } .other-report-filters input, .other-report-filters select { flex:1 1 100%; } .other-reports-add { grid-template-columns:1fr; } }
