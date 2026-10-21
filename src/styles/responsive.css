@@ -748,3 +748,10 @@
         cursor: pointer;
       }
       .photo-viewer-actions a { background: #15803d; }
+
+      /* Keep report headers and merged body cells anchored at the top. */
+      .admin-report-view table th,
+      .admin-report-view table td {
+        vertical-align: top !important;
+        text-align: center !important;
+      }

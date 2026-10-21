@@ -211,8 +211,7 @@ const lineH = size * 1.22;
 const maxLines = Math.max(1, Math.floor((hMm * MM - 2.2 * MM) / lineH));
 const visible = lines.slice(0, maxLines);
 if (lines.length > maxLines && visible.length) visible[visible.length - 1] = `${visible[visible.length - 1].slice(0, Math.max(1, visible[visible.length - 1].length - 4))}...`;
-const blockH = visible.length * lineH;
-const startTop = topMm + Math.max(1.7, (hMm * MM - blockH) / MM / 2 + size * 0.65 / MM);
+const startTop = topMm + 1.7;
 return visible.map((line, i) => drawText(xMm + wMm / 2, startTop + i * lineH / MM, line, size, "center", bold)).join("\n");
 };
 const pages = [];
@@ -491,7 +490,7 @@ return `BT ${fontName} ${size} Tf ${pdfTextFill(topMm)} rg 1 0 0 1 ${x.toFixed(2
 const drawWrapped = (xMm, topMm, wMm, hMm, txt, size=6.0, bold=false) => {
 const lines=wrapText(txt,wMm*MM-4*MM,size), lineH=size*1.22; const maxLines=Math.max(1,Math.floor((hMm*MM-2.2*MM)/lineH));
 const visible=lines.slice(0,maxLines); if(lines.length>maxLines&&visible.length) visible[visible.length-1]=`${visible[visible.length-1].slice(0,Math.max(1,visible[visible.length-1].length-4))}...`;
-const blockH=visible.length*lineH; const startTop=topMm+Math.max(1.7,(hMm*MM-blockH)/MM/2+size*.65/MM);
+const startTop=topMm+1.7;
 return visible.map((line,i)=>drawText(xMm+wMm/2,startTop+i*lineH/MM,line,size,"center",bold)).join("\n");
 };
 const pages=[];

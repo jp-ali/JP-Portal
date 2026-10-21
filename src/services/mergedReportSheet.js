@@ -24,6 +24,10 @@ export function mergedReportSheet(XLSX, data, title) {
   sheet["!merges"] = merges;
   sheet["!rows"] = [{ hpt: 32 }, { hpt: 23 }, { hpt: 29 }];
   sheet["!autofilter"] = { ref: `A3:${XLSX.utils.encode_col(last)}${Math.max(3, data.length + 3)}` };
-  for (const address of ["A1", "A2"]) if (sheet[address]) sheet[address].s = { alignment: { horizontal: "center", vertical: "center" }, font: { bold: true, color: { rgb: "7A0F2B" } } };
+  for (const address of Object.keys(sheet)) {
+    if (address.startsWith("!")) continue;
+    sheet[address].s = { ...sheet[address].s, alignment: { horizontal: "center", vertical: "top", wrapText: true } };
+  }
+  for (const address of ["A1", "A2"]) if (sheet[address]) sheet[address].s.font = { bold: true, color: { rgb: "7A0F2B" } };
   return sheet;
 }

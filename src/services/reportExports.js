@@ -105,8 +105,7 @@ const visible = lines.slice(0, maxLines);
 if (lines.length > maxLines && visible.length) {
 visible[visible.length - 1] = `${visible[visible.length - 1].slice(0, Math.max(1, visible[visible.length - 1].length - 4))}...`;
 }
-const blockH = visible.length * lineH;
-const startTop = topMm + Math.max(1.7, (hMm * MM - blockH) / MM / 2 + size * 0.65 / MM);
+const startTop = topMm + 1.7;
 return visible.map((line, i) => {
 let tx = xMm + 2;
 if (align === "center") tx = xMm + wMm / 2;
@@ -425,8 +424,7 @@ const visible = lines.slice(0, maxLines);
 if (lines.length > maxLines && visible.length) {
 visible[visible.length - 1] = `${visible[visible.length - 1].slice(0, Math.max(1, visible[visible.length - 1].length - 4))}...`;
 }
-const blockH = visible.length * lineH;
-const startTop = topMm + Math.max(1.7, (hMm * MM - blockH) / MM / 2 + size * 0.65 / MM);
+const startTop = topMm + 1.7;
 return visible.map((line, i) => {
 let tx = xMm + 2;
 if (align === "center") tx = xMm + wMm / 2;

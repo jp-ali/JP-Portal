@@ -107,33 +107,10 @@ const { catalogues, catalogueTitle, setCatalogueTitle, catalogueFile, setCatalog
 const pdfTemplateRef = useRef(null);
 const [pdfExportData, setPdfExportData] = useState([]);
 useEffect(() => {
-const loadScript = (src, globalName) => {
-if (globalName === "jspdf" && window.jspdf) return Promise.resolve(window.jspdf);
-if (globalName === "XLSX" && window.XLSX) return Promise.resolve(window.XLSX);
-const existing = document.querySelector(`script[src="${src}"]`);
-if (existing) {
-return new Promise((resolve, reject) => {
-if ((globalName === "jspdf" && window.jspdf) || (globalName === "XLSX" && window.XLSX)) {
-resolve(window[globalName]);
-return;
-}
-existing.addEventListener("load", () => resolve(window[globalName]), { once: true });
-existing.addEventListener("error", () => reject(new Error(`Failed to load ${globalName}`)), { once: true });
+window.__xlsxReady = import("xlsx-js-style").then(({ default: XLSX }) => {
+  window.XLSX = XLSX;
+  return XLSX;
 });
-}
-return new Promise((resolve, reject) => {
-const script = document.createElement("script");
-script.src = src;
-script.async = true;
-script.onload = () => window[globalName] ? resolve(window[globalName]) : reject(new Error(`${globalName} loaded but was not initialized`));
-script.onerror = () => reject(new Error(`Failed to load ${globalName}`));
-document.body.appendChild(script);
-});
-};
-window.__xlsxReady = loadScript(
-"https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
-"XLSX"
-);
 }, []);
 const getDateKey = (value) => {
 if (!value) return "";
