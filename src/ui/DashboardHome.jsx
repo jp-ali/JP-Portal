@@ -4,7 +4,7 @@ import mobileHeroBooks from "../assets/dashboard-books-mobile.webp";
 import { dashboardItemKeys, useDashboardVisibility } from "../services/dashboardVisibility.js";
 
 function HideButton({ title, onClick }) {
-  return <button type="button" className="portal-dashboard-hide" title={`Hide ${title}`} aria-label={`Hide ${title}`} onClick={onClick}><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.5 10.5 0 0 1 12 5c5.2 0 9 4.1 10 7a13 13 0 0 1-3.1 4.7M6.2 6.2C4.2 7.6 2.8 9.8 2 12c1 2.9 4.8 7 10 7 1.7 0 3.2-.4 4.5-1.1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button>;
+  return <button type="button" className="portal-dashboard-hide" title={`Hide ${title}`} aria-label={`Hide ${title}`} onClick={onClick}><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.5 10.5 0 0 1 12 5c5.2 0 9 4.1 10 7a13 13 0 0 1-3.1 4.7M6.2 6.2C4.2 7.6 2.8 9.8 2 12c1 2.9 4.8 7 10 7 1.7 0 3.2-.4 4.5-1.1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button>;
 }
 
 export default function DashboardHome({ role, accountId, stats, sections }) {
