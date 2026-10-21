@@ -1,7 +1,21 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
-import React from "react";
+import React, { useState } from "react";
 import { marketerCityNames } from "../../domain/marketerCities.js";
 import MarketerPhotoControl from "../../ui/MarketerPhotoControl.jsx";
+import defaultAvatar from "../../assets/default-marketer-avatar.svg";
+
+function MarketerDetailListCard({ marketer, citiesList, onView, onEdit }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  return <article className="marketer-detail-card">
+    <div className="marketer-detail-card-top">
+      <button type="button" className="marketer-detail-card-avatar" onClick={onView} aria-label={`View ${marketer.name || "marketer"} details`}><img src={marketer.profilePhoto || defaultAvatar} alt="" /></button>
+      <div className="marketer-detail-card-identity"><strong>{marketer.name || "Unnamed Marketer"}</strong><small title={marketer.email}>{marketer.email || "No email"}</small><span className="marketer-detail-card-status"><i />Active</span></div>
+      <button type="button" className="marketer-detail-card-view" onClick={onView}>View Details →</button>
+      <div className="marketer-detail-card-options"><button type="button" className="marketer-detail-card-more" aria-label={`${marketer.name || "Marketer"} options`} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>⋮</button>{menuOpen && <div className="marketer-detail-card-menu"><button type="button" onClick={() => { setMenuOpen(false); onView(); }}>View Details</button><button type="button" onClick={() => { setMenuOpen(false); onEdit(); }}>Edit Details</button></div>}</div>
+    </div>
+    <div className="marketer-detail-card-facts"><div><span aria-hidden="true">☎</span><p title={marketer.phone || "N/A"}><strong>{marketer.phone || "N/A"}</strong><small>Phone</small></p></div><div><span aria-hidden="true">●</span><p title={marketerCityNames(marketer, citiesList)}><strong>{marketerCityNames(marketer, citiesList)}</strong><small>City</small></p></div><div><span aria-hidden="true">▣</span><p title={marketer.designation || "Regional Manager"}><strong>{marketer.designation || "Regional Manager"}</strong><small>Designation</small></p></div></div>
+  </article>;
+}
 
 export default function AdminMarketersDetailPanel() {
   const { cardStyle, citiesList, downloadMarketersExcel, downloadMarketersPDF, handleEditMarketer, inputStyle, marketerSearch, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, reportViewClass, selectedMarketerDetailBox, setAdminView, setFullScreenImage, setMarketerSearch, setMarketersList, setSelectedMarketerDetailBox, setSubordinatePickerOpen } = usePortalContext();
@@ -75,17 +89,7 @@ style={{ ...inputStyle, marginBottom: "16px", fontSize: "14px", padding: "12px 1
 <div className="marketer-detail-grid">
                           {marketersList
 .filter(m => (m.name && m.name.toLowerCase().includes(marketerSearch.toLowerCase())) || (m.email && m.email.toLowerCase().includes(marketerSearch.toLowerCase())))
-.map((m) => (
-<button type="button"
-key={m.id} 
-onClick={() => setSelectedMarketerDetailBox(m.id)}
-className="marketer-detail-card"
->
-                                <strong><span aria-hidden="true">{renderMarketerPersonIcon(15)}</span>{m.name || "Unnamed"}</strong>
-                                <small>{m.email}</small>
-                                <span className="marketer-detail-card-action">View Details →</span>
-                              </button>
-))}
+.map((m) => <MarketerDetailListCard key={m.id} marketer={m} citiesList={citiesList} onView={() => setSelectedMarketerDetailBox(m.id)} onEdit={() => handleEditMarketer(m)} />)}
                         </div>
 )}
                   </>
