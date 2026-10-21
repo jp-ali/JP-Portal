@@ -77,14 +77,26 @@ export function cardSvg(template, values) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${widthMm}mm" height="${heightMm}mm" viewBox="0 0 ${width} ${height}">\n<image x="0" y="0" width="${width}" height="${height}" xlink:href="${image}"/>\n${labels}\n</svg>`;
 }
 
-export function downloadCardSvg(template, values) {
-  const blob = new Blob([cardSvg(template, values)], { type: "image/svg+xml;charset=utf-8" });
+function cardFileName(values, extension) {
+  const name = String(values.depotName || values.name || "card").trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").slice(0, 55) || "card";
+  return `${name}.${extension}`;
+}
+
+function saveDownload(blob, fileName) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = "card-corel-editable.svg";
+  anchor.download = fileName;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
   anchor.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setTimeout(() => { anchor.remove(); URL.revokeObjectURL(url); }, 60000);
+  return fileName;
+}
+
+export function downloadCardSvg(template, values) {
+  const blob = new Blob([cardSvg(template, values)], { type: "image/svg+xml;charset=utf-8" });
+  return saveDownload(blob, cardFileName(values, "svg"));
 }
 
 export async function downloadCardPdf(template, values) {
@@ -100,5 +112,5 @@ export async function downloadCardPdf(template, values) {
     pdf.setFontSize(Math.max(4, field.fontSize * widthMm / width * 72 / 25.4));
     pdf.text(value, field.x * widthMm / 100, field.y * heightMm / 100, { align: field.align, baseline: "alphabetic" });
   });
-  pdf.save("card.pdf");
+  return saveDownload(pdf.output("blob"), cardFileName(values, "pdf"));
 }

@@ -83,7 +83,8 @@ export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSav
   };
   const exportCard = async (kind) => {
     if (!template.image) return setError("Card image is still loading.");
-    try { if (kind === "svg") downloadCardSvg(template, values); else await downloadCardPdf(template, values); }
+    setError("");
+    try { const fileName = kind === "svg" ? downloadCardSvg(template, values) : await downloadCardPdf(template, values); setMessage(`${fileName} downloaded. Check your browser's Downloads folder.`); }
     catch (problem) { setError(`Could not export card: ${problem.message}`); }
   };
   const addField = () => {
@@ -123,7 +124,7 @@ export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSav
       {template.image ? <div className="card-designer-preview" onClick={place} role="presentation" style={{ aspectRatio: `${template.imageWidth} / ${template.imageHeight}` }}><img src={template.image} alt="Card background" draggable="false" />
         {cardRenderEntries(template, values).map(({ field, value }) => <span key={field.id} className={`card-designer-overlay ${field.id === selected ? "selected" : ""}`} style={{ left: `${field.x}%`, top: `${field.y}%`, color: field.color, fontSize: `${field.fontSize / template.imageWidth * 100}cqw`, fontWeight: field.bold ? 700 : 400, transform: `translate(${field.align === "center" ? "-50%" : field.align === "right" ? "-100%" : "0"}, -100%)`, textAlign: field.align }}>{value}</span>)}
       </div> : <div className="card-designer-empty">Loading default card artwork…</div>}
-      <div className="card-designer-export"><button type="button" onClick={() => exportCard("pdf")} disabled={!template.image}>Download PDF</button><button type="button" onClick={() => exportCard("svg")} disabled={!template.image}>Download Corel SVG</button></div>
+      <div className="card-designer-export"><button type="button" onClick={() => exportCard("pdf")} disabled={!template.image}>Download PDF</button><button type="button" onClick={() => exportCard("svg")} disabled={!template.image}>Download Corel SVG</button></div><p className="card-designer-tip">Downloaded files appear in your browser's Downloads folder. Saved cards appear in Saved Cards.</p>
     </div>
     <div className="card-designer-controls"><div className="card-designer-controls-head"><div><h3>Card details</h3><p>Change text, style and order. The preview updates as you type.</p></div><button type="button" onClick={addField}>+ Add field</button></div>
       <div className="card-designer-fields">{template.fields.map((field, index) => <div className={`card-designer-field ${selected === field.id ? "active" : ""}`} key={field.id}>

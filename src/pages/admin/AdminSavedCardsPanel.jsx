@@ -33,7 +33,8 @@ export default function AdminSavedCardsPanel({ onEdit, onNew }) {
       if (kind === "pdf" || kind === "svg") {
         const { card } = await request(`/cards/${encodeURIComponent(selected.id)}`);
         const template = { image: card.image, imageWidth: card.imageWidth, imageHeight: card.imageHeight, widthMm: card.widthMm, fields: card.fields };
-        if (kind === "pdf") await downloadCardPdf(template, card.values); else downloadCardSvg(template, card.values);
+        const fileName = kind === "pdf" ? await downloadCardPdf(template, card.values) : downloadCardSvg(template, card.values);
+        setMessage(`${fileName} downloaded. Check your browser's Downloads folder.`);
       } else {
         const path = `/cards/${encodeURIComponent(selected.id)}${kind === "restore" ? "/restore" : kind === "permanent" ? "/permanent" : ""}`;
         await request(path, { method: kind === "restore" ? "POST" : "DELETE" });

@@ -9,6 +9,21 @@ function Test-LocalPort([int]$port) {
   return [bool](Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1)
 }
 
+if (Test-LocalPort 3001) {
+  $cardsStatus = & curl.exe --max-time 3 -s -o NUL -w '%{http_code}' 'http://localhost:3001/api/cards'
+  if ($cardsStatus -eq '404') {
+    $apiListener = Get-NetTCPConnection -LocalPort 3001 -State Listen | Select-Object -First 1
+    $apiProcessId = $apiListener.OwningProcess
+    $apiProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$apiProcessId"
+    if ($apiProcess.CommandLine -match 'src[\\/]server\.js') {
+      Stop-Process -Id $apiProcessId -Force
+      for ($attempt = 0; $attempt -lt 20 -and (Test-LocalPort 3001); $attempt++) { Start-Sleep -Milliseconds 250 }
+    } else {
+      throw 'Port 3001 is occupied by an API without card support. Stop that process before starting JP Portal.'
+    }
+  }
+}
+
 if (-not (Test-LocalPort 3001)) {
   Start-Process -FilePath $nodeExe -ArgumentList @('src/server.js') `
     -WorkingDirectory (Join-Path $projectRoot 'backend') -WindowStyle Hidden `
