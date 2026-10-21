@@ -111,7 +111,11 @@ whatsappGroupLink: marketerWhatsappGroupLink,
 };
 if (editingId) {
 await updateMarketer(editingId, marketerPayload);
+if (marketerPass) {
+window.prompt("Marketer updated. Copy the new password now and share it with them:", marketerPass);
+} else {
 alert("Marketer details and assignments updated successfully!");
+}
 setEditingId(null);
 } else {
 await createMarketer(marketerPayload);

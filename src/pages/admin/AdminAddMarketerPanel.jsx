@@ -3,6 +3,23 @@ import React, { useState } from "react";
 
 export default function AdminAddMarketerPanel() {
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordCopied, setPasswordCopied] = useState(false);
+  const generatePassword = () => {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+    const random = new Uint32Array(16);
+    crypto.getRandomValues(random);
+    setMarketerPass(Array.from(random, (value) => alphabet[value % alphabet.length]).join(""));
+    setShowPassword(true);
+    setPasswordCopied(false);
+  };
+  const copyPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(marketerPass);
+      setPasswordCopied(true);
+    } catch {
+      alert("Copy is unavailable here. Show the password and copy it from the field before saving.");
+    }
+  };
   const { adminAreaAssignOpen, adminAreaSearch, adminCityAssignOpen, adminCitySearch, areaSyncMessage, areaSyncingCityId, areasList, assignedAreaIds, assignedCityIds, assignmentCityFocusId, btnPrimary, cardStyle, citiesList, editingId, editingReturnToMarketerDetails, fetchAreasForCity, handleAddArea, handleAddCity, handleSaveMarketer, inputStyle, marketerAssignedKms, marketerDesignation, marketerEmail, marketerName, marketerPass, marketerPhone, marketersList, newAreaName, newCityName, readCachedAreasForCity, renderMarketerPersonIcon, resetMarketerAssignmentForm, setAdminAreaAssignOpen, setAdminAreaSearch, setAdminCityAssignOpen, setAdminCitySearch, setAdminSchoolSearch, setAdminView, setAssignmentAreaFocusId, setAssignmentCityFocusId, setEditingId, setEditingReturnToMarketerDetails, setMarketerAssignedKms, setMarketerDesignation, setMarketerEmail, setMarketerName, setMarketerPass, setMarketerPhone, setMarketerWhatsappGroupLink, setMarketerWhatsappGroupName, setNewAreaName, setNewCityName, setSubordinateMarketerIds, setSubordinatePickerOpen, setSubordinateSearch, subordinateMarketerIds, subordinatePickerOpen, subordinateSearch, syncAreasForCityFromOpenStreetMap, toggleAreaAssignment, toggleCityAssignment } = usePortalContext();
   return (<div>
               <button onClick={() => setAdminView("home")} style={{ marginBottom: "14px", padding: "8px 14px", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }}>← Back to Menu</button>
@@ -55,10 +72,16 @@ style={{ flex:"0 0 auto", minWidth:"132px", padding:"10px 13px", background:"#ff
                   <input type="number" min="0.1" step="0.1" placeholder="Assigned KMs per Litre (e.g. 12)" value={marketerAssignedKms} onChange={(e) => setMarketerAssignedKms(e.target.value)} required style={inputStyle} />
                   <input type="email" placeholder="Email ID" value={marketerEmail} onChange={(e) => setMarketerEmail(e.target.value)} required style={inputStyle} />
                   <div style={{ position:"relative" }}>
-                    <input type={showPassword ? "text" : "password"} placeholder={editingId ? "New password (leave blank to keep current)" : "Password (at least 8 characters)"} value={marketerPass} onChange={(e) => setMarketerPass(e.target.value)} required={!editingId} minLength={8} autoComplete="new-password" style={{ ...inputStyle, width:"100%", paddingRight:"68px" }} />
+                    <input type={showPassword ? "text" : "password"} placeholder={editingId ? "New password (leave blank to keep current)" : "Password (at least 8 characters)"} value={marketerPass} onChange={(e) => { setMarketerPass(e.target.value); setPasswordCopied(false); }} required={!editingId} minLength={8} autoComplete="new-password" style={{ ...inputStyle, width:"100%", paddingRight:"68px" }} />
                     <button type="button" onClick={() => setShowPassword((visible) => !visible)} style={{ position:"absolute", right:"9px", top:"50%", transform:"translateY(-50%)", border:0, color:"#7a0f2b", background:"transparent", fontSize:"12px", fontWeight:800, cursor:"pointer" }}>{showPassword ? "Hide" : "Show"}</button>
                   </div>
-                  {editingId && <small style={{ color:"#78686d", marginTop:"-9px" }}>Current password is protected. Leave blank to keep it, or enter a new one to reset it.</small>}
+                  {editingId && <div style={{ marginTop:"-8px" }}>
+                    <small style={{ display:"block", color:"#78686d", marginBottom:"8px" }}>Current password cannot be shown because it is securely hashed. Leave blank to keep it, or set a new one and share it with the marketer after saving.</small>
+                    <div style={{ display:"flex", gap:"8px", flexWrap:"wrap" }}>
+                      <button type="button" onClick={generatePassword} style={{ padding:"7px 10px", border:"1px solid #7a0f2b", borderRadius:"8px", background:"#fff7f9", color:"#7a0f2b", fontSize:"11px", fontWeight:800, cursor:"pointer" }}>Generate New Password</button>
+                      {marketerPass && <button type="button" onClick={copyPassword} style={{ padding:"7px 10px", border:"1px solid #ddcbd0", borderRadius:"8px", background:"#fff", color:"#7a0f2b", fontSize:"11px", fontWeight:800, cursor:"pointer" }}>{passwordCopied ? "Copied" : "Copy Password"}</button>}
+                    </div>
+                  </div>}
                   <div className="city-area-assignment-box" style={{ background: "rgba(255,255,255,.96)", border: "1px solid rgba(16,185,129,.28)", borderRadius: "14px", padding: "14px" }}>
                     <h4 style={{ margin: "0 0 10px", color: "#8a253b", fontSize: "15px" }}>📍 City & Area Assignment</h4>
                     <p style={{ margin: "0 0 12px", color: "#78686d", fontSize: "12px" }}>Assign only the cities and areas this marketer is allowed to visit. Schools are selected or added by the marketer during Add Visit.</p>
