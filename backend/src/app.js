@@ -4,6 +4,7 @@ import { authRoutes } from "./routes/authRoutes.js";
 import { marketerRoutes } from "./routes/marketerRoutes.js";
 import { visitRoutes } from "./routes/visitRoutes.js";
 import { customReportRoutes } from "./routes/customReportRoutes.js";
+import { cardTemplateRoutes } from "./routes/cardTemplateRoutes.js";
 
 export const app = express();
 
@@ -37,6 +38,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/marketers", marketerRoutes);
 app.use("/api/visits", visitRoutes);
 app.use("/api/custom-reports", customReportRoutes);
+app.use("/api/card-template", cardTemplateRoutes);
 
 app.use((error, _request, response, _next) => {
   if (error instanceof SyntaxError && "body" in error) {

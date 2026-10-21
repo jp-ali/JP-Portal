@@ -4,6 +4,7 @@ import AdminAttendancePanel from "./admin/AdminAttendancePanel.jsx";
 import AdminCataloguesPanel from "./admin/AdminCataloguesPanel.jsx";
 import AdminVerificationCallsPanel from "./admin/AdminVerificationCallsPanel.jsx";
 import AdminOtherReportsPanel from "./admin/AdminOtherReportsPanel.jsx";
+import AdminCardDesignerPanel from "./admin/AdminCardDesignerPanel.jsx";
 import AdminAttendanceMediaPanel from "./admin/AdminAttendanceMediaPanel.jsx";
 import AdminActionPlansPanel from "./admin/AdminActionPlansPanel.jsx";
 import AdminMediaPanel from "./admin/AdminMediaPanel.jsx";
@@ -106,6 +107,10 @@ if (key === "other-reports") {
 setAdminView("other-reports");
 return;
 }
+if (key === "card-designer") {
+setAdminView("card-designer");
+return;
+}
 if (key === "marketers-detail") {
 setAdminView("marketers-detail");
 fetchMarketers();
@@ -176,6 +181,7 @@ const adminSidebarItems = [
 { key: "catalogues", icon: "📚", label: "Catalogues", active: adminView === "catalogues" },
 { key: "verification-calls", icon: "☎️", label: "Verification Calls", active: ["verification-reports", "verification-calls"].includes(adminView) },
 { key: "other-reports", icon: "📋", label: "Other Reports", active: adminView === "other-reports" || adminView === "custom-report" },
+{ key: "card-designer", icon: "🎨", label: "Card Designer", active: adminView === "card-designer" },
 { key: "media-active", icon: "🖼️", label: "Media", active: adminView === "media" && mediaView === "active" },
 { key: "media-deleted", icon: "♻️", label: "Recently Deleted", active: adminView === "media" && mediaView === "deleted" }
 ];
@@ -232,6 +238,7 @@ onClick={() => openAdminSidebarSection(item.key)}
           {["other-reports", "verification-reports", "custom-report"].includes(adminView) && (
 <AdminOtherReportsPanel mode={adminView === "custom-report" ? customReportOrigin : adminView === "verification-reports" ? "verification" : "other"} reports={customReports} setReports={setCustomReports} selectedId={selectedCustomReportId} setSelectedId={setSelectedCustomReportId} loading={customReportsLoading} loadError={customReportsError} reload={reloadCustomReports} onOrigin={setCustomReportOrigin} />
 )}
+          {adminView === "card-designer" && <AdminCardDesignerPanel />}
           {adminView === "attendance-media" && (
 <AdminAttendanceMediaPanel />
 )}
