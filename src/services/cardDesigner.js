@@ -65,16 +65,21 @@ export async function prepareCardImage(file) {
 
 function linesFor(value) { return String(value ?? "").split(/\r?\n/).filter((line) => line.length); }
 
-export function cardSvg(template, values) {
-  const { image, imageWidth: width, imageHeight: height, widthMm, fields } = template;
-  const heightMm = widthMm * height / width;
+function svgCardObjects(template, values) {
+  const { image, imageWidth: width, imageHeight: height } = template;
   const labels = cardRenderEntries(template, values).flatMap(({ field, value }) => linesFor(value).map((line, index) => {
     const x = field.x * width / 100;
     const y = field.y * height / 100 + index * field.fontSize * 1.2;
     const anchor = { left: "start", center: "middle", right: "end" }[field.align];
     return `<text x="${x}" y="${y}" fill="${field.color}" font-family="Arial, sans-serif" font-size="${field.fontSize}" font-weight="${field.bold ? 700 : 400}" text-anchor="${anchor}">${escapeXml(line)}</text>`;
   })).join("\n");
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${widthMm}mm" height="${heightMm}mm" viewBox="0 0 ${width} ${height}">\n<image x="0" y="0" width="${width}" height="${height}" xlink:href="${image}"/>\n${labels}\n</svg>`;
+  return `<image x="0" y="0" width="${width}" height="${height}" xlink:href="${image}"/>\n${labels}`;
+}
+
+export function cardSvg(template, values) {
+  const { imageWidth: width, imageHeight: height, widthMm } = template;
+  const heightMm = widthMm * height / width;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${widthMm}mm" height="${heightMm}mm" viewBox="0 0 ${width} ${height}">\n${svgCardObjects(template, values)}\n</svg>`;
 }
 
 function cardFileName(values, extension) {
@@ -99,18 +104,69 @@ export function downloadCardSvg(template, values) {
   return saveDownload(blob, cardFileName(values, "svg"));
 }
 
-export async function downloadCardPdf(template, values) {
-  const { jsPDF } = await import("jspdf");
-  const { image, imageWidth: width, imageHeight: height, widthMm, fields } = template;
-  const heightMm = widthMm * height / width;
-  const pdf = new jsPDF({ unit: "mm", format: [widthMm, heightMm], orientation: widthMm >= heightMm ? "landscape" : "portrait" });
-  pdf.addImage(image, "JPEG", 0, 0, widthMm, heightMm);
+const SHEET_WIDTH = 210;
+const SHEET_HEIGHT = 297;
+const CELL_WIDTH = 90;
+const CELL_HEIGHT = 52;
+const CARDS_PER_SHEET = 10;
+
+function sheetPlacement(card, index) {
+  const page = Math.floor(index / CARDS_PER_SHEET);
+  const position = index % CARDS_PER_SHEET;
+  const column = position % 2;
+  const row = Math.floor(position / 2);
+  const scale = Math.min(CELL_WIDTH / card.imageWidth, CELL_HEIGHT / card.imageHeight);
+  const width = card.imageWidth * scale;
+  const height = card.imageHeight * scale;
+  return { x: 10 + column * 100 + (CELL_WIDTH - width) / 2, y: page * SHEET_HEIGHT + 10 + row * 56 + (CELL_HEIGHT - height) / 2, width, height, scale };
+}
+
+export function cardSheetSvg(cards) {
+  if (!cards.length) throw new Error("Select at least one card.");
+  const pages = Math.ceil(cards.length / CARDS_PER_SHEET);
+  const items = cards.map((card, index) => {
+    const { x, y, width, height, scale } = sheetPlacement(card, index);
+    return `<g id="card-${index + 1}"><rect x="${x}" y="${y}" width="${width}" height="${height}" fill="white" stroke="#dddddd" stroke-width="0.15"/><g transform="translate(${x} ${y}) scale(${scale})">${svgCardObjects(card, card.values)}</g></g>`;
+  }).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${SHEET_WIDTH}mm" height="${pages * SHEET_HEIGHT}mm" viewBox="0 0 ${SHEET_WIDTH} ${pages * SHEET_HEIGHT}">\n${items}\n</svg>`;
+}
+
+export function downloadCardSheetSvg(cards) {
+  return saveDownload(new Blob([cardSheetSvg(cards)], { type: "image/svg+xml;charset=utf-8" }), "Cards-Corel-Sheet.svg");
+}
+
+function drawPdfCard(pdf, template, values, x, y, width, height) {
+  pdf.addImage(template.image, "JPEG", x, y, width, height);
   cardRenderEntries(template, values).forEach(({ field, value }) => {
     const rgb = field.color.match(/[0-9a-f]{2}/gi).map((part) => parseInt(part, 16));
     pdf.setTextColor(...rgb);
     pdf.setFont("helvetica", field.bold ? "bold" : "normal");
-    pdf.setFontSize(Math.max(4, field.fontSize * widthMm / width * 72 / 25.4));
-    pdf.text(value, field.x * widthMm / 100, field.y * heightMm / 100, { align: field.align, baseline: "alphabetic" });
+    pdf.setFontSize(Math.max(4, field.fontSize * width / template.imageWidth * 72 / 25.4));
+    pdf.text(value, x + field.x * width / 100, y + field.y * height / 100, { align: field.align, baseline: "alphabetic" });
   });
+}
+
+export async function downloadCardPdf(template, values) {
+  const { jsPDF } = await import("jspdf");
+  const { imageWidth: width, imageHeight: height, widthMm } = template;
+  const heightMm = widthMm * height / width;
+  const pdf = new jsPDF({ unit: "mm", format: [widthMm, heightMm], orientation: widthMm >= heightMm ? "landscape" : "portrait" });
+  drawPdfCard(pdf, template, values, 0, 0, widthMm, heightMm);
   return saveDownload(pdf.output("blob"), cardFileName(values, "pdf"));
+}
+
+export async function downloadCardSheetPdf(cards) {
+  if (!cards.length) throw new Error("Select at least one card.");
+  const { jsPDF } = await import("jspdf");
+  const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  cards.forEach((card, index) => {
+    if (index && index % CARDS_PER_SHEET === 0) pdf.addPage();
+    const { x, y, width, height } = sheetPlacement(card, index);
+    const page = Math.floor(index / CARDS_PER_SHEET);
+    const pageY = y - page * SHEET_HEIGHT;
+    drawPdfCard(pdf, card, card.values, x, pageY, width, height);
+    pdf.setDrawColor(220, 220, 220);
+    pdf.rect(x, pageY, width, height);
+  });
+  return saveDownload(pdf.output("blob"), "Cards-Print-Sheet.pdf");
 }

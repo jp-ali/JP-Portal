@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { cardRenderEntries, cardSvg, defaultCardFields, defaultCardValues } from "./cardDesigner.js";
+import { cardRenderEntries, cardSheetSvg, cardSvg, defaultCardFields, defaultCardValues } from "./cardDesigner.js";
 
 test("Corel SVG embeds the art and keeps entered text as escaped vector text", () => {
   const svg = cardSvg({ image: "data:image/jpeg;base64,AAAA", imageWidth: 1200, imageHeight: 750, widthMm: 85.6, fields: [defaultCardFields[0]] }, { depotName: "Ali & Co <JP>" });
@@ -16,4 +16,15 @@ test("second phone shares the first phone line and empty name lifts the role", (
   assert.equal(entries.find(({ field }) => field.id === "phone2").value, "| +92-300-0000000");
   assert.equal(entries.find(({ field }) => field.id === "phone2").field.y, entries.find(({ field }) => field.id === "phone").field.y);
   assert.equal(entries.find(({ field }) => field.id === "designation").field.y, 33);
+});
+
+test("Corel sheet keeps several cards and their text as separate editable groups", () => {
+  const card = { image: "data:image/jpeg;base64,AAAA", imageWidth: 1200, imageHeight: 750, widthMm: 85.6, fields: [defaultCardFields[0]], values: { depotName: "Ali & Co" } };
+  const sheet = cardSheetSvg([card, { ...card, values: { depotName: "JP Books" } }]);
+  assert.match(sheet, /width="210mm" height="297mm"/);
+  assert.match(sheet, /id="card-1"/);
+  assert.match(sheet, /id="card-2"/);
+  assert.match(sheet, />Ali &amp; Co<\/text>/);
+  assert.match(sheet, />JP Books<\/text>/);
+  assert.equal((sheet.match(/<image /g) || []).length, 2);
 });
