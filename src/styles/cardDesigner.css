@@ -40,10 +40,18 @@
 @media(max-width:600px) { .card-designer { padding:12px; } .card-designer-preview-area,.card-designer-controls { padding:10px; } .card-designer-head { align-items:flex-start; } }
 .card-designer-v2 { display:grid; gap:18px; }
 .card-designer-v2 .card-designer-head { margin:0; }
-.card-designer-v2 .card-designer-preview-area { display:flex; flex-direction:column; align-items:center; justify-self:center; width:min(100%,640px); box-sizing:border-box; background:linear-gradient(180deg,#fff,#fff9fa); padding:22px; }
-.card-designer-v2 .card-designer-preview-head { width:min(100%,560px); }
-.card-designer-v2 .card-designer-preview { max-width:560px; box-shadow:0 12px 36px #3410181b; }
-.card-designer-v2 .card-designer-export { justify-content:center; margin:18px auto 0; }
+.card-designer-v2 .card-designer-preview-area { display:flex; flex-direction:column; align-items:center; justify-self:center; width:min(100%,460px); box-sizing:border-box; background:linear-gradient(180deg,#fff,#fff9fa); padding:12px; }
+.card-designer-v2 .card-designer-preview-head { width:min(100%,420px); margin-bottom:9px; }
+.card-designer-preview-title { display:grid; gap:2px; }
+.card-designer-v2 .card-designer-preview { max-width:420px; box-shadow:0 9px 25px #3410181b; }
+.card-designer-v2 .card-designer-export { justify-content:center; gap:6px; margin:10px auto 0; }
+.card-designer-v2 .card-designer-export button { padding:7px 9px; font-size:11px; }
+.card-designer-v2 .card-designer-preview-area .card-designer-tip { text-align:center; margin:7px 0 0; }
+.card-designer-preview-modal { position:fixed; inset:0; z-index:2147483600; display:grid; place-items:center; overflow:auto; padding:24px; box-sizing:border-box; background:rgba(31,10,17,.75); }
+.card-designer-preview-dialog { width:min(100%,1000px); max-height:100%; overflow:auto; box-sizing:border-box; padding:14px; border-radius:14px; background:#fff; box-shadow:0 24px 70px #15050b75; }
+.card-designer-preview-dialog-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; color:#74102d; }
+.card-designer-preview-dialog-head button { font:inherit; font-size:13px; font-weight:700; cursor:pointer; border:1px solid #dcc0ca; color:#74102d; background:#fff; border-radius:9px; padding:8px 12px; }
+.card-designer-preview-dialog .card-designer-preview { max-width:none; margin:auto; cursor:crosshair; }
 .card-designer-v2 .card-designer-controls { padding:20px; }
 .card-designer-controls-head { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; border-bottom:1px solid #ebdce0; padding-bottom:14px; margin-bottom:16px; }
 .card-designer-controls-head h3 { margin:0; color:#74102d; font-size:19px; }

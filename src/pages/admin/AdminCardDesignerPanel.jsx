@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { request } from "../../services/authApi.js";
 import { cardRenderEntries, defaultCardFields, defaultCardValues, downloadCardPdf, downloadCardSvg, downloadCardSvgz, prepareCardImage } from "../../services/cardDesigner.js";
 import defaultCardArt from "../../assets/card-blank-template.png";
@@ -19,6 +20,7 @@ export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSav
   const [dirty, setDirty] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [previewExpanded, setPreviewExpanded] = useState(false);
   const uploadRef = useRef(null);
   const install = (nextTemplate, nextValues, id = "") => {
     stateRef.current = { template: nextTemplate, values: nextValues };
@@ -62,6 +64,17 @@ export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSav
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+  useEffect(() => {
+    if (!previewExpanded) return;
+    const onEscape = (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      setPreviewExpanded(false);
+    };
+    document.addEventListener("keydown", onEscape, true);
+    return () => document.removeEventListener("keydown", onEscape, true);
+  }, [previewExpanded]);
   const changeTemplate = (update) => change({ ...stateRef.current.template, ...update }, stateRef.current.values);
   const changeValue = (id, value) => change(stateRef.current.template, { ...stateRef.current.values, [id]: value });
   const changeField = (id, update) => changeTemplate({ fields: stateRef.current.template.fields.map((field) => field.id === id ? { ...field, ...update } : field) });
@@ -115,17 +128,19 @@ export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSav
     changeField(selected === "phone2" ? "phone" : selected, { x: Math.round(Math.max(0, Math.min(100, (event.clientX - rect.left) / rect.width * 100)) * 10) / 10,
       y: Math.round(Math.max(0, Math.min(100, (event.clientY - rect.top) / rect.height * 100)) * 10) / 10 });
   };
+  const renderPreview = () => <div className="card-designer-preview" onClick={place} role="presentation" style={{ aspectRatio: `${template.imageWidth} / ${template.imageHeight}` }}><img src={template.image} alt="Card background" draggable="false" />
+    {cardRenderEntries(template, values).map(({ field, value }) => <span key={field.id} className={`card-designer-overlay ${field.id === selected ? "selected" : ""}`} style={{ left: `${field.x}%`, top: `${field.y}%`, color: field.color, fontSize: `${field.fontSize / template.imageWidth * 100}cqw`, fontWeight: field.bold ? 700 : 400, transform: `translate(${field.align === "center" ? "-50%" : field.align === "right" ? "-100%" : "0"}, -100%)`, textAlign: field.align }}>{value}</span>)}
+  </div>;
 
   return <section className="card-designer card-designer-v2">
     <header className="card-designer-head"><div><h2>Card Designer</h2><p>{editingId ? "Edit your saved card" : "Create a new card"} · Choose a field, then click the card to place its text.</p></div><div className="card-designer-actions"><button type="button" onClick={onOpenSaved}>Saved Cards</button><button type="button" onClick={() => uploadRef.current?.click()}>Change artwork</button><button type="button" onClick={undo} disabled={!undoCount}>Undo (Ctrl+Z)</button></div></header>
     <input ref={uploadRef} className="card-designer-hidden" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => upload(event.target.files?.[0])} />
     {loading && <p>Loading card…</p>}{error && <p className="card-designer-error" role="alert">{error}</p>}{message && <p className="card-designer-success" role="status">{message}</p>}
-    <div className="card-designer-preview-area"><div className="card-designer-preview-head"><strong>Live card preview</strong><span>{selectedField ? `Selected: ${selectedField.label}` : "Select a field below"}</span></div>
-      {template.image ? <div className="card-designer-preview" onClick={place} role="presentation" style={{ aspectRatio: `${template.imageWidth} / ${template.imageHeight}` }}><img src={template.image} alt="Card background" draggable="false" />
-        {cardRenderEntries(template, values).map(({ field, value }) => <span key={field.id} className={`card-designer-overlay ${field.id === selected ? "selected" : ""}`} style={{ left: `${field.x}%`, top: `${field.y}%`, color: field.color, fontSize: `${field.fontSize / template.imageWidth * 100}cqw`, fontWeight: field.bold ? 700 : 400, transform: `translate(${field.align === "center" ? "-50%" : field.align === "right" ? "-100%" : "0"}, -100%)`, textAlign: field.align }}>{value}</span>)}
-      </div> : <div className="card-designer-empty">Loading default card artwork…</div>}
+    <div className="card-designer-preview-area"><div className="card-designer-preview-head"><div className="card-designer-preview-title"><strong>Live card preview</strong><span>{selectedField ? `Selected: ${selectedField.label}` : "Select a field below"}</span></div><button type="button" onClick={() => setPreviewExpanded(true)} disabled={!template.image} aria-label="Expand card preview">Expand ↗</button></div>
+      {template.image ? renderPreview() : <div className="card-designer-empty">Loading default card artwork…</div>}
       <div className="card-designer-export"><button type="button" onClick={() => exportCard("pdf")} disabled={!template.image}>Download PDF</button><button type="button" onClick={() => exportCard("svg")} disabled={!template.image}>Download Corel SVG</button><button type="button" onClick={() => exportCard("svgz")} disabled={!template.image}>Shareable Corel (.svgz)</button></div><p className="card-designer-tip">For WhatsApp, send the .svgz file as a Document. It stays editable when opened in CorelDRAW.</p>
     </div>
+    {previewExpanded && template.image && createPortal(<div className="card-designer-preview-modal" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreviewExpanded(false); }} role="presentation"><div className="card-designer-preview-dialog" role="dialog" aria-modal="true" aria-label="Expanded card preview"><div className="card-designer-preview-dialog-head"><strong>Card preview</strong><button type="button" onClick={() => setPreviewExpanded(false)} aria-label="Close card preview">Close ×</button></div>{renderPreview()}</div></div>, document.body)}
     <div className="card-designer-controls"><div className="card-designer-controls-head"><div><h3>Card details</h3><p>Change text, style and order. The preview updates as you type.</p></div><button type="button" onClick={addField}>+ Add field</button></div>
       <div className="card-designer-fields">{template.fields.map((field, index) => <div className={`card-designer-field ${selected === field.id ? "active" : ""}`} key={field.id}>
         <div className="card-designer-field-title"><input aria-label="Field label" value={field.label} maxLength={60} onFocus={() => setSelected(field.id)} onChange={(event) => changeField(field.id, { label: event.target.value })} /><div className="card-designer-field-buttons"><button type="button" title="Move up" disabled={index === 0} onClick={() => moveField(field.id, -1)}>↑</button><button type="button" title="Move down" disabled={index === template.fields.length - 1} onClick={() => moveField(field.id, 1)}>↓</button><button type="button" onClick={() => setSelected(field.id)}>{selected === field.id ? "Placing" : "Place"}</button><button type="button" title="Remove field" aria-label={`Remove ${field.label}`} onClick={() => removeField(field.id)}>×</button></div></div>

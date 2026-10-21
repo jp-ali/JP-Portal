@@ -287,6 +287,7 @@ useEffect(() => {
   const onKeyDown = (event) => {
     if (event.key !== "Escape") { homeEscapeCountRef.current = { count: 0, lastAt: 0 }; return; }
     if (event.repeat) return;
+    if (document.querySelector(".card-designer-preview-modal")) return;
     const activeView = user?.role === "admin" ? adminView : marketerView;
     event.preventDefault();
     if (fullScreenImage) {
