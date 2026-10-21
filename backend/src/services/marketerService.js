@@ -63,6 +63,18 @@ export async function updateMarketer(id, input) {
   return publicMarketer({ id, ...(await ref.get()).data() });
 }
 
+export async function updateOwnProfilePhoto(id, photo) {
+  if (photo !== null && (typeof photo !== "string" || photo.length > 200000 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(photo))) {
+    const error = new Error("Invalid profile photo. Upload a JPEG image under 150 KB.");
+    error.status = 400;
+    throw error;
+  }
+  const ref = firestore().collection("marketers").doc(id);
+  if (!(await ref.get()).exists) return null;
+  await ref.update({ profilePhoto: photo ?? FieldValue.delete() });
+  return publicMarketer({ id, ...(await ref.get()).data() });
+}
+
 export async function archiveMarketer(id) {
   const db = firestore();
   const ref = db.collection("marketers").doc(id);

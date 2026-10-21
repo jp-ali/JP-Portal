@@ -13,6 +13,7 @@ export function marketerProfile(record) {
     subordinateMarketerIds: Array.isArray(record.subordinateMarketerIds) ? record.subordinateMarketerIds.filter(Boolean) : [],
     designation: record.designation || "Regional Manager",
     assignedKms: Number(record.assignedKms || 0),
+    profilePhoto: record.profilePhoto || null,
     whatsappGroupName: record.whatsappGroupName || "",
     whatsappGroupLink: record.whatsappGroupLink || ""
   };

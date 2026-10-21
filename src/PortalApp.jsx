@@ -869,6 +869,7 @@ return <Suspense fallback={<PortalLoading />}><MarketerPortal context={{
     todayAttendance,
     toggleVisitSchool,
     user,
+    setUser,
     videoRef,
     viewCatalogue,
     visitAddSchoolOpen,

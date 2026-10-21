@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Default marketer profile picture">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="33%" r="73%"><stop stop-color="#fff8fa"/><stop offset="1" stop-color="#efc9d5"/></radialGradient>
+    <linearGradient id="jacket" x1="0" x2="1" y2="1"><stop stop-color="#48404a"/><stop offset="1" stop-color="#23212b"/></linearGradient>
+    <linearGradient id="skin" x1="0" x2="1" y2="1"><stop stop-color="#f2c7a7"/><stop offset="1" stop-color="#dca987"/></linearGradient>
+  </defs>
+  <circle cx="120" cy="120" r="120" fill="url(#bg)"/>
+  <path d="M18 240c7-45 36-66 75-75l27 17 27-17c39 9 68 30 75 75Z" fill="url(#jacket)"/>
+  <path d="m94 166 26 15 26-15-12 74h-28Z" fill="#fff"/>
+  <path d="m120 184-9 14 9 9 9-9Z" fill="#a3143b"/><path d="m120 206-9 34h18Z" fill="#a3143b"/>
+  <path d="m89 72 3 58c3 24 16 38 28 42 12-4 25-18 28-42l3-58Z" fill="url(#skin)"/>
+  <path d="M79 94c-4-37 14-62 49-62 16 0 29 7 34 22 10 2 13 13 9 27l-15 20-4-33c-12 9-34 12-57 7l-5 27Z" fill="#35251f"/>
+  <path d="M82 104c-12-9-15 8-9 20 4 8 10 10 14 9m71-29c12-9 15 8 9 20-4 8-10 10-14 9" fill="url(#skin)"/>
+  <path d="m95 164-19 10 24 34 20-27Zm50 0 19 10-24 34-20-27Z" fill="#f9f8f8"/>
+</svg>

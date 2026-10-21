@@ -43,6 +43,15 @@ test("admin login sets an HTTP-only session and protects admin routes", async ()
   assert.equal(logout.status, 204);
 });
 
+test("admin cannot change a marketer profile photo", async () => {
+  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const response = await fetch(`${baseUrl}/api/marketers/me/photo`, {
+    method: "DELETE",
+    headers: { cookie: `school_visit_session=${token}` }
+  });
+  assert.equal(response.status, 403);
+});
+
 test("invalid admin password is rejected", async () => {
   const response = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",

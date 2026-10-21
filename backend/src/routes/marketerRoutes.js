@@ -1,10 +1,12 @@
 import { Router } from "express";
-import { accessible, archive, create, list, removeArchived, restore, update } from "../controllers/marketerController.js";
+import { accessible, archive, create, deleteOwnPhoto, list, removeArchived, restore, saveOwnPhoto, update } from "../controllers/marketerController.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 
 export const marketerRoutes = Router();
 marketerRoutes.use(requireAuth);
 marketerRoutes.get("/accessible", accessible);
+marketerRoutes.put("/me/photo", saveOwnPhoto);
+marketerRoutes.delete("/me/photo", deleteOwnPhoto);
 marketerRoutes.use(requireAdmin);
 marketerRoutes.get("/", list);
 marketerRoutes.get("/deleted", list);

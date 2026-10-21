@@ -1,9 +1,10 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
 import { marketerCityNames } from "../../domain/marketerCities.js";
+import defaultAvatar from "../../assets/default-marketer-avatar.svg";
 
 export default function AdminMarketersDetailPanel() {
-  const { cardStyle, citiesList, downloadMarketersExcel, downloadMarketersPDF, handleEditMarketer, inputStyle, marketerSearch, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, reportViewClass, selectedMarketerDetailBox, setAdminView, setMarketerSearch, setSelectedMarketerDetailBox, setSubordinatePickerOpen } = usePortalContext();
+  const { cardStyle, citiesList, downloadMarketersExcel, downloadMarketersPDF, handleEditMarketer, inputStyle, marketerSearch, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, reportViewClass, selectedMarketerDetailBox, setAdminView, setFullScreenImage, setMarketerSearch, setSelectedMarketerDetailBox, setSubordinatePickerOpen } = usePortalContext();
   return (<div className={reportViewClass("marketers-detail")}>
               {renderExpandedReportChrome("marketers-detail")}
               <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", marginBottom: "14px", flexWrap: "wrap" }}>
@@ -92,44 +93,28 @@ className="marketer-detail-card"
 (() => {
 const m = marketersList.find(item => item.id === selectedMarketerDetailBox);
 if (!m) return <p style={{ color: "#78686d" }}>Marketer details not found.</p>;
-return (
-<div>
-                        <h3 style={{ marginTop: 0, color: "#b76a7b", fontSize: "18px", marginBottom: "14px" }}><span style={{display:"inline-flex",verticalAlign:"middle",marginRight:"7px"}}>{renderMarketerPersonIcon(20)}</span>Marketer Details: {m.name}</h3>
-                        <div style={{ border: "1px solid rgba(123,16,43,.14)", padding: "18px", borderRadius: "12px", background: "rgba(255,255,255,0.94)" }}>
-                          <p style={{ margin: "6px 0", color: "#3b2329" }}><strong>Name:</strong> {m.name}</p>
-                          <p style={{ margin: "6px 0", color: "#5c484e" }}><strong>Phone:</strong> {m.phone || "N/A"}</p>
-                          <p style={{ margin: "6px 0", color: "#5c484e" }}><strong>Email:</strong> {m.email || "N/A"}</p>
-                          <p style={{ margin: "6px 0", color: "#5c484e" }}><strong>City:</strong> {marketerCityNames(m, citiesList)}</p>
-                          <div style={{ margin:"6px 0", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"8px", flexWrap:"wrap" }}>
-                            <p style={{ margin:0, color:"#5c484e" }}><strong>Designation:</strong> {m.designation || "Regional Manager"}</p>
-                            <button type="button" onClick={async()=>{ await handleEditMarketer(m); setSubordinatePickerOpen(true); }} style={{ padding:"6px 9px", background:"#fff", color:"#7a0f2b", border:"1px solid #ddcbd0", borderRadius:"8px", fontSize:"10.5px", fontWeight:800, cursor:"pointer" }}>+ Add Marketer</button>
-                          </div>
-                          <div style={{ margin:"10px 0", padding:"10px 12px", border:"1px solid #eadde0", borderRadius:"10px", background:"#fffafa" }}>
-                            <div style={{ color:"#6f0b24", fontSize:"11px", fontWeight:900, marginBottom:"6px" }}>Marketers under this account</div>
-                            {(Array.isArray(m.subordinateMarketerIds) ? m.subordinateMarketerIds : []).length === 0 ? (
-<div style={{ color:"#78686d", fontSize:"11px" }}>No marketer assigned under this account.</div>
-) : (
-<div style={{ display:"flex", flexWrap:"wrap", gap:"6px" }}>
-                                {(m.subordinateMarketerIds || []).map((id) => marketersList.find((x) => x.id === id)).filter(Boolean).map((member) => (
-<span key={member.id} style={{ display:"inline-flex", alignItems:"center", gap:"5px", padding:"5px 8px", borderRadius:"999px", background:"#f8e9ed", border:"1px solid #ecd4da", color:"#7a0f2b", fontSize:"10.5px", fontWeight:800 }}>
-                                    {renderMarketerPersonIcon(13)} {member.name || member.email}
-                                  </span>
-))}
-                              </div>
-)}
-                          </div>
-                          <p style={{ margin: "6px 0", color: "#5c484e" }}><strong>Assigned KMs / Litre:</strong> {m.assignedKms || "Not assigned"}</p>
-                          <div style={{ marginTop: "18px" }}>
-                            <button 
-onClick={() => handleEditMarketer(m)} 
-style={{ padding: "10px 18px", background: "#8f1532", color: "white", border: "none", borderRadius: "8px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }}
->
-                              ✏️ Edit Details
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-);
+return <div className="marketer-profile">
+  <div className="marketer-profile-main">
+    <aside className="marketer-profile-side">
+      <button type="button" className="marketer-profile-photo" onClick={() => setFullScreenImage(m.profilePhoto || defaultAvatar)} title="Expand profile picture" aria-label={`Expand ${m.name || "marketer"} profile picture`}><img src={m.profilePhoto || defaultAvatar} alt="" /></button>
+      <h2>{m.name || "Unnamed Marketer"}</h2><p>{m.designation || "Regional Manager"}</p><span className="marketer-profile-status">● Active</span>
+    </aside>
+    <div className="marketer-profile-content">
+      <div className="marketer-profile-heading"><h3>👤 Personal Information</h3><button type="button" onClick={() => handleEditMarketer(m)}>✎ Edit Details</button></div>
+      <div className="marketer-profile-fields">
+        <div className="marketer-profile-field"><span>👤</span><div><small>Name</small><strong>{m.name || "N/A"}</strong></div></div>
+        <div className="marketer-profile-field"><span>📞</span><div><small>Phone</small><strong>{m.phone || "N/A"}</strong></div></div>
+        <div className="marketer-profile-field"><span>✉️</span><div><small>Email</small><strong>{m.email || "N/A"}</strong></div></div>
+        <div className="marketer-profile-field"><span>📍</span><div><small>City</small><strong>{marketerCityNames(m, citiesList)}</strong></div></div>
+        <div className="marketer-profile-field"><span>💼</span><div><small>Designation</small><strong>{m.designation || "Regional Manager"}</strong></div></div>
+      </div>
+      <div className="marketer-profile-metrics"><div><span>⛽</span><div><small>Assigned KMs / Litre</small><strong>{m.assignedKms ?? "—"}</strong></div></div><div><span>👥</span><div><small>Account Marketers</small><strong>{(m.subordinateMarketerIds || []).length}</strong></div></div></div>
+    </div>
+  </div>
+  <section className="marketer-profile-team"><div className="marketer-profile-team-heading"><h3>👥 Marketers under this account</h3><button type="button" onClick={() => { handleEditMarketer(m); setSubordinatePickerOpen(true); }}>+ Add Marketer</button></div>
+    {(m.subordinateMarketerIds || []).length ? <div className="marketer-profile-members">{m.subordinateMarketerIds.map((id) => marketersList.find((item) => item.id === id)).filter(Boolean).map((member) => <span key={member.id}>{renderMarketerPersonIcon(15)} {member.name || member.email}</span>)}</div> : <div className="marketer-profile-empty"><span aria-hidden="true">👥</span><strong>No marketers assigned under this account.</strong><small>You can add a marketer to manage attendance pictures.</small></div>}
+  </section>
+</div>;
 })()
 )}
               </div>

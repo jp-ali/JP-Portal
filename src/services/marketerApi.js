@@ -8,3 +8,5 @@ export const updateMarketer = (id, data) => request(`/marketers/${encodeURICompo
 export const archiveMarketer = (id) => request(`/marketers/${encodeURIComponent(id)}`, { method: "DELETE" });
 export const restoreMarketer = (id) => request(`/marketers/deleted/${encodeURIComponent(id)}/restore`, { method: "POST" });
 export const removeDeletedMarketer = (id) => request(`/marketers/deleted/${encodeURIComponent(id)}`, { method: "DELETE" });
+export const saveOwnProfilePhoto = (photo) => request("/marketers/me/photo", { method: "PUT", body: JSON.stringify({ photo }) });
+export const deleteOwnProfilePhoto = () => request("/marketers/me/photo", { method: "DELETE" });
