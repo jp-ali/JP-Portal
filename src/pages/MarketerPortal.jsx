@@ -14,7 +14,6 @@ import React from "react";
 import PhotoViewer from "../ui/PhotoViewer.jsx";
 import VisitEditDialog from "../ui/VisitEditDialog.jsx";
 import PortalTopBar from "../ui/PortalTopBar.jsx";
-import DashboardHiddenPanel from "../ui/DashboardHiddenPanel.jsx";
 
 function MarketerPortalContent({ context }) {
   const { containerStyle, fetchCatalogues, fetchMarketerReports, fetchMarketerSamples, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getMarketerName, globalStyle, handleLogout, marketerCss, marketerSidebarOpen, marketerView, notes, openActionPlanForm, openAddVisit, openAttendanceForm, openExpenseReport, openVisitHistory, pdfExportData, pdfTemplateRef, phone, portalSkeletonLoading, principalName, purpose, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderRedSkeleton, renderResponsiveStyles, restoreMedia, setCatalogueSearch, setFullScreenImage, setFullScreenMediaRecord, setMarketerSidebarOpen, setMarketerview, setSampleDetailsText, setSampleHistoryFromDate, setSampleHistorySearch, setSampleHistoryToDate, setSamplePhone, setSamplePrincipalName, setSampleSchoolName, setSampleSuccessMsg, setSelectedAdminMarketerBox, softDeleteMedia, user } = context;
@@ -31,7 +30,6 @@ if (key === "sample-history") { setMarketerview("sample-history"); fetchMarketer
 if (key === "expense-report") { openExpenseReport(); return; }
 if (key === "catalogues") { setMarketerview("catalogues"); setCatalogueSearch(""); fetchCatalogues(); return; }
 if (key === "support") { setMarketerview("support"); return; }
-if (key === "hidden") { setMarketerview("hidden"); return; }
 };
 const marketerSidebarItems = [
 { key: "home", icon: "⌂", label: "Home", active: marketerView === "home" },
@@ -45,7 +43,6 @@ const marketerSidebarItems = [
 { key: "expense-report", icon: "🧾", label: "Expense Report", active: marketerView === "expense-report" },
 { key: "catalogues", icon: "📚", label: "Catalogues", active: marketerView === "catalogues" },
 { key: "support", icon: "🎧", label: "Support", active: marketerView === "support" },
-{ key: "hidden", icon: "🙈", label: "Hidden", active: marketerView === "hidden" },
 ];
 return (
 <div className="portal-shell portal-marketer-shell" style={globalStyle}>
@@ -77,7 +74,6 @@ return (
         {marketerView === "home" && (
 <MarketerHomePanel />
 )}
-        {marketerView === "hidden" && <DashboardHiddenPanel role="marketer" accountId={user?.id || user?.email} onBack={() => setMarketerview("home")} />}
         {marketerView === "attendance" && (
 <MarketerAttendancePanel />
 )}
