@@ -3,31 +3,88 @@ import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill } from "./pdfTheme.
 import { marketerCityNames } from "../domain/marketerCities.js";
 
 export function createReportExporters({ formatTime12, getMarketerName }) {
+const formatVisitDate = (value) => value?.toDate
+? value.toDate().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+: "N/A";
+const groupVisits = (rows) => {
+const people = [];
+const byPerson = new Map();
+rows.forEach((item) => {
+const name = getMarketerName(item.marketerEmail, item.marketerName || "N/A");
+const date = formatVisitDate(item.createdAt);
+const key = `${String(item.marketerEmail || name).toLowerCase()}|${name}`;
+if (!byPerson.has(key)) {
+const person = { name, dates: new Map() };
+byPerson.set(key, person);
+people.push(person);
+}
+const person = byPerson.get(key);
+if (!person.dates.has(date)) person.dates.set(date, []);
+person.dates.get(date).push(item);
+});
+return people;
+};
 const downloadExcel = (dataList, filename = "Report.xlsx") => {
 if (!window.XLSX) {
 alert("Excel library is still loading. Please try again in a moment.");
 return;
 }
-const formattedData = dataList.map((item, idx) => ({
-"Sr.": idx + 1,
-"School Name": item.schoolName,
-"City": item.cityName || "N/A",
-"Area": item.areaName || "N/A",
-"Session": item.session || "N/A",
-"Branches": item.branches || "N/A",
-"Strength": item.strength || "N/A",
-"Visit Time": formatTime12(item.visitTime || (item.createdAt && item.createdAt.toDate ? item.createdAt.toDate() : null)),
-"Principal Name": item.principalName,
-"Phone No": item.phone,
-"Details / Purpose": item.purpose || item.sampleDetails || "N/A",
-"Remarks": item.notes || "N/A",
-"Marketer": getMarketerName(item.marketerEmail, item.marketerName || item.marketerEmail || "N/A"),
-"Date": item.createdAt && item.createdAt.toDate ? item.createdAt.toDate().toLocaleDateString() : "N/A"
-}));
-const worksheet = mergedReportSheet(window.XLSX, formattedData, "School Visits Report");
-worksheet["!cols"] = Object.keys(formattedData[0] || {}).map((key) => ({
-  wch: key === "Details / Purpose" || key === "Remarks" ? 36 : key === "School Name" || key === "Marketer" ? 24 : key === "Branches" || key === "Strength" || key === "Session" ? 15 : 19
-}));
+const XLSX = window.XLSX;
+const rows = Array.isArray(dataList) ? dataList : [];
+const headings = ["Sr.", "Name", "Visit Date", "Sr#", "City", "Area", "School Name", "Contact Person", "Phone No", "Visit Time", "Session", "Branches", "Strength", "Purpose / Details", "Remarks"];
+const body = [];
+const merges = [0, 1].map((r) => ({ s: { r, c: 0 }, e: { r, c: headings.length - 1 } }));
+groupVisits(rows).forEach((person, personIndex) => {
+const personStart = body.length;
+let serial = 0;
+for (const [date, entries] of person.dates) {
+const dateStart = body.length;
+entries.forEach((item) => {
+body.push([
+body.length === personStart ? personIndex + 1 : "",
+body.length === personStart ? person.name : "",
+body.length === dateStart ? date : "",
+++serial,
+item.cityName || "N/A",
+item.areaName || "N/A",
+item.schoolName || "N/A",
+item.principalName || "N/A",
+item.phone || "N/A",
+formatTime12(item.visitTime || (item.createdAt?.toDate ? item.createdAt.toDate() : null)),
+item.session || "N/A",
+item.branches || "N/A",
+item.strength || "N/A",
+item.purpose || item.sampleDetails || "N/A",
+item.notes || "N/A"
+]);
+});
+if (entries.length > 1) merges.push({ s: { r: dateStart + 3, c: 2 }, e: { r: body.length + 2, c: 2 } });
+}
+if (body.length - personStart > 1) for (const c of [0, 1]) {
+merges.push({ s: { r: personStart + 3, c }, e: { r: body.length + 2, c } });
+}
+});
+const worksheet = XLSX.utils.aoa_to_sheet([
+["SCHOOL VISITS REPORT"],
+[`JAVED PUBLISHERS  |  ${rows.length} records`],
+headings,
+...body
+]);
+worksheet["!merges"] = merges;
+worksheet["!cols"] = [7, 20, 17, 7, 17, 21, 26, 22, 18, 16, 12, 13, 13, 36, 40].map((wch) => ({ wch }));
+worksheet["!rows"] = [{ hpt: 32 }, { hpt: 24 }, { hpt: 32 }, ...body.map((row) => ({ hpt: Math.min(72, Math.max(28, Math.ceil(Math.max(String(row[13]).length / 32, String(row[14]).length / 36)) * 15)) }))];
+worksheet["!autofilter"] = { ref: `A3:O${Math.max(3, body.length + 3)}` };
+const border = { top: { style: "thin", color: { rgb: "442C33" } }, bottom: { style: "thin", color: { rgb: "442C33" } }, left: { style: "thin", color: { rgb: "442C33" } }, right: { style: "thin", color: { rgb: "442C33" } } };
+for (let r = 0; r < body.length + 3; r++) for (let c = 0; c < headings.length; c++) {
+const address = XLSX.utils.encode_cell({ r, c });
+const cell = worksheet[address] || (worksheet[address] = { t: "s", v: "" });
+cell.s = {
+alignment: { horizontal: "center", vertical: "top", wrapText: true },
+border,
+font: { bold: r < 3 || (r >= 3 && c < 3), color: { rgb: r < 3 ? "FFFFFF" : "6F0B24" } },
+fill: { fgColor: { rgb: r < 3 ? "7A0F2B" : c < 3 ? "F8F5F6" : r % 2 ? "FFFFFF" : "FBF6F7" } }
+};
+}
 const workbook = window.XLSX.utils.book_new();
 window.XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
 window.XLSX.writeFile(workbook, filename);
@@ -118,25 +175,8 @@ if (align === "right") tx = xMm + wMm - 2;
 return drawText(tx, startTop + i * lineH / MM, line, size, align, bold);
 }).join("\n");
 };
-const formatDate = (value) => value?.toDate
-? value.toDate().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-: "N/A";
 const formatTime = (item) => formatTime12(item?.visitTime || (item?.createdAt?.toDate ? item.createdAt.toDate() : null));
-const grouped = [];
-const personMap = new Map();
-rows.forEach((item) => {
-const name = getMarketerName(item.marketerEmail, item.marketerName || "N/A");
-const date = formatDate(item.createdAt);
-const personKey = `${String(item.marketerEmail || name).toLowerCase()}|${name}`;
-if (!personMap.has(personKey)) {
-const person = { name, dates: new Map() };
-personMap.set(personKey, person);
-grouped.push(person);
-}
-const person = personMap.get(personKey);
-if (!person.dates.has(date)) person.dates.set(date, []);
-person.dates.get(date).push(item);
-});
+const grouped = groupVisits(rows);
 const rowHeight = (item) => {
 const values = [
 item.cityName || "N/A",
