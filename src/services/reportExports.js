@@ -359,7 +359,7 @@ a.remove();
 setTimeout(() => URL.revokeObjectURL(url), 2000);
 } catch (err) {
 console.error("PDF download error:", err);
-alert("PDF download nahi ho saka. Please dobara try karein.");
+alert("Could not download the PDF. Please try again.");
 }
 };
 const downloadSingleSample = (sample) => {
