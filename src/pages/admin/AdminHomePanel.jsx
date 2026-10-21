@@ -43,9 +43,6 @@ export default function AdminHomePanel() {
   ];
   const openVisits = () => { c.setAdminView("visits"); c.fetchAllReports(); c.fetchMarketers(); c.setSelectedAdminAllBoxKey(null); c.setAllVisitsFromDate(""); c.setAllVisitsToDate(""); c.setSelectedMarketersFilter([]); };
   const sections = [
-    { title: "Card Studio", icon: "🎨", description: "Create printable cards", items: [
-      { title: "Card Designer", description: "Add details to your card design", icon: "🎨", tone: "rose", onClick: () => c.setAdminView("card-designer") }
-    ] },
     { title: "Overview", icon: "▥", description: "Quick access to daily activities", items: [
       { title: "Attendance", description: "Daily readings and expenses", icon: "◷", tone: "rose", onClick: openAttendance },
       { title: "View Today Visits", description: "Check today's marketer visits", icon: "☀", tone: "amber", onClick: openTodayVisits },
@@ -70,5 +67,8 @@ export default function AdminHomePanel() {
       { title: "Recently Deleted", description: "Restore removed media", icon: "♻", tone: "mint", onClick: () => { c.setAdminView("media"); c.fetchAllReports(); c.fetchDeletedMedia(); c.setMediaMarketer(null); c.setSelectedMediaIds([]); c.setSelectedDeletedMediaIds([]); c.setMediaView("deleted"); } }
     ] }
   ];
+  sections.push({ title: "Card Studio", icon: "🎨", description: "Create printable cards", items: [
+    { title: "Card Designer", description: "Add details to your card design", icon: "🎨", tone: "rose", onClick: () => c.setAdminView("card-designer") }
+  ] });
   return <DashboardHome role="admin" stats={stats} sections={sections} />;
 }

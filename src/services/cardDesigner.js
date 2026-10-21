@@ -1,11 +1,18 @@
 const escapeXml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[char]);
 
 export const defaultCardFields = [
-  { id: "name", label: "Name", x: 50, y: 43, fontSize: 64, color: "#73102b", align: "center", bold: true },
-  { id: "designation", label: "Designation", x: 50, y: 53, fontSize: 32, color: "#333333", align: "center", bold: false },
-  { id: "phone", label: "Phone", x: 50, y: 65, fontSize: 29, color: "#333333", align: "center", bold: false },
-  { id: "email", label: "Email", x: 50, y: 73, fontSize: 26, color: "#333333", align: "center", bold: false }
+  { id: "name", label: "Name", x: 8.7, y: 32, fontSize: 54, color: "#242424", align: "left", bold: false },
+  { id: "designation", label: "Designation", x: 8.7, y: 40, fontSize: 44, color: "#555555", align: "left", bold: false },
+  { id: "phone", label: "Phone", x: 13.3, y: 67.5, fontSize: 43, color: "#242424", align: "left", bold: false },
+  { id: "address", label: "Address", x: 13.5, y: 89, fontSize: 40, color: "#242424", align: "left", bold: false }
 ];
+
+export const defaultCardValues = {
+  name: "Muhammad Ali Ashfaq",
+  designation: "Marketing Coordinator",
+  phone: "+92-3068482000",
+  address: "Main outfall road, sanint nagar, Lahore, Punjab"
+};
 
 export async function prepareCardImage(file) {
   if (!file?.type?.startsWith("image/")) throw new Error("Choose a card image (PNG, JPEG or WebP).");

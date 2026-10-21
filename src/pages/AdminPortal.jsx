@@ -181,9 +181,9 @@ const adminSidebarItems = [
 { key: "catalogues", icon: "📚", label: "Catalogues", active: adminView === "catalogues" },
 { key: "verification-calls", icon: "☎️", label: "Verification Calls", active: ["verification-reports", "verification-calls"].includes(adminView) },
 { key: "other-reports", icon: "📋", label: "Other Reports", active: adminView === "other-reports" || adminView === "custom-report" },
-{ key: "card-designer", icon: "🎨", label: "Card Designer", active: adminView === "card-designer" },
 { key: "media-active", icon: "🖼️", label: "Media", active: adminView === "media" && mediaView === "active" },
-{ key: "media-deleted", icon: "♻️", label: "Recently Deleted", active: adminView === "media" && mediaView === "deleted" }
+{ key: "media-deleted", icon: "♻️", label: "Recently Deleted", active: adminView === "media" && mediaView === "deleted" },
+{ key: "card-designer", icon: "🎨", label: "Card Designer", active: adminView === "card-designer" }
 ];
 return (
 <div className="portal-shell portal-admin-shell" style={globalStyle}>

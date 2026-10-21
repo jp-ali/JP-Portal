@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { request } from "../../services/authApi.js";
-import { defaultCardFields, downloadCardPdf, downloadCardSvg, prepareCardImage } from "../../services/cardDesigner.js";
+import { defaultCardFields, defaultCardValues, downloadCardPdf, downloadCardSvg, prepareCardImage } from "../../services/cardDesigner.js";
+import defaultCardArt from "../../assets/bin-eisa-card-template.png";
 import "../../styles/cardDesigner.css";
 
 const blank = () => ({ image: "", imageWidth: 1200, imageHeight: 750, widthMm: 85.6, fields: defaultCardFields.map((field) => ({ ...field })) });
 
 export default function AdminCardDesignerPanel() {
   const [template, setTemplate] = useState(blank);
-  const [values, setValues] = useState({});
+  const [values, setValues] = useState(() => ({ ...defaultCardValues }));
   const [selected, setSelected] = useState("name");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -17,10 +18,17 @@ export default function AdminCardDesignerPanel() {
   const uploadRef = useRef(null);
   useEffect(() => {
     let active = true;
-    request("/card-template").then(({ template: saved }) => {
-      if (active && saved) setTemplate(saved);
-    }).catch((problem) => { if (active) setError(problem.message); })
-      .finally(() => { if (active) setLoading(false); });
+    (async () => {
+      try {
+        const { template: saved } = await request("/card-template");
+        if (saved) { if (active) setTemplate(saved); return; }
+      } catch (problem) { if (active) setError(problem.message); }
+      try {
+        const imageFile = await fetch(defaultCardArt).then((response) => response.blob());
+        const image = await prepareCardImage(imageFile);
+        if (active) setTemplate((current) => ({ ...current, ...image }));
+      } catch (problem) { if (active) setError(problem.message); }
+    })().finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
   const changeTemplate = (update) => { setTemplate((current) => ({ ...current, ...update })); setDirty(true); setMessage(""); };
@@ -86,7 +94,7 @@ export default function AdminCardDesignerPanel() {
           <button type="button" onClick={() => exportCard("pdf")} disabled={!template.image}>Download PDF</button>
           <button type="button" onClick={() => exportCard("svg")} disabled={!template.image}>Download Corel editable SVG</button>
         </div>
-        <p className="card-designer-tip">Open the SVG in CorelDRAW to edit text and save it as a CDR file. The uploaded picture stays an image layer.</p>
+        <p className="card-designer-tip">Open the SVG in CorelDRAW to edit the name, role, phone and address, then save it as a CDR file. The card artwork stays an image layer.</p>
       </div>
       <div className="card-designer-controls">
         <div className="card-designer-preview-head"><strong>Card details</strong><button type="button" onClick={addField}>+ Add field</button></div>
