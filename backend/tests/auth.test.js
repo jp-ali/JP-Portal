@@ -96,6 +96,18 @@ test("custom reports require admin authentication and validate input", async () 
   assert.equal(invalid.status, 400);
 });
 
+test("imported reports require admin authentication and reject invalid rows", async () => {
+  const path = `${baseUrl}/api/custom-reports/import`;
+  assert.equal((await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).status, 401);
+  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const invalid = await fetch(path, {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
+    body: JSON.stringify({ title: "Imported", date: "2026-10-22", columns: [{ key: "name", label: "Name", type: "text" }], rows: [] })
+  });
+  assert.equal(invalid.status, 400);
+});
+
 test("saved card creation requires admin authentication and a valid card", async () => {
   assert.equal((await fetch(`${baseUrl}/api/cards`)).status, 401);
   const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);

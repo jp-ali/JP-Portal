@@ -27,7 +27,7 @@ const reportOptions = (value) => ({
   filterKeys: [...new Set((Array.isArray(value?.filterKeys) ? value.filterKeys : []).filter((key) => typeof key === "string" && /^[a-z][a-z0-9_]{0,39}$/.test(key)))].slice(0, 12)
 });
 function validateColumns(value, options) {
-  if (!Array.isArray(value) || !value.length || value.length > 18) return null;
+  if (!Array.isArray(value) || !value.length || value.length > 20) return null;
   const seen = new Set();
   const columns = [];
   for (const item of value) {
@@ -100,6 +100,33 @@ customReportRoutes.post("/", async (request, response, next) => {
     const columns = request.body?.columns ? validateColumns(request.body.columns, options) : defaultColumns;
     if (!columns) return bad(response, "Invalid report headings");
     const report = { title, date, columns, options, rows: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    const ref = await collection().add(report);
+    response.status(201).json({ report: { id: ref.id, ...report } });
+  } catch (error) { next(error); }
+});
+
+customReportRoutes.post("/import", async (request, response, next) => {
+  try {
+    const title = text(request.body?.title, 120);
+    const date = request.body?.date;
+    const options = reportOptions(request.body?.options);
+    const columns = validateColumns(request.body?.columns, options);
+    const sourceRows = request.body?.rows;
+    if (!title || !validDate(date) || !columns) return bad(response, "Enter a report name and select valid headings.");
+    if (!Array.isArray(sourceRows) || !sourceRows.length || sourceRows.length > 400) return bad(response, "Import 1 to 400 data rows per report.");
+    if (Buffer.byteLength(JSON.stringify(sourceRows), "utf8") > 700000) return bad(response, "Imported data is too large. Split it into smaller reports.");
+    const rows = [];
+    for (const source of sourceRows) {
+      if (!source || typeof source !== "object" || Array.isArray(source)) return bad(response, "Invalid imported row.");
+      const row = { id: collection().doc().id, verificationNumber: "", verificationRemark: "", verificationCustomRemark: "" };
+      for (const column of columns) {
+        row[column.key] = rowValue(source[column.key], column, date);
+        if (row[column.key] === null) return bad(response, `Invalid ${column.label} in imported data.`);
+      }
+      rows.push(row);
+    }
+    const now = new Date().toISOString();
+    const report = { title, date, columns, options, rows, createdAt: now, updatedAt: now };
     const ref = await collection().add(report);
     response.status(201).json({ report: { id: ref.id, ...report } });
   } catch (error) { next(error); }

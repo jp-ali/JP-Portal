@@ -7,6 +7,7 @@ import CustomReportTable from "./CustomReportTable.jsx";
 import { exportCustomReportExcel, exportCustomReportPDF } from "../../services/customReportExports.js";
 import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
 import { isPhoneColumn } from "../../domain/verificationRemarks.js";
+import { buildImportPayload, readImportFile } from "../../services/reportImport.js";
 import { db } from "../../services/firebase.js";
 import { collection, deleteField, doc, getDocs, runTransaction, updateDoc } from "firebase/firestore";
 
@@ -20,6 +21,11 @@ const today = () => {
 export default function AdminOtherReportsPanel({ mode, reports, setReports, selectedId, setSelectedId, loading, loadError, reload, onOrigin }) {
   const { adminView, cardStyle, expandedReportKey, fetchMarketers, inputStyle, renderReportExpandButton, reportViewClass, setAdminView, setExpandedReportKey, openVerificationCalls, marketersList = [] } = usePortalContext();
   const [adding, setAdding] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importPreview, setImportPreview] = useState(null);
+  const [importName, setImportName] = useState("");
+  const [importColumns, setImportColumns] = useState([]);
+  const [parsingImport, setParsingImport] = useState(false);
   const [actionOpen, setActionOpen] = useState(false);
   const [actionMode, setActionMode] = useState("");
   const [selectedReports, setSelectedReports] = useState([]);
@@ -45,12 +51,35 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => { if (!actionOpen) { setActionMode(""); setSelectedReports([]); setConfirmRemoval(false); } }, [actionOpen]);
-  useEffect(() => { setSearch(""); setCityFilter(""); setRemarkFilter(""); setMarketerFilter([]); setFromDate(selectedId && mode === "verification" ? today() : ""); setToDate(selectedId && mode === "verification" ? today() : ""); setExtraFilterValues({}); if (selectedId) fetchMarketers().catch(() => {}); }, [selectedId, mode]);
+  useEffect(() => { setSearch(""); setCityFilter(""); setRemarkFilter(""); setMarketerFilter([]); setFromDate(""); setToDate(""); setExtraFilterValues({}); if (selectedId) fetchMarketers().catch(() => {}); }, [selectedId, mode]);
   const report = reports.find((item) => item.id === selectedId);
   const columns = reportColumns(report);
   const availableFilters = columnsFromHeadings(headings).filter((column) => !["city", "remarks"].includes(column.key) && column.type !== "date");
   const toggleFilter = (key) => setFilterKeys((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
   const resetEditor = () => { setAdding(false); setEditingReportId(""); setTitle(""); setHeadings("Name, Number, City, Institute, Remarks"); setIncludeMarketers(false); setDateRange(false); setFilterKeys([]); };
+  const resetImport = () => { setImporting(false); setImportPreview(null); setImportName(""); setImportColumns([]); };
+  const chooseImportFile = async (file) => {
+    setParsingImport(true); setError(""); setImportPreview(null);
+    try {
+      const preview = await readImportFile(file);
+      setImportPreview(preview);
+      setImportName(file.name.replace(/\.(pdf|xlsx|xls|xlsm)$/i, "").replaceAll(/[_-]+/g, " ").slice(0, 120));
+      setImportColumns(preview.headings.slice(0, 18).map(({ index }) => index));
+    } catch (cause) { setError(cause.message); }
+    finally { setParsingImport(false); }
+  };
+  const submitImport = async (event) => {
+    event.preventDefault();
+    if (busy || !importPreview) return;
+    setBusy(true); setError("");
+    try {
+      const payload = buildImportPayload(importPreview, importColumns, importName, today());
+      const { report: created } = await request("/custom-reports/import", { method: "POST", body: JSON.stringify(payload) });
+      setReports((current) => [...current, created]);
+      resetImport(); setActionOpen(false); onOrigin("other"); setSelectedId(created.id); setAdminView("custom-report");
+    } catch (cause) { setError(cause.message); }
+    finally { setBusy(false); }
+  };
   const startEdit = (item) => { setEditingReportId(item.id); setTitle(item.title); setHeadings(reportColumns(item).filter((column) => !["date", "marketer"].includes(column.key)).map((column) => column.label).join(", ")); setIncludeMarketers(!!item.options?.includeMarketers); setDateRange(!!item.options?.dateRange); setFilterKeys(item.options?.filterKeys || []); setAdding(true); setActionMode(""); setActionOpen(false); };
   const loadDeleted = async () => {
     try {
@@ -172,9 +201,10 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     } catch (cause) { setError(cause.message); }
   };
   const filtered = useMemo(() => (report?.rows || []).filter((row) => {
-    const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
     const date = row.date || report.date;
-    return (!q || columns.some((column) => String(rowValue(row, column, report)).toLowerCase().includes(q)) || (mode === "verification" && [row.verificationNumber, row.verificationRemark, row.verificationCustomRemark].some((value) => String(value || "").toLowerCase().includes(q))))
+    const marketerName = marketersList.find((item) => [item.id, item.email, item.name].some((value) => value && String(value).toLowerCase() === String(row.marketer || "").toLowerCase()))?.name || "";
+    return (!q || columns.some((column) => String(rowValue(row, column, report)).toLowerCase().includes(q)) || marketerName.toLowerCase().includes(q) || (mode === "verification" && [row.verificationNumber, row.verificationRemark, row.verificationCustomRemark].some((value) => String(value || "").toLowerCase().includes(q))))
       && (!cityFilter || row.city === cityFilter)
       && (!remarkFilter || row.remarks === remarkFilter)
       && (!marketerFilter.length || marketerFilter.some((id) => { const marketer = marketersList.find((item) => item.id === id); return [id, marketer?.email, marketer?.name].some((value) => value && String(value).toLowerCase() === String(row.marketer || "").toLowerCase()); }))
@@ -224,7 +254,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     <div className="other-reports-header">
       <div><span className="other-reports-eyebrow">REPORT WORKSPACE</span><h2>{mode === "verification" ? "Verification" : "Other Reports"}</h2><p>{mode === "verification" ? "Review school visits and keep every follow-up in one place." : "A clean space for the reports you create and manage."}</p></div>
       <div className="other-reports-actions">
-        {mode !== "verification" && <button className="other-reports-btn primary" aria-expanded={actionOpen} onClick={() => setActionOpen((value) => !value)}>Action ▾</button>}
+        {mode !== "verification" && <><button className="other-reports-btn primary" aria-expanded={actionOpen} onClick={() => setActionOpen((value) => !value)}>Action ▾</button><button className="other-reports-btn" aria-expanded={importing} onClick={() => { resetEditor(); setActionOpen(false); setError(""); setImporting((value) => !value); setImportPreview(null); }}>Import PDF / Excel</button></>}
       </div>
     </div>
     {actionOpen && mode !== "verification" && <div className="other-report-action-menu">
@@ -237,6 +267,16 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     {actionMode === "edit" && <div className="other-report-selection"><span>Select a report to edit its name, headings and options.</span><button className="other-reports-btn" onClick={() => setActionMode("")}>Cancel</button></div>}
     {actionMode === "old" && <div className="other-report-old"><h3>Old Reports</h3>{deletedReports.length ? deletedReports.map((item) => <div key={item.id}><strong>{item.title}</strong><button className="other-reports-btn primary" disabled={busy} onClick={() => restoreReport(item.id)}>Restore</button></div>) : <p>No deleted reports.</p>}</div>}
     <div className="other-reports-overview"><span className="other-reports-overview-icon" aria-hidden="true">▦</span><div><strong>{mode === "verification" ? reports.length + 1 : reports.length}</strong><span>{mode === "verification" ? "Available reports" : "Custom reports"}</span></div><p>{mode === "verification" ? "School Visits is ready whenever you need it." : "Create a report and start adding contacts in seconds."}</p></div>
+    {importing && mode !== "verification" && <form className="other-report-import" onSubmit={submitImport}>
+      <div className="other-report-import-head"><div><h3>Import a report</h3><p>Choose an Excel sheet or a PDF with selectable table text. Review the headings before saving.</p></div><button type="button" className="other-reports-btn" onClick={resetImport}>Cancel</button></div>
+      <label className="other-report-import-file">PDF or Excel file<input type="file" accept=".pdf,.xlsx,.xls,.xlsm,application/pdf" onChange={(event) => chooseImportFile(event.target.files?.[0])} /></label>
+      {parsingImport && <p role="status">Reading file…</p>}
+      {importPreview && <><label className="other-report-import-name">Report name<input value={importName} onChange={(event) => setImportName(event.target.value)} maxLength={120} required /></label>
+        <div className="other-report-import-select"><div><strong>Choose the data to show</strong><span>{importColumns.length} of {importPreview.headings.length} headings selected · {importPreview.rows.length} rows found</span></div><div className="other-report-import-checks">{importPreview.headings.map(({ index, label }) => <label key={index}><input type="checkbox" checked={importColumns.includes(index)} onChange={() => setImportColumns((current) => current.includes(index) ? current.filter((item) => item !== index) : [...current, index])} />{label}</label>)}</div></div>
+        <div className="other-report-import-sample"><strong>Preview</strong><div className="table-scroll"><table><thead><tr>{importPreview.headings.filter(({ index }) => importColumns.includes(index)).map(({ index, label }) => <th key={index}>{label}</th>)}</tr></thead><tbody>{importPreview.rows.slice(0, 5).map((row, index) => <tr key={index}>{importPreview.headings.filter((item) => importColumns.includes(item.index)).map((item) => <td key={item.index}>{row[item.index] || "—"}</td>)}</tr>)}</tbody></table></div></div>
+        <button type="submit" className="other-reports-btn primary" disabled={busy || !importName.trim() || !importColumns.length}>{busy ? "Importing…" : "Create Imported Report"}</button>
+      </>}
+    </form>}
     {adding && mode !== "verification" && <form className="other-reports-add" onSubmit={createReport}>
       <label>Report name<input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Enter report name" maxLength={120} required /></label>
       <label>Headings (comma or line separated)<textarea value={headings} onChange={(event) => setHeadings(event.target.value)} rows={3} /></label>
@@ -273,7 +313,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
       <div className="other-reports-header">{mode === "verification" ? <h2>{report.title}</h2> : <input className="other-report-title-input" aria-label="Report title" value={report.title} onChange={(event) => updateReport(report.id, { title: event.target.value })} onBlur={(event) => { const title = event.target.value.trim(); if (!title) { reload(); return; } request(`/custom-reports/${report.id}`, { method: "PATCH", body: JSON.stringify({ title }) }).catch((cause) => { setError(cause.message); reload(); }); }} maxLength={120} />}</div>
       {error && <p className="other-reports-error" role="alert">{error}</p>}
       <div className="other-report-filter-bar">
-        <label className="other-report-search"><span aria-hidden="true">⌕</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search" aria-label="Search report" /></label>
+        <label className="other-report-search"><span aria-hidden="true">⌕</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, city or any detail" aria-label="Search all report details" /></label>
         {(mode === "verification" || report.options?.dateRange) && <><label className="other-report-date-field">From Date<input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label><label className="other-report-date-field">To Date<input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label></>}
         <button className="other-reports-btn" onClick={() => { setSearch(""); setCityFilter(""); setRemarkFilter(""); setMarketerFilter([]); setFromDate(""); setToDate(""); setExtraFilterValues({}); }}>Clear</button>
         {(mode === "verification" || report.options?.includeMarketers || report.options?.filterKeys?.length > 0) && <div className="other-report-addon-controls">
