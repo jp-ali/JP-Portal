@@ -22,22 +22,29 @@ export function dateForImport(value, fallback) {
   return Number.isNaN(parsed) ? fallback : new Date(parsed).toISOString().slice(0, 10);
 }
 
-export function matrixToImportPreview(matrix, filename = "") {
-  const lines = matrix.map((row) => Array.isArray(row) ? row.map(text) : []).filter((row) => row.some(Boolean));
-  if (lines.length < 2) throw new Error("The file needs a heading row and at least one data row.");
-  const candidates = lines.slice(0, 15).map((row, index) => {
+export function matrixToImportPreview(matrix, filename = "", selectedHeadingRow = null) {
+  const lines = matrix.map((row) => Array.isArray(row) ? row.map(text) : []);
+  if (lines.filter((row) => row.some(Boolean)).length < 2) throw new Error("The file needs a heading row and at least one data row.");
+  const candidates = lines.slice(0, 30).map((row, index) => {
     const values = row.filter(Boolean);
     const recognized = values.filter((value) => headingWords.test(value)).length;
-    return { index, score: recognized * 4 + Math.min(values.length, 12) + (lines[index + 1]?.filter(Boolean).length >= 2 ? 2 : 0) - (/^(downloaded|created by|report date|total rows)/i.test(values[0] || "") ? 20 : 0) };
-  }).filter(({ index }) => lines[index].filter(Boolean).length >= 2);
+    const words = values.filter((value) => /[a-z]/i.test(value) && !/@|https?:|\d{4,}/i.test(value)).length;
+    const following = lines.slice(index + 1).find((next) => next.some(Boolean)) || [];
+    const aligned = row.filter((value, column) => value && following[column]).length;
+    const metadata = /^(downloaded|created by|report date|total rows|page \d+)/i.test(values[0] || "");
+    return { index, score: recognized * 7 + words * 2 + Math.min(values.length, 12) + aligned * 2 - (metadata ? 30 : 0) - (values.some((value) => /^\d{3,}$/.test(value)) ? 8 : 0) };
+  }).filter(({ index }) => lines[index].filter(Boolean).length >= 2 && lines.slice(index + 1).some((row) => row.some(Boolean)));
   if (!candidates.length) throw new Error("Could not find table headings in this file.");
-  const headingIndex = candidates.sort((a, b) => b.score - a.score || a.index - b.index)[0].index;
-  const header = lines[headingIndex];
+  const headingIndex = selectedHeadingRow === null ? candidates.sort((a, b) => b.score - a.score || a.index - b.index)[0].index : Number(selectedHeadingRow);
+  if (!lines[headingIndex]?.some(Boolean) || !lines.slice(headingIndex + 1).some((row) => row.some(Boolean))) throw new Error("Choose a heading row above the data.");
+  const header = [...lines[headingIndex]];
+  const parent = lines[headingIndex - 1] || [];
+  if (parent.filter(Boolean).length >= 2) for (let index = 0; index < parent.length; index++) if (!header[index] && parent[index]) header[index] = parent[index];
   const data = lines.slice(headingIndex + 1).filter((row) => row.some(Boolean) && !row.every((value, index) => !value || value === header[index]) && !/^created by|^downloaded/i.test(row.find(Boolean) || ""));
   if (!data.length) throw new Error("No table rows were found after the headings.");
   const width = Math.min(80, Math.max(header.length, ...data.map((row) => row.length)));
   const headings = Array.from({ length: width }, (_, index) => ({ index, label: header[index] || `Column ${index + 1}` })).filter(({ index }) => header[index] || data.some((row) => row[index]));
-  return { filename, headings, rows: data };
+  return { filename, headings, rows: data, headingRow: headingIndex, headingChoices: candidates.map(({ index }) => ({ index, summary: lines[index].filter(Boolean).slice(0, 4).join(" · ").slice(0, 100) })), sourceMatrix: matrix };
 }
 
 export function savedReportToImportPreview(report) {
@@ -52,9 +59,18 @@ async function readExcel(file) {
   const module = await import("xlsx-js-style");
   const XLSX = module.default || module;
   const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
+  const sheets = [];
   for (const sheetName of workbook.SheetNames) {
     const matrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "", raw: false });
-    if (matrix.some((row) => row.filter((value) => text(value)).length >= 2)) return matrixToImportPreview(matrix, file.name);
+    try {
+      const preview = matrixToImportPreview(matrix, file.name);
+      const recognized = preview.headings.filter(({ label }) => headingWords.test(label)).length;
+      sheets.push({ name: sheetName, matrix, preview, score: recognized * 10 + preview.headings.length + Math.min(preview.rows.length, 100) / 10 });
+    } catch { /* Ignore title and empty sheets; the user can choose any sheet with a table. */ }
+  }
+  if (sheets.length) {
+    const best = [...sheets].sort((a, b) => b.score - a.score)[0];
+    return { ...best.preview, sheetName: best.name, availableSheets: sheets.map(({ name, matrix }) => ({ name, matrix })) };
   }
   throw new Error("No table was found in the Excel workbook.");
 }

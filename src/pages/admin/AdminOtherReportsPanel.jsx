@@ -7,7 +7,7 @@ import CustomReportTable from "./CustomReportTable.jsx";
 import { exportCustomReportExcel, exportCustomReportPDF } from "../../services/customReportExports.js";
 import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
 import { isPhoneColumn } from "../../domain/verificationRemarks.js";
-import { buildImportPayload, readImportFile, savedReportToImportPreview } from "../../services/reportImport.js";
+import { buildImportPayload, matrixToImportPreview, readImportFile, savedReportToImportPreview } from "../../services/reportImport.js";
 import { db } from "../../services/firebase.js";
 import { collection, deleteField, doc, getDocs, runTransaction, updateDoc } from "firebase/firestore";
 
@@ -26,6 +26,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const [importPreview, setImportPreview] = useState(null);
   const [importName, setImportName] = useState("");
   const [importColumns, setImportColumns] = useState([]);
+  const [importLabels, setImportLabels] = useState({});
   const [importSourceId, setImportSourceId] = useState("");
   const [parsingImport, setParsingImport] = useState(false);
   const [actionOpen, setActionOpen] = useState(false);
@@ -59,15 +60,30 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const availableFilters = columnsFromHeadings(headings).filter((column) => !["city", "remarks"].includes(column.key) && column.type !== "date");
   const toggleFilter = (key) => setFilterKeys((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
   const resetEditor = () => { setAdding(false); setEditingReportId(""); setTitle(""); setHeadings("Name, Number, City, Institute, Remarks"); setIncludeMarketers(false); setDateRange(false); setFilterKeys([]); };
-  const resetImport = () => { setImporting(false); setImportPreview(null); setImportName(""); setImportColumns([]); setImportSourceId(""); };
+  const resetImport = () => { setImporting(false); setImportPreview(null); setImportName(""); setImportColumns([]); setImportLabels({}); setImportSourceId(""); };
+  const showImportPreview = (preview) => {
+    setImportPreview(preview);
+    setImportColumns(preview.headings.slice(0, 18).map(({ index }) => index));
+    setImportLabels(Object.fromEntries(preview.headings.map(({ index, label }) => [index, label])));
+  };
+  const chooseHeadingRow = (index) => {
+    if (!importPreview?.sourceMatrix) return;
+    try { showImportPreview({ ...matrixToImportPreview(importPreview.sourceMatrix, importPreview.filename, Number(index)), sheetName: importPreview.sheetName, availableSheets: importPreview.availableSheets }); setError(""); }
+    catch (cause) { setError(cause.message); }
+  };
+  const chooseImportSheet = (name) => {
+    const sheet = importPreview?.availableSheets?.find((item) => item.name === name);
+    if (!sheet) return;
+    try { showImportPreview({ ...matrixToImportPreview(sheet.matrix, importPreview.filename), sheetName: name, availableSheets: importPreview.availableSheets }); setError(""); }
+    catch (cause) { setError(cause.message); }
+  };
   const chooseExistingReport = (id) => {
     setImportSourceId(id); setError("");
     const source = reports.find((item) => item.id === id);
     if (!source) { setImportPreview(null); return; }
     try {
       const preview = savedReportToImportPreview(source);
-      setImportPreview(preview); setImportName(`${source.title} - All Cities`.slice(0, 120));
-      setImportColumns(preview.headings.slice(0, 18).map(({ index }) => index));
+      showImportPreview(preview); setImportName(`${source.title} - All Cities`.slice(0, 120));
     } catch (cause) { setImportPreview(null); setError(cause.message); }
   };
   const openImport = () => {
@@ -80,9 +96,8 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     setParsingImport(true); setError(""); setImportPreview(null); setImportSourceId("");
     try {
       const preview = await readImportFile(file);
-      setImportPreview(preview);
+      showImportPreview(preview);
       setImportName(file.name.replace(/\.(pdf|xlsx|xls|xlsm|csv|tsv|ods)$/i, "").replaceAll(/[_-]+/g, " ").slice(0, 120));
-      setImportColumns(preview.headings.slice(0, 18).map(({ index }) => index));
     } catch (cause) { setError(cause.message); }
     finally { setParsingImport(false); }
   };
@@ -91,7 +106,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     if (busy || !importPreview) return;
     setBusy(true); setError("");
     try {
-      const payload = buildImportPayload(importPreview, importColumns, importName, today());
+      const payload = buildImportPayload({ ...importPreview, headings: importPreview.headings.map((heading) => ({ ...heading, label: importLabels[heading.index]?.trim() || heading.label })) }, importColumns, importName, today());
       const { report: created } = await request("/custom-reports/import", { method: "POST", body: JSON.stringify(payload) });
       setReports((current) => [...current, created]);
       resetImport(); setActionOpen(false); onOrigin("other"); setSelectedId(created.id); setAdminView("custom-report");
@@ -231,7 +246,8 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
       && Object.entries(extraFilterValues).every(([key, value]) => !value || String(row[key] || "") === value);
   }).sort((a, b) => String(a.date || report.date).localeCompare(String(b.date || report.date))), [report, mode, search, cityFilter, remarkFilter, marketerFilter, marketersList, fromDate, toDate, extraFilterValues]);
   const cities = [...new Set((report?.rows || []).map((row) => row.city).filter(Boolean))].sort();
-  const importCityHeading = importPreview?.headings.find(({ label }) => /^city$/i.test(label.trim()));
+  const importHeadings = importPreview?.headings.map((heading) => ({ ...heading, label: importLabels[heading.index]?.trim() || heading.label })) || [];
+  const importCityHeading = importHeadings.find(({ label }) => /^city$/i.test(label.trim()));
   const importCities = importCityHeading ? [...new Set(importPreview.rows.map((row) => String(row[importCityHeading.index] || "").trim()).filter(Boolean))] : [];
   const runExport = async (kind) => {
     const verificationMode = mode === "verification";
@@ -294,9 +310,11 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
       {reports.some((item) => item.rows?.length) && <label className="other-report-import-file">Or use all rows from a saved report<select value={importSourceId} onChange={(event) => chooseExistingReport(event.target.value)}><option value="">Choose a saved report</option>{reports.filter((item) => item.rows?.length).map((item) => <option key={item.id} value={item.id}>{item.title} ({item.rows.length} rows)</option>)}</select></label>}
       {parsingImport && <p role="status">Reading file…</p>}
       {importPreview && <><label className="other-report-import-name">Report name<input value={importName} onChange={(event) => setImportName(event.target.value)} maxLength={120} required /></label>
-        <div className="other-report-import-select"><div><strong>Choose the data to show</strong><span>{importColumns.length} of {importPreview.headings.length} headings selected · {importPreview.rows.length} rows found</span></div><div className="other-report-import-checks">{importPreview.headings.map(({ index, label }) => <label key={index}><input type="checkbox" checked={importColumns.includes(index)} onChange={() => setImportColumns((current) => current.includes(index) ? current.filter((item) => item !== index) : [...current, index])} />{label}</label>)}</div></div>
+        {importPreview.availableSheets?.length > 1 && <label className="other-report-import-file">Sheet<select value={importPreview.sheetName} onChange={(event) => chooseImportSheet(event.target.value)}>{importPreview.availableSheets.map(({ name }) => <option key={name} value={name}>{name}</option>)}</select></label>}
+        {!importSourceId && /\.(xlsx|xls|xlsm|csv|tsv|ods)$/i.test(importPreview.filename) && <label className="other-report-import-file">Heading row in file<select value={importPreview.headingRow} onChange={(event) => chooseHeadingRow(event.target.value)}>{importPreview.headingChoices.map(({ index, summary }) => <option key={index} value={index}>Row {index + 1}: {summary}</option>)}</select></label>}
+        <div className="other-report-import-select"><div><strong>Choose and correct the headings</strong><span>{importColumns.length} of {importPreview.headings.length} headings selected · {importPreview.rows.length} rows found</span></div><div className="other-report-import-checks">{importPreview.headings.map(({ index, label }) => <div className="other-report-import-heading" key={index}><label><input type="checkbox" checked={importColumns.includes(index)} onChange={() => setImportColumns((current) => current.includes(index) ? current.filter((item) => item !== index) : [...current, index])} />Column {index + 1}</label><input type="text" value={importLabels[index] ?? label} onChange={(event) => setImportLabels((current) => ({ ...current, [index]: event.target.value }))} aria-label={`Heading for column ${index + 1}`} maxLength={60} /></div>)}</div></div>
         {importCityHeading && <p className={`other-report-import-cities${importCities.length === 1 ? " is-limited" : ""}`}>{importCities.length} cit{importCities.length === 1 ? "y" : "ies"} found: {importCities.slice(0, 8).join(", ")}{importCities.length > 8 ? "…" : ""}. {importCities.length === 1 && !importSourceId ? "This file contains only that city. Choose the complete Excel file or a saved report above to include all cities." : "Every city in the selected source will be imported."}</p>}
-        <div className="other-report-import-sample"><strong>Preview</strong><div className="table-scroll"><table><thead><tr>{importPreview.headings.filter(({ index }) => importColumns.includes(index)).map(({ index, label }) => <th key={index}>{label}</th>)}</tr></thead><tbody>{importPreview.rows.slice(0, 5).map((row, index) => <tr key={index}>{importPreview.headings.filter((item) => importColumns.includes(item.index)).map((item) => <td key={item.index}>{row[item.index] || "—"}</td>)}</tr>)}</tbody></table></div></div>
+        <div className="other-report-import-sample"><strong>Preview</strong><div className="table-scroll"><table><thead><tr>{importHeadings.filter(({ index }) => importColumns.includes(index)).map(({ index, label }) => <th key={index}>{label}</th>)}</tr></thead><tbody>{importPreview.rows.slice(0, 5).map((row, index) => <tr key={index}>{importHeadings.filter((item) => importColumns.includes(item.index)).map((item) => <td key={item.index}>{row[item.index] || "—"}</td>)}</tr>)}</tbody></table></div></div>
         <button type="submit" className="other-reports-btn primary" disabled={busy || !importName.trim() || !importColumns.length}>{busy ? "Importing…" : "Create Imported Report"}</button>
       </>}
     </form>}

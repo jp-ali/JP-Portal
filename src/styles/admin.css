@@ -34,6 +34,9 @@
 .other-report-import-select span { color:#78686d; font-size:11px; }
 .other-report-import-checks { display:flex; flex-wrap:wrap; gap:8px; }
 .other-report-import-checks label { display:inline-flex; align-items:center; gap:6px; padding:8px 10px; border:1px solid #e7cdd5; border-radius:9px; background:#fff; color:#3b2329; font-size:12px; font-weight:600; cursor:pointer; }
+.other-report-import-heading { display:grid; gap:5px; min-width:155px; padding:7px; border:1px solid #e7cdd5; border-radius:10px; background:#fff; }
+.other-report-import-checks .other-report-import-heading label { border:0; padding:0; }
+.other-report-import-heading > input { width:100%; min-width:0; box-sizing:border-box; padding:7px 9px; border:1px solid #decbd0; border-radius:7px; color:#3b2329; font:inherit; }
 .other-report-import-checks input { accent-color:#7a0f2b; }
 .other-report-import-sample { display:grid; gap:8px; }
 .other-report-import-sample .table-scroll { max-height:220px; overflow:auto; border:1px solid #e7cdd5; border-radius:9px; }

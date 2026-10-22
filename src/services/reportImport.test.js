@@ -65,6 +65,38 @@ test("an XLSX workbook is read from a selected file", async () => {
   assert.equal(preview.rows[0][1], "Lahore");
 });
 
+test("Excel heading detection skips title rows and keeps column positions", async () => {
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([
+    ["School contacts"], [], ["Downloaded: 22/10/2026"],
+    ["Name", "", "City", "Phone Number"],
+    ["Ali", "", "Lahore", "03001234567"],
+    ["Sara", "", "Karachi", "03007654321"]
+  ]), "Contacts");
+  const bytes = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
+  const preview = await readImportFile(new File([bytes], "contacts.xlsx"));
+  assert.equal(preview.headingRow, 3);
+  assert.deepEqual(preview.headings.map(({ index, label }) => [index, label]), [[0, "Name"], [2, "City"], [3, "Phone Number"]]);
+  assert.equal(preview.rows[1][2], "Karachi");
+});
+
+test("Excel chooses the data sheet when the first sheet is a cover", async () => {
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([["Report", "2026"], ["Prepared", "Ali"]]), "Cover");
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([["Name", "City", "Phone"], ["Sara", "Karachi", "03007654321"]]), "Contacts");
+  const bytes = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
+  const preview = await readImportFile(new File([bytes], "contacts.xlsx"));
+  assert.equal(preview.sheetName, "Contacts");
+  assert.deepEqual(preview.availableSheets.map(({ name }) => name), ["Cover", "Contacts"]);
+});
+
+test("the selected heading row can replace an incorrect automatic choice", () => {
+  const matrix = [["Name", "Area"], ["Ali", "Lahore"], ["Sara", "Karachi"]];
+  const preview = matrixToImportPreview(matrix, "contacts.xlsx", 0);
+  assert.deepEqual(preview.headings.map(({ label }) => label), ["Name", "Area"]);
+  assert.equal(preview.rows.length, 2);
+});
+
 test("a CSV report can be imported without an Excel-only file restriction", async () => {
   const preview = await readImportFile(new File(["Name,City,Number\nAli,Lahore,03001234567\nSara,Karachi,03007654321\n"], "contacts.csv"));
   assert.equal(preview.rows.length, 2);
