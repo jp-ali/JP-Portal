@@ -62,6 +62,18 @@ test("admin photo edit route validates image content", async () => {
   assert.equal(response.status, 400);
 });
 
+test("admin own profile photo requires login and validates the image", async () => {
+  const anonymous = await fetch(`${baseUrl}/api/auth/me/photo`);
+  assert.equal(anonymous.status, 401);
+  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const response = await fetch(`${baseUrl}/api/auth/me/photo`, {
+    method: "PUT",
+    headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
+    body: JSON.stringify({ photo: "data:image/svg+xml;base64,PHN2Zy8+" })
+  });
+  assert.equal(response.status, 400);
+});
+
 test("invalid admin password is rejected", async () => {
   const response = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",

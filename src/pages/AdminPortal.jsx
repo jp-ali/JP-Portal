@@ -20,13 +20,20 @@ import AdminDeleteMarketerPanel from "./admin/AdminDeleteMarketerPanel.jsx";
 import AdminOldMarketersPanel from "./admin/AdminOldMarketersPanel.jsx";
 import React from "react";
 import { useEffect, useState } from "react";
-import { request } from "../services/authApi.js";
+import { getAdminProfilePhoto, request } from "../services/authApi.js";
 import PhotoViewer from "../ui/PhotoViewer.jsx";
 import VisitEditDialog from "../ui/VisitEditDialog.jsx";
 import PortalTopBar from "../ui/PortalTopBar.jsx";
 import DesktopSectionBanner from "../ui/DesktopSectionBanner.jsx";
 
 function AdminPortalContent({ context }) {
+  useEffect(() => {
+    let active = true;
+    getAdminProfilePhoto().then(({ profilePhoto }) => {
+      if (active) context.setUser((current) => ({ ...current, profilePhoto }));
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
   const [customReports, setCustomReports] = useState([]);
   const [selectedCustomReportId, setSelectedCustomReportId] = useState("");
   const [customReportsLoading, setCustomReportsLoading] = useState(false);
@@ -233,11 +240,11 @@ onClick={() => openAdminSidebarSection(item.key)}
               </button>
 ))}
           </nav>
-          <div className="portal-sidebar-footer"><div className="portal-sidebar-profile"><span className="portal-sidebar-avatar">A</span><span><strong>Admin</strong><small>Javed Publishers</small></span></div><button type="button" onClick={handleLogout}>{renderLogoutArrowIcon(16)} Logout</button></div>
+          <div className="portal-sidebar-footer"><div className="portal-sidebar-profile"><span className="portal-sidebar-avatar">{context.user?.profilePhoto ? <img src={context.user.profilePhoto} alt="" /> : "A"}</span><span><strong>Admin</strong><small>Javed Publishers</small></span></div><button type="button" onClick={handleLogout}>{renderLogoutArrowIcon(16)} Logout</button></div>
         </aside>
         <div className={`app-responsive admin-desktop-content ${adminSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
           {renderResponsiveStyles()}
-          <PortalTopBar role="admin" name="Admin" items={adminSidebarItems} onNavigate={openAdminSidebarSection} onMenu={() => setAdminSidebarOpen(true)} onLogout={handleLogout} />
+          <PortalTopBar role="admin" name="Admin" items={adminSidebarItems} onNavigate={openAdminSidebarSection} onMenu={() => setAdminSidebarOpen(true)} onLogout={handleLogout} profilePhoto={context.user?.profilePhoto} onProfilePhotoChange={(photo) => context.setUser((current) => ({ ...current, profilePhoto: photo }))} onExpandProfilePhoto={setFullScreenImage} />
           <DesktopSectionBanner view={adminView} role="admin" accountId={context.user?.id || context.user?.email || "admin"} title={adminView === "media" && mediaView === "deleted" ? "Recently Deleted" : undefined} />
           {portalSkeletonLoading && renderRedSkeleton()}
           {adminView === "home" && (

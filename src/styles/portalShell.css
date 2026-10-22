@@ -206,6 +206,8 @@ body.report-fullscreen-active .desktop-section-banner { display:none; }
 .portal-profile-file-input { display:none; }
 .portal-shell .portal-topbar-profile-menu { width:190px; gap:4px; }
 .portal-shell .portal-topbar-profile-menu button { width:100%; margin-top:3px; text-align:left; }
+.portal-shell .portal-topbar-profile-menu a { display:block; width:100%; margin-top:3px; padding:7px 8px; border-radius:6px; color:#fff; background:#8d173f; font-size:10px; font-weight:700; text-align:left; text-decoration:none; box-sizing:border-box; }
+.portal-shell .portal-topbar-profile-menu a:hover { background:#6f0b24; }
 .portal-topbar-profile-menu .portal-profile-error { color:#a51438; line-height:1.35; }
 .marketer-profile { display:grid; gap:13px; color:#34212b; }
 .marketer-profile-main { display:grid; grid-template-columns:minmax(205px,25%) minmax(0,1fr); overflow:hidden; border:1px solid #f0e0e5; border-radius:17px; background:#fff; box-shadow:0 7px 20px rgba(73,24,43,.07); }

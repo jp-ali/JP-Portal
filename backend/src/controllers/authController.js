@@ -1,4 +1,4 @@
-import { authenticate } from "../services/authService.js";
+import { authenticate, getAdminProfilePhoto, updateAdminProfilePhoto } from "../services/authService.js";
 import { clearSessionCookie, createSession, setSessionCookie } from "../services/session.js";
 
 export async function login(request, response, next) {
@@ -23,4 +23,19 @@ export function me(request, response) {
 export function logout(_request, response) {
   clearSessionCookie(response);
   response.status(204).end();
+}
+
+export async function readAdminPhoto(_request, response, next) {
+  try { response.json({ profilePhoto: await getAdminProfilePhoto() }); }
+  catch (error) { next(error); }
+}
+
+export async function saveAdminPhoto(request, response, next) {
+  try { response.json({ profilePhoto: await updateAdminProfilePhoto(request.body?.photo) }); }
+  catch (error) { next(error); }
+}
+
+export async function deleteAdminPhoto(_request, response, next) {
+  try { response.json({ profilePhoto: await updateAdminProfilePhoto(null) }); }
+  catch (error) { next(error); }
 }

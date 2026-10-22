@@ -51,3 +51,7 @@ export async function getSession() {
 export async function logout() {
   return request("/auth/logout", { method: "POST" });
 }
+
+export const getAdminProfilePhoto = () => request("/auth/me/photo");
+export const saveAdminProfilePhoto = (photo) => request("/auth/me/photo", { method: "PUT", body: JSON.stringify({ photo }) });
+export const deleteAdminProfilePhoto = () => request("/auth/me/photo", { method: "DELETE" });

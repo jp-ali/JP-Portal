@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { ipKeyGenerator, rateLimit } from "express-rate-limit";
-import { login, logout, me } from "../controllers/authController.js";
-import { requireAuth } from "../middleware/auth.js";
+import { deleteAdminPhoto, login, logout, me, readAdminPhoto, saveAdminPhoto } from "../controllers/authController.js";
+import { requireAdmin, requireAuth } from "../middleware/auth.js";
 
 export const authRoutes = Router();
 authRoutes.post("/login", rateLimit({
@@ -19,4 +19,7 @@ authRoutes.post("/login", rateLimit({
   message: { error: "Too many login attempts for this account. Please try again in 15 minutes." }
 }), login);
 authRoutes.get("/me", requireAuth, me);
+authRoutes.get("/me/photo", requireAuth, requireAdmin, readAdminPhoto);
+authRoutes.put("/me/photo", requireAuth, requireAdmin, saveAdminPhoto);
+authRoutes.delete("/me/photo", requireAuth, requireAdmin, deleteAdminPhoto);
 authRoutes.post("/logout", logout);
