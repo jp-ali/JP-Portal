@@ -256,13 +256,9 @@ await fetchTodayAttendance(true);
 }
 try { await copyTextToClipboard(message); } catch (_) {}
 setActionPlanShareMessage(message);
-setActionPlanSuccess(
-"Action plan saved. Tap Share to choose WhatsApp or WhatsApp Business, then select the chat."
-);
-if (typeof navigator.share === "function" && navigator.userActivation?.isActive) {
-try { await navigator.share({ text: message }); setActionPlanShareMessage(""); setActionPlanSuccess("Action plan saved. Select the required chat in WhatsApp and press Send."); } catch (_) {}
-}
+setActionPlanSuccess("Action plan saved. Select the required chat in WhatsApp and press Send.");
 fetchActionPlans(true).catch(() => {});
+await shareActionPlan(message);
 } catch (err) {
 alert("Error saving action plan: " + err.message);
 } finally {
