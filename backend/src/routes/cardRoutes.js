@@ -3,8 +3,14 @@ import { firestore } from "../config/firebase.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { validateCardTemplate } from "./cardTemplateRoutes.js";
 import { convertCardsToCdr } from "../services/cardCdrExport.js";
+import { getOrCreateMarketerCard } from "../services/marketerCardService.js";
 
 export const cardRoutes = Router();
+cardRoutes.get("/me", requireAuth, async (request, response, next) => {
+  if (request.user.role !== "marketer") return response.status(403).json({ error: "Marketer access required" });
+  try { response.json({ card: await getOrCreateMarketerCard(request.user.marketerId) }); }
+  catch (error) { next(error); }
+});
 cardRoutes.use(requireAuth, requireAdmin);
 const cards = () => firestore().collection("savedCards");
 const summary = (snapshot) => {
@@ -83,6 +89,7 @@ cardRoutes.put("/:id", async (request, response, next) => {
     const ref = cards().doc(request.params.id);
     const snapshot = await ref.get();
     if (!snapshot.exists || snapshot.data().deletedAt) return response.status(404).json({ error: "Active card not found" });
+    if (snapshot.data().marketerId) data.title = `${data.values.name || "Marketer"} Card`;
     const updatedAt = new Date().toISOString();
     await ref.update({ ...data, updatedAt });
     response.json({ card: { id: ref.id, ...snapshot.data(), ...data, updatedAt } });

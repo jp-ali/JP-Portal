@@ -68,6 +68,14 @@
 .card-designer-bottom { display:flex; align-items:end; justify-content:space-between; gap:16px; flex-wrap:wrap; padding-top:16px; border-top:1px solid #ead6dc; margin-top:18px; }
 .card-designer-bottom .primary { min-width:170px; padding:12px 20px; }
 .saved-cards { background:#fff; border:1px solid #ead6dc; border-radius:18px; padding:20px; color:#39242a; box-shadow:0 9px 25px #5f112014; }
+.marketer-my-card { padding:20px; border:1px solid #ead6dc; border-radius:18px; background:#fff; color:#39242a; box-shadow:0 9px 25px #5f112014; }
+.marketer-my-card header h2 { margin:0 0 5px; color:#74102d; font-size:21px; font-weight:800; }
+.marketer-my-card header p { margin:0 0 18px; color:#78666d; font-size:13px; }
+.marketer-my-card-content { display:grid; justify-items:center; gap:16px; }
+.marketer-my-card .marketer-card-preview { width:min(100%,520px); cursor:default; box-shadow:0 9px 25px #3410181b; }
+.marketer-my-card-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:8px; }
+.marketer-my-card-actions button { padding:9px 13px; border:0; border-radius:9px; color:#fff; background:#7a0f2b; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+.card-designer-preview-dialog .marketer-card-preview { width:100%; max-width:900px; cursor:default; }
 .saved-cards h2 { color:#74102d; margin:0 0 4px; font-size:22px; }
 .saved-cards p { margin:0; color:#78666d; font-size:13px; }
 .saved-cards button { font:inherit; cursor:pointer; border:1px solid #dcc0ca; color:#74102d; background:#fff; border-radius:9px; padding:9px 12px; }

@@ -31,6 +31,7 @@ const sectionDetails = {
   "old-marketers": ["Old Marketers", "Review previously removed accounts.", "team", "🗄️"],
   "card-designer": ["Card Designer", "Create and customize a business card.", "cards", "🎨"],
   "saved-cards": ["Saved Cards", "Manage your saved card designs.", "cards", "🪪"],
+  "my-card": ["My Card", "View and download your business card.", "cards", "▣"],
   hidden: ["Hidden", "Restore hidden dashboard items.", "reports", "👁️"],
   support: ["Support", "Get help and contact the team.", "team", "🎧"],
 };

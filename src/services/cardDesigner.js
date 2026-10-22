@@ -85,7 +85,8 @@ export function cardSvg(template, values) {
 }
 
 function cardFileName(values, extension) {
-  const name = String(values.depotName || values.name || "card").trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").slice(0, 55) || "card";
+  const label = values.depotName === "JAVED PUBLISHERS" && values.name ? values.name : values.depotName || values.name || "card";
+  const name = String(label).trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").slice(0, 55) || "card";
   return `${name}.${extension}`;
 }
 

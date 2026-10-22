@@ -10,6 +10,7 @@ import MarketerSampleHistoryPanel from "./marketer/MarketerSampleHistoryPanel.js
 import MarketerAddVisitPanel from "./marketer/MarketerAddVisitPanel.jsx";
 import MarketerTodayVisitsPanel from "./marketer/MarketerTodayVisitsPanel.jsx";
 import MarketerRangeVisitsPanel from "./marketer/MarketerRangeVisitsPanel.jsx";
+import MarketerCardPanel from "./marketer/MarketerCardPanel.jsx";
 import React from "react";
 import PhotoViewer from "../ui/PhotoViewer.jsx";
 import VisitEditDialog from "../ui/VisitEditDialog.jsx";
@@ -30,6 +31,7 @@ if (key === "add-sample") { setMarketerview("add-sample"); setSampleSchoolName("
 if (key === "sample-history") { setMarketerview("sample-history"); fetchMarketerSamples(user.email); setSampleHistoryFromDate(""); setSampleHistoryToDate(""); setSampleHistorySearch(""); return; }
 if (key === "expense-report") { openExpenseReport(); return; }
 if (key === "catalogues") { setMarketerview("catalogues"); setCatalogueSearch(""); fetchCatalogues(); return; }
+if (key === "my-card") { setMarketerview("my-card"); return; }
 if (key === "support") { setMarketerview("support"); return; }
 };
 const marketerSidebarItems = [
@@ -43,6 +45,7 @@ const marketerSidebarItems = [
 { key: "sample-history", icon: "📋", label: "Sample History", active: marketerView === "sample-history" },
 { key: "expense-report", icon: "🧾", label: "Expense Report", active: marketerView === "expense-report" },
 { key: "catalogues", icon: "📚", label: "Catalogues", active: marketerView === "catalogues" },
+{ key: "my-card", icon: "▣", label: "My Card", active: marketerView === "my-card" },
 { key: "support", icon: "🎧", label: "Support", active: marketerView === "support" },
 ];
 return (
@@ -88,6 +91,7 @@ return (
         {marketerView === "catalogues" && (
 <MarketerCataloguesPanel />
 )}
+        {marketerView === "my-card" && <MarketerCardPanel onBack={() => setMarketerview("home")} />}
         {marketerView === "support" && (
 <MarketerSupportPanel />
 )}

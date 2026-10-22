@@ -107,6 +107,13 @@ test("saved card creation requires admin authentication and a valid card", async
   assert.equal(invalid.status, 400);
 });
 
+test("marketer card endpoint is private to marketers", async () => {
+  assert.equal((await fetch(`${baseUrl}/api/cards/me`)).status, 401);
+  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const response = await fetch(`${baseUrl}/api/cards/me`, { headers: { cookie: `school_visit_session=${token}` } });
+  assert.equal(response.status, 403);
+});
+
 test("forwarded local login requests are accepted", async () => {
   const response = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",

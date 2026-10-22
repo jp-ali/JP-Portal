@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { FieldValue } from "firebase-admin/firestore";
 import { firestore } from "../config/firebase.js";
 import { publicMarketer } from "../models/marketerModel.js";
+import { defaultMarketerCard, syncMarketerCard } from "./marketerCardService.js";
 
 const fields = ["name", "phone", "email", "designation", "assignedKms", "whatsappGroupName", "whatsappGroupLink", "assignedCityIds", "assignedAreaIds", "assignedSchoolIds", "subordinateMarketerIds"];
 const arrayFields = new Set(["assignedCityIds", "assignedAreaIds", "assignedSchoolIds", "subordinateMarketerIds"]);
@@ -50,16 +51,32 @@ export async function createMarketer(input) {
   const data = validate(input, true);
   delete data.password;
   data.createdAt = FieldValue.serverTimestamp();
-  const ref = await firestore().collection("marketers").add(data);
+  const now = new Date().toISOString();
+  data.cardProvisionedAt = now;
+  const db = firestore();
+  const ref = db.collection("marketers").doc();
+  const batch = db.batch();
+  batch.set(ref, data);
+  batch.set(db.collection("savedCards").doc(ref.id), defaultMarketerCard(ref.id, data, now));
+  await batch.commit();
   return publicMarketer({ id: ref.id, ...data });
 }
 
 export async function updateMarketer(id, input) {
-  const ref = firestore().collection("marketers").doc(id);
-  if (!(await ref.get()).exists) return null;
+  const db = firestore();
+  const ref = db.collection("marketers").doc(id);
+  const current = await ref.get();
+  if (!current.exists) return null;
   const data = validate(input, false);
   if (!Object.keys(data).length) throw new Error("No changes supplied");
-  await ref.update(data);
+  const batch = db.batch();
+  batch.update(ref, data);
+  if (["name", "phone", "email", "designation"].some((field) => field in data)) {
+    const cardRef = db.collection("savedCards").doc(id);
+    const card = await cardRef.get();
+    if (card.exists && !card.data().deletedAt) batch.update(cardRef, syncMarketerCard(card.data(), { ...current.data(), ...data }));
+  }
+  await batch.commit();
   return publicMarketer({ id, ...(await ref.get()).data() });
 }
 

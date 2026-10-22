@@ -36,6 +36,7 @@ export default function MarketerHomePanel() {
     ] },
     { title: "Resources & Support", icon: "▰", description: "Helpful materials and support", items: [
       { title: "Catalogues", description: "View and download PDFs", icon: "▥", tone: "mint", onClick: () => { c.setMarketerview("catalogues"); c.setCatalogueSearch(""); c.fetchCatalogues(); } },
+      { title: "My Card", description: "View and download your card", icon: "▣", tone: "rose", onClick: () => c.setMarketerview("my-card") },
       { title: "Support", description: "Contact admin for help", icon: "☎", tone: "violet", onClick: () => c.setMarketerview("support") }
     ] }
   ];
