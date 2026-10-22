@@ -1,3 +1,4 @@
+import { confirmAction } from "../../ui/confirmDialog.js";
 import { useState } from "react";
 import { deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../../services/firebase";
@@ -108,7 +109,7 @@ alert("Error updating school: " + err.message);
 };
 const removeOwnVisitSchool = async (school) => {
 if (!isOwnManualSchool(school)) return alert("You can remove only the schools you added yourself.");
-if (!window.confirm(`Remove ${school.name}?`)) return;
+if (!await confirmAction(`Remove ${school.name}?`)) return;
 try {
 await deleteDoc(doc(db, "schools", school.id));
 const wasSelected = visitSchoolIds.includes(school.id);

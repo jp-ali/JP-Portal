@@ -1,3 +1,4 @@
+import { confirmAction } from "../../ui/confirmDialog.js";
 import { useRef, useState } from "react";
 import { collection, deleteDoc, doc, getDocs, query, Timestamp, where } from "firebase/firestore";
 import { db } from "../../services/firebase";
@@ -224,7 +225,7 @@ if (cache.key === key) cache.pending = null;
 return cache.pending;
 };
 const handleDeleteVisit = async (id, isAdmin = false) => {
-if (window.confirm("Are you sure you want to delete this visit report?")) {
+if (await confirmAction("Are you sure you want to delete this visit report?")) {
 try {
 await deleteDoc(doc(db, "visits", id));
 if (isAdmin) {
@@ -257,7 +258,7 @@ setLongPressTimer(null);
 };
 const deleteSelectedMarketerVisits = async () => {
 if (!selectedMarketerVisitIds.length) return;
-if (!window.confirm(`Delete ${selectedMarketerVisitIds.length} selected visit report(s)?`)) return;
+if (!await confirmAction(`Delete ${selectedMarketerVisitIds.length} selected visit report(s)?`)) return;
 try {
 await Promise.all(selectedMarketerVisitIds.map(id => deleteDoc(doc(db, "visits", id))));
 setSelectedMarketerVisitIds([]);
@@ -268,7 +269,7 @@ alert("Error deleting selected visits: " + err.message);
 }
 };
 const handleDeleteSample = async (id, isAdmin = false) => {
-if (window.confirm("Are you sure you want to delete this sample report?")) {
+if (await confirmAction("Are you sure you want to delete this sample report?")) {
 try {
 await deleteDoc(doc(db, "samples", id));
 if (isAdmin) {

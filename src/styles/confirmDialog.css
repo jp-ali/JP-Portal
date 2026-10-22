@@ -1,0 +1,13 @@
+.portal-confirm-overlay{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;padding:20px;background:rgba(32,12,23,.52);backdrop-filter:blur(5px);animation:portal-confirm-fade .2s ease-out}
+.portal-confirm-card{width:min(100%,420px);padding:26px;border:1px solid #f1ccd9;border-radius:20px;background:linear-gradient(145deg,#fff,#fff6f9);box-shadow:0 26px 70px rgba(35,5,20,.32);text-align:center;animation:portal-confirm-pop .24s cubic-bezier(.2,.8,.2,1)}
+.portal-confirm-icon{display:grid;place-items:center;width:46px;height:46px;margin:0 auto 12px;border-radius:14px;background:#ffe6ee;color:#900331;font-size:27px;font-weight:800}
+.portal-confirm-card h2{margin:0 0 8px;color:#790b2d;font-size:21px;font-weight:800}
+.portal-confirm-card p{margin:0;color:#594752;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.portal-confirm-actions{display:flex;gap:10px;margin-top:23px}
+.portal-confirm-actions button{flex:1;min-height:42px;border-radius:10px;font:inherit;font-size:13px;font-weight:800;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.portal-confirm-actions button:hover{transform:translateY(-2px);box-shadow:0 7px 16px rgba(95,8,42,.16)}
+.portal-confirm-cancel{border:1px solid #e5cbd5;background:#fff;color:#76223e}
+.portal-confirm-accept{border:1px solid #850b32;background:linear-gradient(135deg,#790b2b,#a60942);color:#fff}
+@keyframes portal-confirm-fade{from{opacity:0}to{opacity:1}}
+@keyframes portal-confirm-pop{from{opacity:0;transform:translateY(16px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.portal-confirm-overlay,.portal-confirm-card{animation:none}.portal-confirm-actions button{transition:none}}

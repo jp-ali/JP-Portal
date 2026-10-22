@@ -1,3 +1,4 @@
+import { confirmAction } from "../../ui/confirmDialog.js";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import { request } from "../../services/authApi.js";
@@ -228,7 +229,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     finally { setBusy(false); }
   };
   const removeRow = async (rowId) => {
-    if (!window.confirm("Delete this row?")) return;
+    if (!await confirmAction("Delete this row?")) return;
     try {
       await request(`/custom-reports/${report.id}/rows/${rowId}`, { method: "DELETE" });
       updateReport(report.id, { rows: (report.rows || []).filter((row) => row.id !== rowId) });

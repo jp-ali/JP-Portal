@@ -1,3 +1,4 @@
+import { confirmAction } from "../../ui/confirmDialog.js";
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
 import MediaOverview from "../../ui/MediaOverview.jsx";
@@ -63,7 +64,7 @@ return <div key={email} onClick={() => { setMediaMarketer(email); setSelectedMed
                       <div style={{ display:"flex", gap:"7px", flexWrap:"wrap", marginBottom:"10px" }}>
                         <button onClick={()=>setSelectedDeletedMediaIds(selectedDeletedMediaIds.length===deletedMedia.length ? [] : deletedMedia.map(x=>x.id))} style={{padding:"6px 10px",background:"#a42243",color:"white",border:"none",borderRadius:"7px",fontSize:"11px",fontWeight:"700",cursor:"pointer"}}>{deletedMedia.length>0 && selectedDeletedMediaIds.length===deletedMedia.length ? "☑ Clear All" : "☑ Select All"}</button>
                         <button onClick={restoreSelectedMedia} disabled={!selectedDeletedMediaIds.length} style={{padding:"6px 10px",background:selectedDeletedMediaIds.length?"#86132f":"#d7c7cb",color:"white",border:"none",borderRadius:"7px",fontSize:"11px",fontWeight:"700",cursor:selectedDeletedMediaIds.length?"pointer":"not-allowed",opacity:selectedDeletedMediaIds.length?1:.7}}>♻️ Restore Selected</button>
-                        <button onClick={async()=>{if(!selectedDeletedMediaIds.length)return;if(!window.confirm(`Permanently delete ${selectedDeletedMediaIds.length} picture(s)?`))return;for(const id of selectedDeletedMediaIds)await deleteDoc(doc(db,"deleted_media",id));setSelectedDeletedMediaIds([]);await fetchDeletedMedia();}} style={{padding:"6px 10px",background:"#7a0f2b",color:"white",border:"none",borderRadius:"7px",fontSize:"11px",fontWeight:"700",cursor:"pointer"}}>🗑️ Delete Selected</button>
+                        <button onClick={async()=>{if(!selectedDeletedMediaIds.length)return;if(!await confirmAction(`Permanently delete ${selectedDeletedMediaIds.length} picture(s)?`))return;for(const id of selectedDeletedMediaIds)await deleteDoc(doc(db,"deleted_media",id));setSelectedDeletedMediaIds([]);await fetchDeletedMedia();}} style={{padding:"6px 10px",background:"#7a0f2b",color:"white",border:"none",borderRadius:"7px",fontSize:"11px",fontWeight:"700",cursor:"pointer"}}>🗑️ Delete Selected</button>
                       </div>
                     </div>
                     <div style={{ border: "2px solid rgba(245,158,11,.35)", borderRadius: "16px", padding: "16px", background: "linear-gradient(135deg,rgba(120,53,15,.16),rgba(255,255,255,.97))", boxShadow: "0 10px 30px rgba(0,0,0,.16)" }}>

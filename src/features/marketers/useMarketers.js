@@ -1,3 +1,4 @@
+import { confirmAction } from "../../ui/confirmDialog.js";
 import { useRef, useState } from "react";
 import { listMarketers, listDeletedMarketers, listAccessibleMarketers, createMarketer, updateMarketer, archiveMarketer, restoreMarketer, removeDeletedMarketer } from "../../services/marketerApi.js";
 
@@ -194,7 +195,7 @@ if (cityIds.length) fetchAreasForCities(cityIds).catch((error) => console.error(
 }, 0);
 };
 const handleDeleteMarketer = async (m) => {
-if (window.confirm(`Are you sure you want to delete ${m.name}?`)) {
+if (await confirmAction(`Are you sure you want to delete ${m.name}?`)) {
 try {
 await archiveMarketer(m.id);
 await Promise.all([fetchMarketers(true), fetchDeletedMarketers()]);
@@ -205,7 +206,7 @@ alert("Error deleting: " + err.message);
 }
 };
 const handlePermanentDeleteMarketer = async (m) => {
-if (window.confirm(`Are you sure you want to permanently delete ${m.name}?`)) {
+if (await confirmAction(`Are you sure you want to permanently delete ${m.name}?`)) {
 try {
 await removeDeletedMarketer(m.id);
 await fetchDeletedMarketers();
@@ -216,7 +217,7 @@ alert("Error permanent deleting: " + err.message);
 }
 };
 const handleRestoreMarketer = async (m) => {
-if (window.confirm(`Are you sure you want to restore ${m.name}?`)) {
+if (await confirmAction(`Are you sure you want to restore ${m.name}?`)) {
 try {
 await restoreMarketer(m.id);
 await Promise.all([fetchMarketers(true), fetchDeletedMarketers()]);
@@ -236,7 +237,7 @@ archive: `Move ${unique.length} selected marketer(s) to Old Marketers?`,
 restore: `Restore ${unique.length} selected marketer(s)?`,
 remove: `Permanently delete ${unique.length} selected old marketer(s)? This cannot be undone.`
 };
-if (!window.confirm(labels[action])) return false;
+if (!await confirmAction(labels[action])) return false;
 const results = await Promise.allSettled(unique.map((item) => operations[action](item.id)));
 const succeeded = results.filter((result) => result.status === "fulfilled").length;
 await Promise.all([fetchMarketers(true), fetchDeletedMarketers()]);

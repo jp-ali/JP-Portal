@@ -1,3 +1,4 @@
+import { confirmAction } from "../../ui/confirmDialog.js";
 import React, { useEffect, useMemo, useState } from "react";
 import { request } from "../../services/authApi.js";
 import { downloadCardSheetCdr, downloadCardSheetPdf, downloadCardSheetSvg, downloadCardSheetShareZip } from "../../services/cardDesigner.js";
@@ -29,7 +30,7 @@ export default function AdminSavedCardsPanel({ onEdit, onNew, onBack }) {
     if (kind === "old") return switchOld();
     if (!selected.length) return setError("Select at least one card first.");
     if (kind === "edit") return selected.length === 1 ? onEdit(selected[0].id) : setError("Select one card to edit.");
-    if (["remove", "permanent"].includes(kind) && !window.confirm(kind === "permanent" ? `Permanently delete ${selected.length} card(s)?` : `Move ${selected.length} card(s) to Old Cards?`)) return;
+    if (["remove", "permanent"].includes(kind) && !await confirmAction(kind === "permanent" ? `Permanently delete ${selected.length} card(s)?` : `Move ${selected.length} card(s) to Old Cards?`)) return;
     setBusy(true); setError(""); setMessage("");
     try {
       if (["pdf", "svg", "zip", "cdr"].includes(kind)) {

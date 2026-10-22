@@ -1,3 +1,4 @@
+import { confirmAction } from "../ui/confirmDialog.js";
 import React, { useEffect, useState } from "react";
 import { compressCanvasToTargetDataUrl } from "../services/imageCompression.js";
 import { listOfflineVisits, removeOfflineVisit, saveOfflineVisit } from "../services/offlineVisitStore.js";
@@ -113,7 +114,7 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
     finally { setBusy(false); }
   };
   const remove = async (id) => {
-    if (!window.confirm("Delete this offline draft?")) return;
+    if (!await confirmAction("Delete this offline draft?")) return;
     try { await removeOfflineVisit(id); await refresh(); }
     catch (error) { setMessage(error.message); }
   };

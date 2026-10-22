@@ -1,3 +1,4 @@
+import { confirmAction } from "../../ui/confirmDialog.js";
 import { useRef, useState } from "react";
 import { addDoc, collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../../services/firebase";
@@ -167,7 +168,7 @@ const objs=[],add=(b)=>{objs.push(b);return objs.length;},f1=add("<< /Type /Font
 const handleDeleteActionPlan = async (plan) => {
 if (!plan?.id) return;
 const who = plan.marketerName || plan.marketerEmail || "this marketer";
-if (!window.confirm(`Delete this action plan for ${who}? This cannot be undone.`)) return;
+if (!await confirmAction(`Delete this action plan for ${who}? This cannot be undone.`)) return;
 try {
 await deleteDoc(doc(db, "action_plans", plan.id));
 setActionPlans((prev) => prev.filter((p) => p.id !== plan.id));

@@ -341,6 +341,7 @@ useEffect(() => {
   const onKeyDown = (event) => {
     if (event.key !== "Escape") { homeEscapeCountRef.current = { count: 0, lastAt: 0 }; return; }
     if (event.repeat) return;
+    if (document.querySelector("[data-confirm-dialog]")) return;
     if (document.querySelector(".card-designer-preview-modal")) return;
     event.preventDefault();
     if (goBack()) {
@@ -358,6 +359,7 @@ useEffect(() => {
   };
   const onBrowserBack = () => {
     window.history.pushState({ ...window.history.state, jpPortalGuard: browserGuardRef.current }, "", window.location.href);
+    if (document.querySelector("[data-confirm-dialog]")) return;
     homeEscapeCountRef.current = { count: 0, lastAt: 0 };
     goBack();
   };

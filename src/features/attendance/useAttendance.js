@@ -1,3 +1,4 @@
+import { confirmAction } from "../../ui/confirmDialog.js";
 import { useEffect, useRef, useState } from "react";
 import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../../services/firebase";
@@ -230,7 +231,7 @@ return matchesDate && matchesMarketer;
 });
 const softDeleteAttendanceMedia = async (item, skipConfirm = false) => {
 if (!item?.image || !item?.attendanceDocId || !item?.field) return;
-if (!skipConfirm && !window.confirm(`Delete ${item.label} picture? It will move to Recently Deleted.`)) return;
+if (!skipConfirm && !await confirmAction(`Delete ${item.label} picture? It will move to Recently Deleted.`)) return;
 try {
 await addDoc(collection(db, "deleted_media"), {
 mediaType: "attendance",
@@ -255,7 +256,7 @@ alert("Error deleting attendance media: " + err.message);
 const deleteSelectedAttendanceMedia = async () => {
 const selected = getFilteredAttendanceMedia().filter((item) => selectedAttendanceMediaIds.includes(item.id));
 if (!selected.length) return;
-if (!window.confirm(`Delete ${selected.length} selected attendance picture(s)? They will move to Recently Deleted.`)) return;
+if (!await confirmAction(`Delete ${selected.length} selected attendance picture(s)? They will move to Recently Deleted.`)) return;
 try {
 for (const item of selected) {
 await addDoc(collection(db, "deleted_media"), {

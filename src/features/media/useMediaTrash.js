@@ -1,3 +1,4 @@
+import { confirmAction } from "../../ui/confirmDialog.js";
 import { useState } from "react";
 import { addDoc, collection, deleteDoc, doc, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../../services/firebase";
@@ -12,7 +13,7 @@ const [mediaView, setMediaView] = useState("active");
 const [fullScreenMediaRecord, setFullScreenMediaRecord] = useState(null);
 const softDeleteMedia = async (report) => {
 if (!report?.image) return;
-if (!window.confirm("Delete this picture? It will move to Recently Deleted.")) return;
+if (!await confirmAction("Delete this picture? It will move to Recently Deleted.")) return;
 try {
 await addDoc(collection(db, "deleted_media"), {
 originalVisitId: report.id,
@@ -32,7 +33,7 @@ await fetchDeletedMedia();
 const bulkDeleteMedia = async (reportsToDelete) => {
 const list = reportsToDelete.filter(r => r?.image);
 if (!list.length) return;
-if (!window.confirm(`Delete ${list.length} picture(s)? They will move to Recently Deleted.`)) return;
+if (!await confirmAction(`Delete ${list.length} picture(s)? They will move to Recently Deleted.`)) return;
 try {
 for (const report of list) {
 await addDoc(collection(db, "deleted_media"), {
@@ -68,7 +69,7 @@ if (!selected.length) {
 alert("Please select at least one deleted picture to restore.");
 return;
 }
-if (!window.confirm(`Restore ${selected.length} selected picture(s)?`)) return;
+if (!await confirmAction(`Restore ${selected.length} selected picture(s)?`)) return;
 try {
 for (const item of selected) {
 if (!item?.image) continue;
@@ -90,7 +91,7 @@ alert("Error restoring selected media: " + err.message);
 }
 };
 const permanentlyDeleteMedia = async (item) => {
-if (!window.confirm("Permanently delete this picture? This cannot be undone.")) return;
+if (!await confirmAction("Permanently delete this picture? This cannot be undone.")) return;
 try {
 await deleteDoc(doc(db, "deleted_media", item.id));
 await fetchDeletedMedia();
@@ -98,7 +99,7 @@ await fetchDeletedMedia();
 };
 const permanentlyDeleteAllMedia = async () => {
 if (!deletedMedia.length) return;
-if (!window.confirm(`Permanently delete all ${deletedMedia.length} recently deleted picture(s)?`)) return;
+if (!await confirmAction(`Permanently delete all ${deletedMedia.length} recently deleted picture(s)?`)) return;
 try {
 for (const item of deletedMedia) await deleteDoc(doc(db, "deleted_media", item.id));
 await fetchDeletedMedia();
@@ -108,12 +109,11 @@ const handleDeletePicture = async (id, isAdmin = false) => {
 if (isAdmin) {
 const report = reports.find(r => r.id === id);
 if (report) {
-if (!window.confirm("Delete this picture? It will move to Recently Deleted.")) return;
 await softDeleteMedia(report);
 }
 return;
 }
-if (window.confirm("Are you sure you want to delete only this picture?")) {
+if (await confirmAction("Are you sure you want to delete only this picture?")) {
 try {
 await updateDoc(doc(db, "visits", id), { image: null });
 fetchMarketerReports(user.email, true);

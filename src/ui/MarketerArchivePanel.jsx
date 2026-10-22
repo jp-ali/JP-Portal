@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { usePortalContext } from "../context/PortalContext.jsx";
 import { marketerCityNames } from "../domain/marketerCities.js";
 import defaultAvatar from "../assets/default-marketer-avatar.svg";
+import MarketerMultiSelect from "./MarketerMultiSelect.jsx";
 import archiveCss from "../styles/marketerArchive.css?raw";
 
 const PAGE_SIZE = 10;
@@ -29,15 +30,15 @@ export default function MarketerArchivePanel({ mode }) {
   const {
     citiesList, deleteSearch, deletedMarketersList, handleBulkMarketerAction,
     handleDeleteMarketer, handlePermanentDeleteMarketer, handleRestoreMarketer,
-    marketersList, setAdminView, setDeleteSearch
+    inputStyle, marketersList, setAdminView, setDeleteSearch
   } = usePortalContext();
   const isOld = mode === "old";
   const rows = isOld ? deletedMarketersList : marketersList;
   const [oldSearch, setOldSearch] = useState("");
   const query = isOld ? oldSearch : deleteSearch;
   const setQuery = isOld ? setOldSearch : setDeleteSearch;
-  const [marketerId, setMarketerId] = useState("");
-  const [cityKey, setCityKey] = useState("");
+  const [marketerIds, setMarketerIds] = useState([]);
+  const [cityKeys, setCityKeys] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [page, setPage] = useState(1);
   const [busy, setBusy] = useState(false);
@@ -46,7 +47,7 @@ export default function MarketerArchivePanel({ mode }) {
     const available = new Set(rows.map((row) => row.id));
     setSelectedIds((current) => current.filter((id) => available.has(id)));
   }, [rows]);
-  useEffect(() => { setPage(1); setSelectedIds([]); }, [query, marketerId, cityKey]);
+  useEffect(() => { setPage(1); setSelectedIds([]); }, [query, marketerIds, cityKeys]);
 
   const cityOptions = useMemo(() => {
     const cityById = new Map(citiesList.map((city) => [String(city.id), city.name]));
@@ -64,16 +65,24 @@ export default function MarketerArchivePanel({ mode }) {
     });
     return [...options].sort((a, b) => String(a[1]).localeCompare(String(b[1])));
   }, [citiesList, rows]);
+  useEffect(() => {
+    const available = new Set(rows.map((row) => row.id));
+    setMarketerIds((current) => current.every((id) => available.has(id)) ? current : current.filter((id) => available.has(id)));
+  }, [rows]);
+  useEffect(() => {
+    const available = new Set(cityOptions.map(([key]) => key));
+    setCityKeys((current) => current.every((key) => available.has(key)) ? current : current.filter((key) => available.has(key)));
+  }, [cityOptions]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const matches = rows.filter((marketer) => {
-      if (marketerId && marketer.id !== marketerId) return false;
-      if (cityKey && !assignedCityKeys(marketer).includes(cityKey)) return false;
+      if (marketerIds.length && !marketerIds.includes(marketer.id)) return false;
+      if (cityKeys.length && !assignedCityKeys(marketer).some((key) => cityKeys.includes(key))) return false;
       return !needle || String(marketer.name || "").toLowerCase().includes(needle) || String(marketer.email || "").toLowerCase().includes(needle);
     });
     return matches;
-  }, [rows, query, marketerId, cityKey]);
+  }, [rows, query, marketerIds, cityKeys]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
@@ -119,8 +128,8 @@ export default function MarketerArchivePanel({ mode }) {
 
     <div className="marketer-archive-controls">
       <label className="marketer-archive-search"><Icon name="search" size={18} /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search marketer by name or email..." aria-label="Search marketers" /></label>
-      <select aria-label="Filter marketer" value={marketerId} onChange={(event) => setMarketerId(event.target.value)}><option value="">All Marketers</option>{rows.slice().sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""))).map((marketer) => <option key={marketer.id} value={marketer.id}>{marketer.name || marketer.email || "Unnamed Marketer"}</option>)}</select>
-      <select aria-label="Filter city" value={cityKey} onChange={(event) => setCityKey(event.target.value)}><option value="">All Cities</option>{cityOptions.map(([key, name]) => <option key={key} value={key}>{name}</option>)}</select>
+      <MarketerMultiSelect marketers={rows} selected={marketerIds} onChange={setMarketerIds} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" height={38} />
+      <MarketerMultiSelect marketers={cityOptions.map(([id, name]) => ({ id, name }))} selected={cityKeys} onChange={setCityKeys} inputStyle={inputStyle} valueKey="id" emptyLabel="All Cities" itemLabel="City" pluralLabel="Cities" height={38} />
       <button className="marketer-archive-select-all" type="button" onClick={toggleAll} disabled={!filtered.length || busy}><span className="marketer-archive-small-check">{allFilteredSelected ? "✓" : ""}</span>{allFilteredSelected ? "Deselect All" : "Select All"}</button>
       {isOld && <button className="marketer-archive-bulk-restore" type="button" onClick={() => runBulk("restore")} disabled={!selectedRows.length || busy}>Restore Selected ({selectedRows.length})</button>}
       <button className="marketer-archive-bulk-delete" type="button" onClick={() => runBulk(isOld ? "remove" : "archive")} disabled={!selectedRows.length || busy}>Delete Selected ({selectedRows.length})</button>

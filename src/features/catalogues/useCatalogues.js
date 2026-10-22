@@ -1,3 +1,4 @@
+import { confirmAction } from "../../ui/confirmDialog.js";
 import { useRef, useState } from "react";
 import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
 import { db } from "../../services/firebase";
@@ -204,7 +205,7 @@ alert("Only admin can delete catalogues.");
 return;
 }
 if (!catalogue?.id) return;
-if (!window.confirm(`Delete catalogue \"${catalogue.title || catalogue.fileName || "Catalogue"}\"? Marketers will no longer be able to view or download it.`)) return;
+if (!await confirmAction(`Delete catalogue \"${catalogue.title || catalogue.fileName || "Catalogue"}\"? Marketers will no longer be able to view or download it.`)) return;
 setCatalogueActionId(`delete:${catalogue.id}`);
 try {
 const chunkSnap = await getDocs(collection(db, "catalogues", catalogue.id, "chunks"));
