@@ -381,6 +381,7 @@ const renderExpandedReportChrome = (key) => {
 if (expandedReportKey !== key) return null;
 let excelAction = null;
 let pdfAction = null;
+let refreshAction = null;
 if (key === "attendance") { excelAction = downloadAttendanceExcel; pdfAction = downloadAttendancePDF; }
 else if (key === "verification-calls") { excelAction = downloadVerificationExcel; pdfAction = downloadVerificationPDF; }
 else if (key === "action-plans") { excelAction = downloadActionPlanExcel; pdfAction = downloadActionPlanPDF; }
@@ -397,6 +398,7 @@ excelAction = () => downloadExcel(list, "Selected_Samples_Report.xlsx");
 pdfAction = () => downloadPDF(list);
 }
 else if (key === "today-visits") {
+refreshAction = () => fetchTodayReports(true);
 const todayReports = reports.filter((r) => r.createdAt && getDateKey(r.createdAt) === getDateKey(new Date()));
 const list = selectedAdminMarketerBox ? todayReports.filter((item) => item.marketerEmail === selectedAdminMarketerBox) : todayReports;
 excelAction = () => downloadExcel(list, selectedAdminMarketerBox ? `${selectedAdminMarketerBox}_Today_Visits.xlsx` : "All_Today_Visits.xlsx");
@@ -420,6 +422,7 @@ excelAction = () => downloadExcel(list, "Sample_History.xlsx");
 pdfAction = () => downloadPDF(list);
 }
 else if (key === "marketer-today-visits") {
+refreshAction = () => fetchMarketerReports(user.email, true);
 const list = marketerReports.filter((item) => { if (!item.createdAt) return false; const d = item.createdAt.toDate ? item.createdAt.toDate() : new Date(item.createdAt); const now = new Date(); return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
 excelAction = () => downloadExcel(list, "My_Today_Visits.xlsx");
 pdfAction = () => downloadPDF(list);
@@ -433,7 +436,8 @@ return (
 <button type="button" className="report-expanded-back" onClick={() => setExpandedReportKey("")} title="Back" aria-label="Back">
 <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
 </button>
-{(excelAction || pdfAction) && <div className="report-expanded-exports">
+{(refreshAction || excelAction || pdfAction) && <div className="report-expanded-exports">
+{refreshAction && <button type="button" className="white-refresh-btn" onClick={refreshAction} title="Refresh today's visits" aria-label="Refresh today's visits" style={{ width: 32, minWidth: 32, padding: 0, background: "#fff", color: "#7a0f2b", border: "1px solid #ddcbd0", fontSize: 18 }}>↻</button>}
 {excelAction && <button type="button" className="report-expanded-excel" onClick={excelAction}>Excel</button>}
 {pdfAction && <button type="button" className="report-expanded-pdf" onClick={pdfAction}>PDF</button>}
 </div>}

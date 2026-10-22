@@ -3,7 +3,7 @@ import React from "react";
 import AdminVisitActions from "../../ui/AdminVisitActions.jsx";
 
 export default function AdminTodayVisitsPanel() {
-  const { cardStyle, downloadExcel, downloadPDF, getDateKey, getMarketerName, handleDeletePicture, handleDeleteVisit, inputStyle, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, reports, setAdminView, setEditingVisit, setVisitSearch, visitSearch } = usePortalContext();
+  const { cardStyle, downloadExcel, downloadPDF, fetchTodayReports, getDateKey, getMarketerName, handleDeletePicture, handleDeleteVisit, inputStyle, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, reports, setAdminView, setEditingVisit, setVisitSearch, visitSearch } = usePortalContext();
   const todayKey = getDateKey(new Date());
   const todayReports = reports.filter((report) => report.createdAt && getDateKey(report.createdAt) === todayKey);
   const search = visitSearch.trim().toLowerCase();
@@ -17,6 +17,7 @@ export default function AdminTodayVisitsPanel() {
     <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px", alignItems: "center" }}>
       <button onClick={() => setAdminView("home")} style={{ padding: "8px 14px", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }}>← Back</button>
       <div style={{ display: "flex", gap: "8px" }}>
+        <button className="white-refresh-btn" type="button" title="Refresh today's visits" aria-label="Refresh today's visits" onClick={() => fetchTodayReports(true)} style={{ width: "38px", height: "38px", padding: 0, background: "#fff", color: "#7a0f2b", border: "1px solid #ddcbd0", borderRadius: "9px", fontWeight: 900, fontSize: "18px", cursor: "pointer" }}>↻</button>
         <button onClick={() => downloadExcel(visibleReports, "All_Today_Visits.xlsx")} style={{ padding: "6px 12px", background: "#15803d", color: "white", border: "none", borderRadius: "8px", fontWeight: "600", fontSize: "12px", cursor: "pointer" }}>📥 Excel</button>
         <button onClick={() => downloadPDF(visibleReports)} style={{ padding: "6px 12px", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "white", border: "none", borderRadius: "8px", fontWeight: "600", fontSize: "12px", cursor: "pointer" }}>📄 PDF</button>
         {renderReportExpandButton("today-visits", "Expand today's visits")}

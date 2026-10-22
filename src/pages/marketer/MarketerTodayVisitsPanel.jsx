@@ -2,7 +2,7 @@ import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
 
 export default function MarketerTodayVisitsPanel() {
-  const { canEditVisitToday, cardStyle, downloadExcel, downloadPDF, getDateKey, marketerReports, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, setEditingVisit, setFullScreenImage, setMarketerview } = usePortalContext();
+  const { canEditVisitToday, cardStyle, downloadExcel, downloadPDF, fetchMarketerReports, getDateKey, marketerReports, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, setEditingVisit, setFullScreenImage, setMarketerview, user } = usePortalContext();
   return (<div className={reportViewClass("marketer-today-visits")}>
             {renderExpandedReportChrome("marketer-today-visits")}
             <div className="report-normal-toolbar" style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px", alignItems: "center" }}>
@@ -13,6 +13,7 @@ style={{ padding: "8px 14px", background: "linear-gradient(135deg,#6f0b24,#86132
                 ← Back
               </button>
               <div style={{ display: "flex", gap: "8px" }}>
+                <button className="white-refresh-btn" type="button" title="Refresh today's visits" aria-label="Refresh today's visits" onClick={() => fetchMarketerReports(user.email, true)} style={{ width: "38px", height: "38px", padding: 0, background: "#fff", color: "#7a0f2b", border: "1px solid #ddcbd0", borderRadius: "9px", fontWeight: 900, fontSize: "18px", cursor: "pointer" }}>↻</button>
                 <button 
 onClick={() => downloadExcel(marketerReports.filter(r => {
 if (!r.createdAt) return false;
