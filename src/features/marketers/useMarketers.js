@@ -84,9 +84,14 @@ return null;
 };
 const fetchDeletedMarketers = async () => {
 try {
-setDeletedMarketersList(await listDeletedMarketers());
+const list = await listDeletedMarketers();
+setDeletedMarketersList(list);
+const assignedCityIds = [...new Set(list.flatMap((m) => Array.isArray(m.assignedCityIds) ? m.assignedCityIds : []))];
+if (assignedCityIds.length) fetchCitiesByIds(assignedCityIds).catch(() => {});
+return list;
 } catch (err) {
 console.error(err);
+return [];
 }
 };
 const handleSaveMarketer = async (e) => {
@@ -192,8 +197,7 @@ const handleDeleteMarketer = async (m) => {
 if (window.confirm(`Are you sure you want to delete ${m.name}?`)) {
 try {
 await archiveMarketer(m.id);
-fetchMarketers(true);
-fetchDeletedMarketers();
+await Promise.all([fetchMarketers(true), fetchDeletedMarketers()]);
 alert("Marketer moved to Old Marketers list.");
 } catch (err) {
 alert("Error deleting: " + err.message);
@@ -204,7 +208,7 @@ const handlePermanentDeleteMarketer = async (m) => {
 if (window.confirm(`Are you sure you want to permanently delete ${m.name}?`)) {
 try {
 await removeDeletedMarketer(m.id);
-fetchDeletedMarketers();
+await fetchDeletedMarketers();
 alert("Marketer permanently deleted.");
 } catch (err) {
 alert("Error permanent deleting: " + err.message);
@@ -215,13 +219,33 @@ const handleRestoreMarketer = async (m) => {
 if (window.confirm(`Are you sure you want to restore ${m.name}?`)) {
 try {
 await restoreMarketer(m.id);
-fetchMarketers(true);
-fetchDeletedMarketers();
+await Promise.all([fetchMarketers(true), fetchDeletedMarketers()]);
 alert("Marketer restored successfully!");
 } catch (err) {
 alert("Error restoring: " + err.message);
 }
 }
 };
-return { marketerName, setMarketerName, marketerPhone, setMarketerPhone, marketerEmail, setMarketerEmail, marketerPass, setMarketerPass, marketerDesignation, setMarketerDesignation, marketerAssignedKms, setMarketerAssignedKms, subordinateMarketerIds, setSubordinateMarketerIds, subordinatePickerOpen, setSubordinatePickerOpen, subordinateSearch, setSubordinateSearch, marketerWhatsappGroupName, setMarketerWhatsappGroupName, marketerWhatsappGroupLink, setMarketerWhatsappGroupLink, marketersList, setMarketersList, deletedMarketersList, setDeletedMarketersList, editingId, setEditingId, editingReturnToMarketerDetails, setEditingReturnToMarketerDetails, fetchMarketers, fetchMarketersByIds, getAccessibleVisitMarketers, fetchDeletedMarketers, handleSaveMarketer, handleEditMarketer, handleDeleteMarketer, handlePermanentDeleteMarketer, handleRestoreMarketer };
+const handleBulkMarketerAction = async (items, action) => {
+const operations = { archive: archiveMarketer, restore: restoreMarketer, remove: removeDeletedMarketer };
+if (!operations[action]) return false;
+const unique = [...new Map((items || []).filter((item) => item?.id).map((item) => [item.id, item])).values()];
+if (!unique.length) return false;
+const labels = {
+archive: `Move ${unique.length} selected marketer(s) to Old Marketers?`,
+restore: `Restore ${unique.length} selected marketer(s)?`,
+remove: `Permanently delete ${unique.length} selected old marketer(s)? This cannot be undone.`
+};
+if (!window.confirm(labels[action])) return false;
+const results = await Promise.allSettled(unique.map((item) => operations[action](item.id)));
+const succeeded = results.filter((result) => result.status === "fulfilled").length;
+await Promise.all([fetchMarketers(true), fetchDeletedMarketers()]);
+if (succeeded !== unique.length) {
+alert(`${succeeded} of ${unique.length} marketer(s) updated. Please retry the remaining selection.`);
+} else {
+alert(`${succeeded} marketer(s) ${action === "archive" ? "moved to Old Marketers" : action === "restore" ? "restored" : "permanently deleted"}.`);
+}
+return succeeded === unique.length;
+};
+return { marketerName, setMarketerName, marketerPhone, setMarketerPhone, marketerEmail, setMarketerEmail, marketerPass, setMarketerPass, marketerDesignation, setMarketerDesignation, marketerAssignedKms, setMarketerAssignedKms, subordinateMarketerIds, setSubordinateMarketerIds, subordinatePickerOpen, setSubordinatePickerOpen, subordinateSearch, setSubordinateSearch, marketerWhatsappGroupName, setMarketerWhatsappGroupName, marketerWhatsappGroupLink, setMarketerWhatsappGroupLink, marketersList, setMarketersList, deletedMarketersList, setDeletedMarketersList, editingId, setEditingId, editingReturnToMarketerDetails, setEditingReturnToMarketerDetails, fetchMarketers, fetchMarketersByIds, getAccessibleVisitMarketers, fetchDeletedMarketers, handleSaveMarketer, handleEditMarketer, handleDeleteMarketer, handlePermanentDeleteMarketer, handleRestoreMarketer, handleBulkMarketerAction };
 }
