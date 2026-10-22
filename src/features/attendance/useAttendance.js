@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../../services/firebase";
-import { listMarketers } from "../../services/marketerApi";
 import { formatActionPlanDate } from "../../domain/dates.js";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
 import { mergedReportSheet } from "../../services/mergedReportSheet.js";
+import { ensureExcelReady } from "../../services/excelLoader.js";
 import { PDF_BANNER, PDF_TABLE_HEAD, PDF_TABLE_SUBHEAD, PDF_FOOTER, pdfTextFill, pdfTextWidth, pdfCenteredTextTop } from "../../services/pdfTheme.js";
 
-export function useAttendance({ user, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, setMarketerview, fetchDeletedMedia }) {
+export function useAttendance({ user, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, setMarketerview, fetchDeletedMedia, fetchMarketers }) {
 const [attendanceType, setAttendanceType] = useState("");
 const [attendanceStartReading, setAttendanceStartReading] = useState("");
 const [attendanceEndReading, setAttendanceEndReading] = useState("");
@@ -39,6 +39,8 @@ const [attendanceMediaFromDate, setAttendanceMediaFromDate] = useState(getTodayI
 const [attendanceMediaToDate, setAttendanceMediaToDate] = useState(getTodayInputDate());
 const [selectedAttendanceMediaIds, setSelectedAttendanceMediaIds] = useState([]);
 const [attendanceMediaMarketer, setAttendanceMediaMarketer] = useState(null);
+const attendanceCache = useRef({ rows: null, loadedAt: 0, pending: null });
+const todayCache = useRef({ key: "", row: null, loadedAt: 0, pending: null });
 useEffect(() => {
 const dateKey = adminAttendanceToDate || getTodayInputDate();
 const saved = attendancePetrolRates[dateKey];
@@ -46,7 +48,7 @@ setAdminAttendancePetrolRate(saved === undefined || saved === null ? "" : String
 }, [adminAttendanceToDate, attendancePetrolRates]);
 useEffect(() => {
 if (user?.role === "marketer" && (user?.marketerId || user?.email)) {
-fetchTodayAttendance(user.marketerId, user.email).catch(() => {});
+fetchTodayAttendance(false, user.marketerId, user.email).catch(() => {});
 } else if (!user) {
 setTodayAttendance(null);
 }
@@ -75,25 +77,38 @@ setAttendanceFoodExpensePhoto(null);
 setAttendanceNightStayExpensePhoto(null);
 stopAttendanceCamera();
 };
-const fetchTodayAttendance = async (marketerId = user?.marketerId, email = user?.email) => {
+const fetchTodayAttendance = (force = false, marketerId = user?.marketerId, email = user?.email) => {
 if (!marketerId && !email) return null;
-try {
+const cache = todayCache.current;
 const id = getAttendanceDocId(marketerId, email, getTodayInputDate());
+if (!force && cache.key === id && cache.loadedAt && Date.now() - cache.loadedAt < 15000) return Promise.resolve(cache.row);
+if (cache.pending && cache.key === id) return force ? cache.pending.then(() => fetchTodayAttendance(true, marketerId, email)) : cache.pending;
+cache.key = id;
+cache.pending = (async () => {
+try {
 const snap = await getDoc(doc(db, "attendance", id));
 const row = snap.exists() ? { id: snap.id, ...snap.data() } : null;
-setTodayAttendance(row);
+if (cache.key === id) { cache.row = row; cache.loadedAt = Date.now(); setTodayAttendance(row); }
 return row;
 } catch (err) {
 console.error("Today attendance fetch error:", err);
-return null;
+return cache.key === id ? cache.row : null;
+} finally {
+if (cache.key === id) cache.pending = null;
 }
+})();
+return cache.pending;
 };
-const fetchAttendanceRecords = async () => {
+const fetchAttendanceRecords = (force = false) => {
+const cache = attendanceCache.current;
+if (!force && cache.rows && Date.now() - cache.loadedAt < 30000) return Promise.resolve(cache.rows);
+if (cache.pending) return force ? cache.pending.then(() => fetchAttendanceRecords(true)) : cache.pending;
+cache.pending = (async () => {
 try {
 const [attendanceSnap, actionPlanSnap, marketerRows, petrolRateSnap] = await Promise.all([
 getDocs(collection(db, "attendance")),
 getDocs(collection(db, "action_plans")),
-listMarketers(),
+fetchMarketers(),
 getDocs(collection(db, "petrol_rates"))
 ]);
 const areaByMarketerDate = new Map();
@@ -148,11 +163,17 @@ const tb = b.updatedAt?.toDate ? b.updatedAt.toDate().getTime() : 0;
 return tb - ta;
 });
 setAttendanceRecords(rows);
+cache.rows = rows;
+cache.loadedAt = Date.now();
 return rows;
 } catch (err) {
 console.error("Attendance fetch error:", err);
-return [];
+return cache.rows || [];
+} finally {
+cache.pending = null;
 }
+})();
+return cache.pending;
 };
 const getFilteredAttendance = () => {
 return attendanceRecords.filter((r) => {
@@ -226,7 +247,7 @@ deletedAt: serverTimestamp()
 });
 await updateDoc(doc(db, "attendance", item.attendanceDocId), { [item.field]: null });
 setSelectedAttendanceMediaIds((prev) => prev.filter((id) => id !== item.id));
-await Promise.all([fetchAttendanceRecords(), fetchDeletedMedia()]);
+await Promise.all([fetchAttendanceRecords(true), fetchDeletedMedia()]);
 } catch (err) {
 alert("Error deleting attendance media: " + err.message);
 }
@@ -253,7 +274,7 @@ deletedAt: serverTimestamp()
 await updateDoc(doc(db, "attendance", item.attendanceDocId), { [item.field]: null });
 }
 setSelectedAttendanceMediaIds([]);
-await Promise.all([fetchAttendanceRecords(), fetchDeletedMedia()]);
+await Promise.all([fetchAttendanceRecords(true), fetchDeletedMedia()]);
 } catch (err) {
 alert("Error deleting selected attendance media: " + err.message);
 }
@@ -333,7 +354,7 @@ if (!raw) return;
 const value = Number(raw);
 if (!Number.isFinite(value) || value <= 0) {
 alert("Please enter valid Assigned KMs per litre.");
-await fetchAttendanceRecords();
+await fetchAttendanceRecords(true);
 return;
 }
 try {
@@ -341,7 +362,7 @@ await updateDoc(doc(db, "attendance", row.id), { assignedKms: value, updatedAt: 
 setAttendanceRecords((prev) => prev.map((item) => item.id === row.id ? { ...item, assignedKms: value } : item));
 } catch (err) {
 alert("Assigned KMs could not be saved: " + err.message);
-await fetchAttendanceRecords();
+await fetchAttendanceRecords(true);
 }
 };
 
@@ -432,7 +453,7 @@ if (!attendanceStartPhoto) {
 alert("Start Time picture is mandatory.");
 return;
 }
-const latest = await fetchTodayAttendance();
+const latest = await fetchTodayAttendance(true);
 if (latest?.startMarked) {
 alert("Start Time has already been marked for today.");
 return;
@@ -460,7 +481,7 @@ startPhoto: attendanceStartPhoto,
 startCreatedAt: serverTimestamp(),
 updatedAt: serverTimestamp()
 }, { merge: true });
-await fetchTodayAttendance();
+await fetchTodayAttendance(true);
 setAttendanceStartReading("");
 setAttendanceStartPhoto(null);
 setAttendanceType("");
@@ -472,7 +493,7 @@ setAttendanceSubmitting(false);
 }
 };
 const submitAttendanceEnd = async () => {
-const latest = await fetchTodayAttendance();
+const latest = await fetchTodayAttendance(true);
 if (!latest?.startMarked) {
 alert("Please mark Start Time first.");
 return;
@@ -529,7 +550,7 @@ nightStayExpensePhoto: attendanceNightStayExpensePhoto || null,
 endCreatedAt: serverTimestamp(),
 updatedAt: serverTimestamp()
 }, { merge: true });
-await fetchTodayAttendance();
+await fetchTodayAttendance(true);
 setAttendanceEndReading("");
 setAttendanceEndPhoto(null);
 setAttendanceOtherExpense("");
@@ -554,7 +575,7 @@ if (!reason) {
 alert("Please enter leave reason.");
 return;
 }
-const latest = await fetchTodayAttendance();
+const latest = await fetchTodayAttendance(true);
 if (latest?.startMarked || latest?.endMarked) {
 alert("Attendance has already been started for today. Leave cannot be submitted now.");
 return;
@@ -575,7 +596,7 @@ leaveTime: getClockTime(),
 leaveCreatedAt: serverTimestamp(),
 updatedAt: serverTimestamp()
 }, { merge: true });
-await fetchTodayAttendance();
+await fetchTodayAttendance(true);
 setAttendanceLeaveReason("");
 setAttendanceType("");
 alert("Leave submitted successfully.");
@@ -587,8 +608,8 @@ setAttendanceSubmitting(false);
 };
 const openAttendanceForm = async () => {
 resetAttendanceForm();
-await fetchTodayAttendance();
 setMarketerview("attendance");
+await fetchTodayAttendance();
 };
 const attendanceExportValues = (r) => {
 const petrolExpense = getAttendancePetrolExpense(r);
@@ -611,16 +632,13 @@ Number(r.otherExpense || 0),
 `Rs. ${getAttendanceTotalOtherExpense(r)}`
 ];
 };
-const downloadAttendanceExcel = () => {
+const downloadAttendanceExcel = async () => {
 const rows = getFilteredAttendance();
 if (!rows.length) {
 alert("No attendance records found in the selected range.");
 return;
 }
-if (!window.XLSX) {
-alert("Excel library is still loading. Please try again in a moment.");
-return;
-}
+if (!await ensureExcelReady()) return;
 const columns = ["SR#", "SALE OFFICER", "AREA NAME", "DAY IN", "DAY OUT", "START", "END", "KMS", "ASSIGNED KMS", "RATE", "PETROL EXPENSE", "TRANSPORT", "NIGHT STAY", "FOOD", "OTHER", "TOTAL OTHER EXPENSE"];
 const formatted = [];
 const personRanges = [];

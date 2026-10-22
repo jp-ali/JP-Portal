@@ -76,7 +76,7 @@ return;
 }
 if (key === "today-visits") {
 setAdminView("today-visits");
-fetchAllReports();
+context.fetchTodayReports();
 setSelectedAdminMarketerBox(null);
 return;
 }

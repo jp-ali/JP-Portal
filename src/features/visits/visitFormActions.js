@@ -250,7 +250,7 @@ setVisitBranches("");
 setVisitStrength("");
 setNotes("");
 setImageFile(null);
-fetchMarketerReports(user.email);
+fetchMarketerReports(user.email, true);
 } catch (err) {
 alert("Error submitting report: " + err.message);
 }
@@ -273,7 +273,7 @@ setSampleSchoolName("");
 setSamplePrincipalName("");
 setSamplePhone("");
 setSampleDetailsText("");
-fetchMarketerSamples(user.email);
+fetchMarketerSamples(user.email, true);
 } catch (err) {
 alert("Error submitting sample: " + err.message);
 }

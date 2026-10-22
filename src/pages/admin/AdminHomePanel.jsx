@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getCountFromServer, getDocs, query, Timestamp, where } from "firebase/firestore";
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import DashboardHome from "../../ui/DashboardHome.jsx";
 
 export default function AdminHomePanel() {
   const c = usePortalContext();
   const [statsReady, setStatsReady] = useState({ reports: false, marketers: false, attendance: false, plans: false });
-  const [todayCounts, setTodayCounts] = useState({ attendance: 0, plans: 0 });
+  const [todayCounts, setTodayCounts] = useState({ attendance: 0, plans: 0, visits: 0 });
   useEffect(() => {
     let active = true;
     const today = c.getTodayInputDate();
@@ -14,7 +14,18 @@ export default function AdminHomePanel() {
       const row = doc.data();
       return String(row.marketerId || row.marketerEmail || doc.id).toLowerCase();
     })).size;
-    c.fetchAllReports().then(() => { if (active) setStatsReady((current) => ({ ...current, reports: true })); }).catch(() => {});
+    const start = new Date(`${today}T00:00:00`);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    getCountFromServer(query(collection(c.db, "visits"), where("createdAt", ">=", Timestamp.fromDate(start)), where("createdAt", "<", Timestamp.fromDate(end)))).then((snapshot) => {
+      if (!active) return;
+      setTodayCounts((current) => ({ ...current, visits: snapshot.data().count }));
+      setStatsReady((current) => ({ ...current, reports: true }));
+    }).catch(() => c.fetchAllReports().then((rows) => {
+      if (!active) return;
+      setTodayCounts((current) => ({ ...current, visits: rows.filter((item) => c.getDateKey(item.createdAt) === today).length }));
+      setStatsReady((current) => ({ ...current, reports: true }));
+    }));
     c.fetchMarketers().then(() => { if (active) setStatsReady((current) => ({ ...current, marketers: true })); }).catch(() => {});
     getDocs(query(collection(c.db, "attendance"), where("date", "==", today))).then((snapshot) => {
       if (!active) return;
@@ -28,17 +39,15 @@ export default function AdminHomePanel() {
     }).catch(() => {});
     return () => { active = false; };
   }, []);
-  const today = c.getDateKey(new Date());
-  const visits = c.reports || [];
   const openAttendance = () => { const day = c.getTodayInputDate(); c.setAdminAttendanceFromDate(day); c.setAdminAttendanceToDate(day); c.setAdminAttendanceSearch(""); c.setAdminView("attendance"); c.fetchAttendanceRecords(); };
   const openActionPlans = () => { const day = c.getTodayInputDate(); c.setAdminActionPlanFromDate(day); c.setAdminActionPlanToDate(day); c.setAdminActionPlanMarketerIds([]); c.setAdminView("action-plans"); c.fetchActionPlans(); };
-  const openTodayVisits = () => { c.setAdminView("today-visits"); c.fetchAllReports(); c.setSelectedAdminMarketerBox(null); };
+  const openTodayVisits = () => { c.setAdminView("today-visits"); c.fetchTodayReports(); c.setSelectedAdminMarketerBox(null); };
   const openMarketers = () => { c.setAdminView("marketers-detail"); c.fetchMarketers(); c.setSelectedMarketerDetailBox(null); };
   const stats = [
     { label: "All Marketers", value: statsReady.marketers ? (c.marketersList || []).length : "—", icon: "♟", tone: "rose", onClick: openMarketers },
     { label: "Today's Attendance", value: statsReady.attendance ? todayCounts.attendance : "—", icon: "◷", tone: "mint", onClick: openAttendance },
     { label: "Today's Action Plan", value: statsReady.plans ? todayCounts.plans : "—", icon: "▤", tone: "pink", onClick: openActionPlans },
-    { label: "Today's Visits", value: statsReady.reports ? visits.filter((item) => c.getDateKey(item.createdAt) === today).length : "—", icon: "▦", tone: "amber", onClick: openTodayVisits }
+    { label: "Today's Visits", value: statsReady.reports ? todayCounts.visits : "—", icon: "▦", tone: "amber", onClick: openTodayVisits }
   ];
   const openVisits = () => { c.setAdminView("visits"); c.fetchAllReports(); c.fetchMarketers(); c.setSelectedAdminAllBoxKey(null); c.setAllVisitsFromDate(""); c.setAllVisitsToDate(""); c.setSelectedMarketersFilter([]); };
   const sections = [

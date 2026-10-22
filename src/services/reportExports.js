@@ -1,6 +1,7 @@
 import { mergedReportSheet } from "./mergedReportSheet.js";
 import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill, pdfTextWidth, pdfCenteredTextTop } from "./pdfTheme.js";
 import { marketerCityNames } from "../domain/marketerCities.js";
+import { ensureExcelReady } from "./excelLoader.js";
 
 export function createReportExporters({ formatTime12, getMarketerName }) {
 const formatVisitDate = (value) => value?.toDate
@@ -24,11 +25,8 @@ person.dates.get(date).push(item);
 });
 return people;
 };
-const downloadExcel = (dataList, filename = "Report.xlsx") => {
-if (!window.XLSX) {
-alert("Excel library is still loading. Please try again in a moment.");
-return;
-}
+const downloadExcel = async (dataList, filename = "Report.xlsx") => {
+if (!await ensureExcelReady()) return;
 const XLSX = window.XLSX;
 const rows = Array.isArray(dataList) ? dataList : [];
 const headings = ["Sr.", "Name", "Visit Date", "Sr#", "City", "Area", "School Name", "Contact Person", "Phone No", "Visit Time", "Session", "Branches", "Strength", "Purpose / Details", "Remarks"];
@@ -366,16 +364,13 @@ if (!sample) return;
 const safeName = String(sample.schoolName || "Sample").replace(/[^a-z0-9_-]+/gi, "_");
 downloadExcel([sample], `Sample_${safeName}.xlsx`);
 };
-const downloadMarketersExcel = (dataList, filename = "Marketer_Details.xlsx", citiesList = []) => {
+const downloadMarketersExcel = async (dataList, filename = "Marketer_Details.xlsx", citiesList = []) => {
 const rows = Array.isArray(dataList) ? dataList : [];
 if (!rows.length) {
 alert("No marketer details found to download.");
 return;
 }
-if (!window.XLSX) {
-alert("Excel library is still loading. Please try again in a moment.");
-return;
-}
+if (!await ensureExcelReady()) return;
 const formattedData = rows.map((m, idx) => ({
 "Sr.": idx + 1,
 "Name": m.name || "N/A",

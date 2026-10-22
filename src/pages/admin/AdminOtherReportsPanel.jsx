@@ -281,7 +281,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
         { key: "verificationRemarksText", label: "Remarks", type: "remarks" }
       ] };
     }
-    try { if (kind === "excel") exportCustomReportExcel(exportReport, exportRows, marketersList); else await exportCustomReportPDF(exportReport, exportRows, marketersList); setError(""); }
+    try { if (kind === "excel") await exportCustomReportExcel(exportReport, exportRows, marketersList); else await exportCustomReportPDF(exportReport, exportRows, marketersList); setError(""); }
     catch (cause) { setError(cause.message); }
   };
 

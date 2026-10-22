@@ -13,12 +13,12 @@ function EyeIcon({ visible }) {
 export default function LoginPage({ context }) {
   const { error, handleLogin, identifier, loginPending, password, preloadPortal, renderBackgroundStationary, setIdentifier, setPassword, setShowPassword, showPassword, onWorkOffline, online } = context;
   useEffect(() => {
-    if (window.matchMedia("(min-width: 768px)").matches) { preloadPortal(true).catch(() => {}); return; }
+    if (!window.matchMedia("(min-width: 1024px)").matches) return;
     if ("requestIdleCallback" in window) {
-      const id = window.requestIdleCallback(() => preloadPortal().catch(() => {}));
+      const id = window.requestIdleCallback(() => preloadPortal().catch(() => {}), { timeout: 3500 });
       return () => window.cancelIdleCallback(id);
     }
-    const id = window.setTimeout(() => preloadPortal().catch(() => {}), 350);
+    const id = window.setTimeout(() => preloadPortal().catch(() => {}), 2500);
     return () => window.clearTimeout(id);
   }, [preloadPortal]);
 
@@ -31,7 +31,7 @@ export default function LoginPage({ context }) {
     <main className="login-form-panel">
       <div className="login-card">
         <div className="login-brand"><div className="login-bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><h1>JAVED PUBLISHERS</h1><p>School Visit Portal</p></div>
-        <form onSubmit={handleLogin} onFocusCapture={() => preloadPortal(window.matchMedia("(min-width: 768px)").matches).catch(() => {})}>
+        <form onSubmit={handleLogin}>
           <div className="login-field"><label htmlFor="login-identifier">Email or Phone Number</label><div className="login-input-wrap"><input id="login-identifier" type="text" autoComplete="username" placeholder="admin@portal.com" value={identifier} onChange={(event) => setIdentifier(event.target.value)} required /><span className="login-input-icon"><PersonIcon /></span></div></div>
           <div className="login-field"><label htmlFor="login-password">Password</label><div className="login-input-wrap"><input id="login-password" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Enter your password" value={password} onChange={(event) => setPassword(event.target.value)} required /><button className="login-eye" type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"}><EyeIcon visible={showPassword} /></button></div></div>
           <button className="login-submit" type="submit" disabled={loginPending}>{loginPending ? "Signing In..." : "Sign In"}</button>

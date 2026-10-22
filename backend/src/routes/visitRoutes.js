@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { updateVisit } from "../controllers/visitController.js";
+import { marketerVisitSummary, updateVisit } from "../controllers/visitController.js";
 import { requireAuth } from "../middleware/auth.js";
 
 export const visitRoutes = Router();
+visitRoutes.get("/summary", requireAuth, marketerVisitSummary);
 visitRoutes.patch("/:id", requireAuth, updateVisit);

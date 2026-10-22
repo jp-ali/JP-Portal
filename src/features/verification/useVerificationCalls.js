@@ -3,6 +3,7 @@ import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { formatActionPlanDate } from "../../domain/dates.js";
 import { mergedReportSheet } from "../../services/mergedReportSheet.js";
+import { ensureExcelReady } from "../../services/excelLoader.js";
 import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill, pdfTextWidth, pdfCenteredTextTop } from "../../services/pdfTheme.js";
 import { VERIFICATION_REMARK_OPTIONS } from "../../domain/verificationRemarks.js";
 
@@ -52,15 +53,15 @@ verificationUpdatedAt: serverTimestamp()
 } catch (err) {
 console.error("Verification remark update error:", err);
 alert("Remarks could not be saved. Please try again.");
-await fetchAllReports();
+await fetchAllReports(true);
 } finally {
 setVerificationSavingId("");
 }
 };
-const downloadVerificationExcel = () => {
+const downloadVerificationExcel = async () => {
 const rows = getFilteredVerificationRows();
 if (!rows.length) { alert("No verification calls found for the selected range."); return; }
-if (!window.XLSX) { alert("Excel library is still loading. Please try again in a moment."); return; }
+if (!await ensureExcelReady()) return;
 const data = rows.map((row, index) => ({
 "Sr.": index + 1,
 "Date": row.createdAt?.toDate ? row.createdAt.toDate().toLocaleDateString("en-GB") : "N/A",

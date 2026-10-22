@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { addDoc, collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { getSession } from "../../services/authApi";
 import { formatActionPlanDate } from "../../domain/dates.js";
 import { mergedReportSheet } from "../../services/mergedReportSheet.js";
+import { ensureExcelReady } from "../../services/excelLoader.js";
 import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill, pdfTextWidth, pdfCenteredTextTop } from "../../services/pdfTheme.js";
 
 export function useActionPlans({ user, setUser, setMarketerview, marketersList, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId }) {
@@ -13,6 +14,7 @@ const [actionPlanPurpose, setActionPlanPurpose] = useState("");
 const [actionPlanSubmitting, setActionPlanSubmitting] = useState(false);
 const [actionPlanSuccess, setActionPlanSuccess] = useState("");
 const [actionPlans, setActionPlans] = useState([]);
+const actionPlansCache = useRef({ rows: null, loadedAt: 0, pending: null });
 const [adminActionPlanFromDate, setAdminActionPlanFromDate] = useState(getTodayInputDate());
 const [adminActionPlanToDate, setAdminActionPlanToDate] = useState(getTodayInputDate());
 const [adminActionPlanMarketerIds, setAdminActionPlanMarketerIds] = useState([]);
@@ -40,7 +42,11 @@ Area: ${areaName}
 purpose : ${purposeValue}
 Regards : ${designationValue || "Regional Manager"}
 ${marketerNameValue}`;
-const fetchActionPlans = async () => {
+const fetchActionPlans = (force = false) => {
+const cache = actionPlansCache.current;
+if (!force && cache.rows && Date.now() - cache.loadedAt < 30000) return Promise.resolve(cache.rows);
+if (cache.pending) return force ? cache.pending.then(() => fetchActionPlans(true)) : cache.pending;
+cache.pending = (async () => {
 try {
 const snap = await getDocs(collection(db, "action_plans"));
 const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -50,11 +56,17 @@ const tb = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
 return tb - ta;
 });
 setActionPlans(rows);
+cache.rows = rows;
+cache.loadedAt = Date.now();
 return rows;
 } catch (err) {
 console.error("Action plan fetch error:", err);
-return [];
+return cache.rows || [];
+} finally {
+cache.pending = null;
 }
+})();
+return cache.pending;
 };
 const getFilteredActionPlans = () => {
 return actionPlans.filter((p) => {
@@ -69,16 +81,13 @@ return [id, marketer?.email, marketer?.name].some((identity) => identity &&
 return matchesFrom && matchesTo && matchesMarketer;
 });
 };
-const downloadActionPlanExcel = () => {
+const downloadActionPlanExcel = async () => {
 const rows = getFilteredActionPlans();
 if (!rows.length) {
 alert("No action plans found in the selected date range.");
 return;
 }
-if (!window.XLSX) {
-alert("Excel library is still loading. Please try again in a moment.");
-return;
-}
+if (!await ensureExcelReady()) return;
 const formatted = [];
 const merges = [];
 groupRowsByMarketerAndDate(rows, { getDateValue: (plan) => plan?.date }).forEach((person, personIndex) => {
@@ -147,6 +156,7 @@ if (!window.confirm(`Delete this action plan for ${who}? This cannot be undone.`
 try {
 await deleteDoc(doc(db, "action_plans", plan.id));
 setActionPlans((prev) => prev.filter((p) => p.id !== plan.id));
+if (actionPlansCache.current.rows) actionPlansCache.current.rows = actionPlansCache.current.rows.filter((p) => p.id !== plan.id);
 } catch (err) {
 alert("Error deleting action plan: " + err.message);
 }
@@ -171,7 +181,7 @@ if (!actionPlanDate || !typedArea || !typedPurpose) {
 alert("Please enter date, area and purpose.");
 return;
 }
-const attendanceBeforePlan = await fetchTodayAttendance();
+const attendanceBeforePlan = await fetchTodayAttendance(true);
 if (!attendanceBeforePlan?.startMarked || attendanceBeforePlan?.status === "leave") {
 alert("Please mark Start Time attendance first. Action Plan is available after attendance is marked.");
 return;
@@ -226,7 +236,7 @@ actionPlanId: actionPlanDoc.id,
 actionPlanSentAt: serverTimestamp(),
 updatedAt: serverTimestamp()
 }, { merge: true });
-await fetchTodayAttendance();
+await fetchTodayAttendance(true);
 }
 const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
 try { await copyTextToClipboard(message); } catch (_) {}
@@ -238,7 +248,7 @@ window.location.href = whatsappUrl;
 setActionPlanSuccess(
 "Action plan saved. WhatsApp opened with the message ready. Select the required group/chat and press Send."
 );
-fetchActionPlans().catch(() => {});
+fetchActionPlans(true).catch(() => {});
 } catch (err) {
 if (whatsappWindow && !whatsappWindow.closed) whatsappWindow.close();
 alert("Error saving action plan: " + err.message);

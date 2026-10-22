@@ -1,6 +1,7 @@
 import React, { Component, lazy, Suspense, useEffect, useRef, useState } from "react";
 import LoginPage from "./pages/LoginPage.jsx";
 import OfflineVisitPortal from "./pages/OfflineVisitPortal.jsx";
+import { listOfflineVisits } from "./services/offlineVisitStore.js";
 import { getSession, login, logout } from "./services/authApi.js";
 import { globalStyle, containerStyle, cardStyle, inputStyle, btnPrimary, footerStyle, renderBackgroundStationary, renderResponsiveStyles } from "./ui/portalPresentation.jsx";
 import PortalLoading from "./ui/PortalLoading.jsx";
@@ -57,7 +58,12 @@ export default function App() {
     if (!online || session.user?.role !== "marketer") return { synced: 0 };
     if (syncing.current) return syncing.current;
     syncing.current = (async () => {
-      try { const { syncOfflineVisits } = await import("./services/offlineVisitSync.js"); return await syncOfflineVisits(session.user); }
+      try {
+        const drafts = await listOfflineVisits();
+        if (!drafts.some((item) => String(item.ownerEmail || "").toLowerCase() === String(session.user.email || "").toLowerCase())) return { synced: 0 };
+        const { syncOfflineVisits } = await import("./services/offlineVisitSync.js");
+        return await syncOfflineVisits(session.user);
+      }
       catch (failure) { console.warn("Offline visits remain on this device until sync succeeds:", failure); return { synced: 0, error: failure.message }; }
       finally { syncing.current = null; }
     })();
@@ -82,12 +88,12 @@ export default function App() {
     if (loginPending) return;
     setError("");
     setLoginPending(true);
-    preloadPortal().catch(() => {});
     try {
       const user = await login(identifier, password);
       setPassword("");
       setSession({ loading: false, user });
       setOfflineMode(false);
+      preloadPortal().catch(() => {});
     } catch (failure) {
       setError(failure.message || "Login failed");
     } finally {

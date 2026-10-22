@@ -3,7 +3,7 @@ import test from "node:test";
 import XLSX from "xlsx-js-style";
 import { createReportExporters } from "./reportExports.js";
 
-test("School Visits Excel follows the PDF columns and merged person/date groups", () => {
+test("School Visits Excel follows the PDF columns and merged person/date groups", async () => {
   let book;
   globalThis.window = { XLSX: { ...XLSX, writeFile: (value) => { book = value; } } };
   const makeVisit = (name, day, session, branches, strength) => ({
@@ -19,7 +19,7 @@ test("School Visits Excel follows the PDF columns and merged person/date groups"
     makeVisit("Ali", "2026-10-03", "Evening", "4", "400"),
     makeVisit("Hamza", "2026-10-04", "Morning", "1", "100")
   ];
-  createReportExporters({ formatTime12: () => "12:00 PM", getMarketerName: (_email, name) => name }).downloadExcel(visits);
+  await createReportExporters({ formatTime12: () => "12:00 PM", getMarketerName: (_email, name) => name }).downloadExcel(visits);
   const sheet = book.Sheets.Report;
   const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
   assert.deepEqual(rows[2], ["Sr.", "Name", "Visit Date", "Sr#", "City", "Area", "School Name", "Contact Person", "Phone No", "Visit Time", "Session", "Branches", "Strength", "Purpose / Details", "Remarks"]);

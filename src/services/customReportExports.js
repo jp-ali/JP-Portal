@@ -1,4 +1,5 @@
 import { reportColumns, rowValue } from "../domain/customReportSchema.js";
+import { ensureExcelReady } from "./excelLoader.js";
 
 const filename = (title) => String(title || "Custom_Report").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 60);
 const downloadDate = () => new Date().toLocaleDateString("en-GB");
@@ -20,8 +21,8 @@ const contiguousGroups = (rows, getKey) => {
 const dateGroups = (rows, report) => contiguousGroups(rows, (row) => `${report.verificationLayout ? `${row.verificationGroup}\u0000` : ""}${row.date || report.date}`);
 const personGroups = (rows) => contiguousGroups(rows, (row) => row.verificationGroup);
 
-export function exportCustomReportExcel(report, rows, marketers = []) {
-  if (!window.XLSX) throw new Error("Excel exporter is still loading. Please try again.");
+export async function exportCustomReportExcel(report, rows, marketers = []) {
+  if (!await ensureExcelReady()) throw new Error("Excel exporter could not load.");
   const XLSX = window.XLSX;
   const columns = exportColumns(report);
   const last = columns.length - 1;

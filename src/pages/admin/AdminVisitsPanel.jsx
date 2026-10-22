@@ -34,7 +34,7 @@ export default function AdminVisitsPanel() {
     </div>
     <div style={cardStyle}>
       <h3 style={{ marginTop: 0, color: "#3b2329", fontSize: "17px", marginBottom: "14px" }}>All Visits & Reports</h3>
-      <ReportMarketerFilterBar fromDate={allVisitsFromDate} toDate={allVisitsToDate} onFromDate={setAllVisitsFromDate} onToDate={setAllVisitsToDate} onClear={() => { setAllVisitsFromDate(""); setAllVisitsToDate(""); }} marketers={marketersList} selected={selectedMarketersFilter} onSelected={setSelectedMarketersFilter} onRefresh={() => Promise.all([fetchAllReports(), fetchMarketers()])} inputStyle={inputStyle} />
+      <ReportMarketerFilterBar fromDate={allVisitsFromDate} toDate={allVisitsToDate} onFromDate={setAllVisitsFromDate} onToDate={setAllVisitsToDate} onClear={() => { setAllVisitsFromDate(""); setAllVisitsToDate(""); }} marketers={marketersList} selected={selectedMarketersFilter} onSelected={setSelectedMarketersFilter} onRefresh={() => Promise.all([fetchAllReports(true), fetchMarketers(true)])} inputStyle={inputStyle} />
       {!hasRange ? <div style={{ padding: "16px", borderRadius: "12px", background: "#faf6f7", color: "#78686d", fontSize: "13px", textAlign: "center" }}>Select a date range to view visits.</div>
         : !filtered.length ? <p style={{ color: "#78686d", fontSize: "14px" }}>No visits match the selected range and marketer filters.</p>
         : <>

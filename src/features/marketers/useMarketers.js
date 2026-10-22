@@ -15,6 +15,7 @@ const [marketerWhatsappGroupName, setMarketerWhatsappGroupName] = useState("");
 const [marketerWhatsappGroupLink, setMarketerWhatsappGroupLink] = useState("");
 const [marketersList, setMarketersList] = useState([]);
 const marketersCache = useRef({ rows: null, loadedAt: 0, pending: null });
+const accessibleCache = useRef({ rows: null, loadedAt: 0, pending: null });
 const [deletedMarketersList, setDeletedMarketersList] = useState([]);
 const [editingId, setEditingId] = useState(null);
 const [editingReturnToMarketerDetails, setEditingReturnToMarketerDetails] = useState(false);
@@ -52,7 +53,16 @@ return [];
 }
 try {
 const allowed = new Set(uniqueIds);
-const rows = (await listAccessibleMarketers()).filter((item) => allowed.has(item.id));
+const cache = accessibleCache.current;
+if (!cache.rows || Date.now() - cache.loadedAt >= 30000) {
+if (!cache.pending) cache.pending = listAccessibleMarketers().then((rows) => {
+cache.rows = rows;
+cache.loadedAt = Date.now();
+return rows;
+}).finally(() => { cache.pending = null; });
+await cache.pending;
+}
+const rows = (cache.rows || []).filter((item) => allowed.has(item.id));
 rows.sort((a, b) => String(a.name || a.email || "").localeCompare(String(b.name || b.email || "")));
 setMarketersList(rows);
 return rows;

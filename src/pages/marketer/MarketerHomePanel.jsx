@@ -1,24 +1,32 @@
 import React, { useEffect, useState } from "react";
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import DashboardHome from "../../ui/DashboardHome.jsx";
+import { request } from "../../services/authApi.js";
 
 export default function MarketerHomePanel() {
   const c = usePortalContext();
   const [statsReady, setStatsReady] = useState({ visits: false, samples: false });
+  const [summary, setSummary] = useState(null);
   useEffect(() => {
     let active = true;
-    c.fetchMarketerReports(c.user.email).then(() => { if (active) setStatsReady((current) => ({ ...current, visits: true })); }).catch(() => {});
-    c.fetchMarketerSamples(c.user.email).then(() => { if (active) setStatsReady((current) => ({ ...current, samples: true })); }).catch(() => {});
+    request("/visits/summary").then((result) => {
+      if (!active) return;
+      setSummary(result.summary);
+      setStatsReady({ visits: true, samples: true });
+    }).catch(() => {
+      c.fetchMarketerReports(c.user.email).then(() => { if (active) setStatsReady((current) => ({ ...current, visits: true })); }).catch(() => {});
+      c.fetchMarketerSamples(c.user.email).then(() => { if (active) setStatsReady((current) => ({ ...current, samples: true })); }).catch(() => {});
+    });
     return () => { active = false; };
   }, [c.user.email]);
   const visits = c.marketerReports || [];
   const today = c.getDateKey(new Date());
   const attendance = c.todayAttendance;
   const stats = [
-    { label: "My Visits", value: statsReady.visits ? visits.length : "—", icon: "▥", tone: "rose" },
-    { label: "Today's Visits", value: statsReady.visits ? visits.filter((item) => c.getDateKey(item.createdAt) === today).length : "—", icon: "▦", tone: "mint" },
-    { label: "Monthly Visits", value: statsReady.visits ? visits.filter((item) => c.getDateKey(item.createdAt).startsWith(today.slice(0, 7))).length : "—", icon: "▥", tone: "pink" },
-    { label: "My Samples", value: statsReady.samples ? (c.marketerSamples || []).length : "—", icon: "◇", tone: "amber" }
+    { label: "My Visits", value: statsReady.visits ? summary?.visits ?? visits.length : "—", icon: "▥", tone: "rose" },
+    { label: "Today's Visits", value: statsReady.visits ? summary?.todayVisits ?? visits.filter((item) => c.getDateKey(item.createdAt) === today).length : "—", icon: "▦", tone: "mint" },
+    { label: "Monthly Visits", value: statsReady.visits ? summary?.monthlyVisits ?? visits.filter((item) => c.getDateKey(item.createdAt).startsWith(today.slice(0, 7))).length : "—", icon: "▥", tone: "pink" },
+    { label: "My Samples", value: statsReady.samples ? summary?.samples ?? (c.marketerSamples || []).length : "—", icon: "◇", tone: "amber" }
   ];
   const sections = [
     { title: "Daily Activity", icon: "▥", description: "Start and manage your day", items: [

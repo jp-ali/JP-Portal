@@ -19,7 +19,7 @@ export default function AdminVerificationCallsPanel() {
                   <h3 style={{ margin:"0 0 4px", color:"#3b2329", fontSize:"18px" }}>☎️ Verification Calls</h3>
                   <p style={{ margin:0, color:"#78686d", fontSize:"11.5px" }}>Verify school visits, call principals directly and save call remarks for later review.</p>
                 </div>
-                <ReportMarketerFilterBar fromDate={verificationFromDate} toDate={verificationToDate} onFromDate={setVerificationFromDate} onToDate={setVerificationToDate} onClear={() => { setVerificationFromDate(""); setVerificationToDate(""); }} marketers={marketersList} selected={verificationMarketerIds} onSelected={setVerificationMarketerIds} valueKey="id" onRefresh={() => Promise.all([fetchAllReports(), fetchMarketers()])} inputStyle={inputStyle} />
+                <ReportMarketerFilterBar fromDate={verificationFromDate} toDate={verificationToDate} onFromDate={setVerificationFromDate} onToDate={setVerificationToDate} onClear={() => { setVerificationFromDate(""); setVerificationToDate(""); }} marketers={marketersList} selected={verificationMarketerIds} onSelected={setVerificationMarketerIds} valueKey="id" onRefresh={() => Promise.all([fetchAllReports(true), fetchMarketers(true)])} inputStyle={inputStyle} />
                 {(() => {
 const rows=getFilteredVerificationRows();
 if(!rows.length) return <div style={{ padding:"18px", textAlign:"center", color:"#78686d", border:"1px dashed #decbd0", borderRadius:"12px" }}>No visit records found for the selected range / marketers.</div>;

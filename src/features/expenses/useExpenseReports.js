@@ -3,6 +3,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { calculatedKms, dailyAssignedKms, dailyPetrolExpense, dailyPetrolRate } from "./expenseCalculations.js";
 import { boldReportTotalRow, mergedReportSheet } from "../../services/mergedReportSheet.js";
+import { ensureExcelReady } from "../../services/excelLoader.js";
 import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill, pdfTextWidth, pdfCenteredTextTop } from "../../services/pdfTheme.js";
 
 export function useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12, groupRowsByMarketerAndDate }) {
@@ -83,7 +84,7 @@ totalOtherExpense: transport + nightStay + food + other
 };
 });
 };
-const downloadExpenseReportExcel = () => {
+const downloadExpenseReportExcel = async () => {
 if (!expenseReportFromDate || !expenseReportToDate) {
 alert("Please select From Date and To Date first.");
 return;
@@ -93,10 +94,7 @@ if (!rows.length) {
 alert("No expense report data found for the selected range.");
 return;
 }
-if (!window.XLSX) {
-alert("Excel library is still loading. Please try again in a moment.");
-return;
-}
+if (!await ensureExcelReady()) return;
 const totalKms = rows.reduce((sum, row) => sum + Number(row.kms || 0), 0);
 const totalPetrol = rows.reduce((sum, row) => sum + Number(row.petrolExpense || 0), 0);
 const totalTransport = rows.reduce((sum, row) => sum + Number(row.transport || 0), 0);
@@ -388,7 +386,7 @@ other,
 totalOtherExpense: transport + nightStay + food + other
 };
 });
-const downloadAdminExpenseExcel = () => {
+const downloadAdminExpenseExcel = async () => {
 if (!adminExpenseFromDate || !adminExpenseToDate) {
 alert("Please select From Date and To Date first.");
 return;
@@ -398,10 +396,7 @@ if (!rows.length) {
 alert("No expense report data found for the selected range.");
 return;
 }
-if (!window.XLSX) {
-alert("Excel library is still loading. Please try again in a moment.");
-return;
-}
+if (!await ensureExcelReady()) return;
 const totalKms = rows.reduce((sum, row) => sum + Number(row.kms || 0), 0);
 const totalPetrol = rows.reduce((sum, row) => sum + Number(row.petrolExpense || 0), 0);
 const totalTransport = rows.reduce((sum, row) => sum + Number(row.transport || 0), 0);

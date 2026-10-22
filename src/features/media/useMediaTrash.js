@@ -25,7 +25,7 @@ deletedAt: serverTimestamp()
 });
 await updateDoc(doc(db, "visits", report.id), { image: null });
 setSelectedMediaIds(prev => prev.filter(id => id !== report.id));
-await fetchAllReports();
+await fetchAllReports(true);
 await fetchDeletedMedia();
 } catch (err) { alert("Error deleting media: " + err.message); }
 };
@@ -42,7 +42,7 @@ marketerEmail: report.marketerEmail || "", marketerName: getMarketerName(report.
 await updateDoc(doc(db, "visits", report.id), { image: null });
 }
 setSelectedMediaIds([]);
-await fetchAllReports();
+await fetchAllReports(true);
 await fetchDeletedMedia();
 alert("Selected media moved to Recently Deleted.");
 } catch (err) { alert("Error deleting media: " + err.message); }
@@ -53,13 +53,13 @@ if (!item?.image) return;
 if (item.mediaType === "attendance" && item.attendanceDocId && item.attendanceField) {
 await updateDoc(doc(db, "attendance", item.attendanceDocId), { [item.attendanceField]: item.image });
 await deleteDoc(doc(db, "deleted_media", item.id));
-await Promise.all([fetchAttendanceRecords(), fetchDeletedMedia()]);
+await Promise.all([fetchAttendanceRecords(true), fetchDeletedMedia()]);
 return;
 }
 if (!item.originalVisitId) return;
 await updateDoc(doc(db, "visits", item.originalVisitId), { image: item.image });
 await deleteDoc(doc(db, "deleted_media", item.id));
-await Promise.all([fetchAllReports(), fetchDeletedMedia()]);
+await Promise.all([fetchAllReports(true), fetchDeletedMedia()]);
 } catch (err) { alert("Error restoring media: " + err.message); }
 };
 const restoreSelectedMedia = async () => {
@@ -83,7 +83,7 @@ await deleteDoc(doc(db, "deleted_media", item.id));
 }
 }
 setSelectedDeletedMediaIds([]);
-await Promise.all([fetchAllReports(), fetchAttendanceRecords(), fetchDeletedMedia()]);
+await Promise.all([fetchAllReports(true), fetchAttendanceRecords(true), fetchDeletedMedia()]);
 alert(`${selected.length} picture(s) restored successfully.`);
 } catch (err) {
 alert("Error restoring selected media: " + err.message);
@@ -116,7 +116,7 @@ return;
 if (window.confirm("Are you sure you want to delete only this picture?")) {
 try {
 await updateDoc(doc(db, "visits", id), { image: null });
-fetchMarketerReports(user.email);
+fetchMarketerReports(user.email, true);
 alert("Picture deleted successfully.");
 } catch (err) { alert("Error deleting picture: " + err.message); }
 }

@@ -36,7 +36,7 @@ style={{ padding: "6px 12px", background: "linear-gradient(135deg,#6f0b24,#86132
                   <h3 style={{ margin: 0, color: "#3b2329", fontSize: "18px" }}>🗓️ Daily Action Plans</h3>
                   <p style={{ margin: "4px 0 0", color: "#78686d", fontSize: "12px" }}>View, filter, download or delete submitted action plans.</p>
                 </div>
-                <ReportMarketerFilterBar fromDate={adminActionPlanFromDate} toDate={adminActionPlanToDate} onFromDate={setAdminActionPlanFromDate} onToDate={setAdminActionPlanToDate} onClear={() => { setAdminActionPlanFromDate(""); setAdminActionPlanToDate(""); }} marketers={marketersList} selected={adminActionPlanMarketerIds} onSelected={setAdminActionPlanMarketerIds} onRefresh={() => Promise.all([fetchActionPlans(), fetchMarketers()])} inputStyle={inputStyle} valueKey="id" />
+                <ReportMarketerFilterBar fromDate={adminActionPlanFromDate} toDate={adminActionPlanToDate} onFromDate={setAdminActionPlanFromDate} onToDate={setAdminActionPlanToDate} onClear={() => { setAdminActionPlanFromDate(""); setAdminActionPlanToDate(""); }} marketers={marketersList} selected={adminActionPlanMarketerIds} onSelected={setAdminActionPlanMarketerIds} onRefresh={() => Promise.all([fetchActionPlans(true), fetchMarketers(true)])} inputStyle={inputStyle} valueKey="id" />
                 {(() => {
 const rows = getFilteredActionPlans();
 return rows.length === 0 ? (
