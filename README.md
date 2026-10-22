@@ -42,6 +42,12 @@ The card designer can download PDF, editable SVG, and a WhatsApp ZIP containing 
 
 For phone testing, connect the phone and computer to the same Wi-Fi and open `http://<computer-Wi-Fi-IP>:5173` on the phone. The Vite server listens on the local network, and its `/api` proxy passes same-origin mobile login requests to the local API. Keep both frontend and API running on the computer. The phone's own `localhost` points to the phone, so use the computer's Wi-Fi IP.
 
+## Installable app and offline visits
+
+The production build includes a web manifest and service worker. Serve `dist/` over HTTPS (or `localhost` for desktop testing), open the site once online, and install it from the browser's **Add to Home Screen / Install app** menu. Vite development mode does not register the service worker; a phone opening the plain HTTP LAN development URL cannot install or run the PWA offline.
+
+When a marketer loses the connection, the app shows a limited offline workspace. Add Visit remains available and stores school details plus a compressed photo in that browser's IndexedDB. Other sections appear dimmed. A person who has never signed in can enter a name and marketer email for local drafts, but that is **not an authenticated login**. After internet returns, sign in to the same marketer account; matching drafts upload automatically. If upload fails, drafts remain on the device and retry on the next login or connection. Keep the browser's site data until upload finishes.
+
 ## Environment variables
 
 The frontend `.env` contains `VITE_API_BASE_URL` and the active Firebase web configuration; `.env.example` is its template. These `VITE_` values are included in the browser build and are not private credentials. `backend/.env` has been created locally and is ignored by Git. It contains the existing admin account's bcrypt hash, a generated session secret, and the existing Firebase project ID. **Set `GOOGLE_APPLICATION_CREDENTIALS` to the absolute path of a service-account JSON file for this Firebase project before marketer login or account management can use Firestore.** Keep that JSON file outside the repository. `backend/.env.example` lists all server keys. Use a different `SESSION_SECRET` and admin password hash in each deployed environment. `NODE_ENV=production` marks session cookies `Secure`.

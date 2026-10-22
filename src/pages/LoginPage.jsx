@@ -11,7 +11,7 @@ function EyeIcon({ visible }) {
 }
 
 export default function LoginPage({ context }) {
-  const { error, handleLogin, identifier, loginPending, password, preloadPortal, renderBackgroundStationary, setIdentifier, setPassword, setShowPassword, showPassword } = context;
+  const { error, handleLogin, identifier, loginPending, password, preloadPortal, renderBackgroundStationary, setIdentifier, setPassword, setShowPassword, showPassword, onWorkOffline, online } = context;
   useEffect(() => {
     if (window.matchMedia("(min-width: 768px)").matches) { preloadPortal(true).catch(() => {}); return; }
     if ("requestIdleCallback" in window) {
@@ -37,6 +37,7 @@ export default function LoginPage({ context }) {
           <button className="login-submit" type="submit" disabled={loginPending}>{loginPending ? "Signing In..." : "Sign In"}</button>
           {error && <p className="login-error" role="alert">{error}</p>}
         </form>
+        <button className="login-offline" type="button" onClick={onWorkOffline}>{online ? "Work offline / save visits as drafts" : "Open offline Add Visit"}</button>
       </div>
       <p className="login-credit">Created by Ali Ashfaq</p>
     </main>

@@ -25,6 +25,7 @@ html,body,#root { margin:0; min-height:100%; }
 .login-submit:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 19px rgba(128,12,48,.22); }
 .login-submit:disabled { opacity:.66; cursor:wait; }
 .login-error { margin:0; color:#cc294b; font-size:12px; font-weight:700; line-height:1.4; text-align:center; }
+.login-offline { display:block; width:100%; margin-top:13px; padding:11px; border:1px solid #d8abb9; border-radius:10px; background:#fff3f6; color:#840d34; font-size:13px; font-weight:800; cursor:pointer; }
 .login-credit { margin:0; color:#8f7e84; font-size:12px; font-weight:600; }
 @media(max-width:950px) { .login-screen { grid-template-columns:50% 50%; }.login-form-panel { padding:25px; } }
 @media(max-width:767px) { .login-screen { grid-template-columns:1fr; min-height:100dvh; overflow:hidden; }.login-mobile-decor { position:absolute; inset:0; display:block; overflow:hidden; pointer-events:none; }.login-art-panel { display:none; }.login-form-panel { position:relative; z-index:2; min-height:100dvh; justify-content:center; gap:23px; padding:24px 15px; background:transparent; }.login-card { max-width:420px; padding:13px; }.login-brand { min-height:115px; margin-bottom:19px; }.login-card form { gap:16px; }.login-input-wrap input { font-size:16px; } }

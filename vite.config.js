@@ -1,8 +1,29 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { readdir, readFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+
+function offlinePrecache() {
+  return {
+    name: 'offline-precache',
+    apply: 'build',
+    async closeBundle() {
+      const dist = join(process.cwd(), 'dist')
+      const assets = await readdir(join(dist, 'assets'))
+      const entry = assets.find((file) => /^index-[\w-]+\.js$/.test(file))
+      if (!entry) throw new Error('Missing PWA entry bundle')
+      // Offline Add Visit lives in the entry bundle. Keep installation small;
+      // other portal chunks are cached when opened online.
+      const files = ['/', '/index.html', '/manifest.webmanifest', '/icons/app-icon.svg', '/icons/icon-192.png', '/icons/icon-512.png', ...assets.filter((file) => /^index-[\w-]+\.(js|css)$/.test(file)).map((file) => `/assets/${file}`)]
+      const swPath = join(dist, 'sw.js')
+      const sw = await readFile(swPath, 'utf8')
+      await writeFile(swPath, sw.replace('self.__PRECACHE__ ||', `${JSON.stringify(files)} ||`).replace('jp-portal-pwa-v1', `jp-portal-pwa-${entry}`))
+    }
+  }
+}
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), offlinePrecache()],
   server: {
     host: true,
     strictPort: true,
