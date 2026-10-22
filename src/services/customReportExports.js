@@ -2,7 +2,9 @@ import { reportColumns, rowValue } from "../domain/customReportSchema.js";
 
 const filename = (title) => String(title || "Custom_Report").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 60);
 const downloadDate = () => new Date().toLocaleDateString("en-GB");
-const display = (row, column, report, marketers) => {
+const exportColumns = (report) => report.verificationLayout ? report.columns : report.options?.hideDate ? [{ key: "rowNumber", label: "Sr.", type: "text" }, ...reportColumns(report)] : reportColumns(report);
+const display = (row, column, report, marketers, index) => {
+  if (column.key === "rowNumber") return String(index + 1);
   const value = rowValue(row, column, report);
   return column.type === "marketer" ? marketers.find((item) => [item.id, item.email, item.name].some((identity) => identity && String(identity).toLowerCase() === String(value).toLowerCase()))?.name || value : value;
 };
@@ -21,7 +23,7 @@ const personGroups = (rows) => contiguousGroups(rows, (row) => row.verificationG
 export function exportCustomReportExcel(report, rows, marketers = []) {
   if (!window.XLSX) throw new Error("Excel exporter is still loading. Please try again.");
   const XLSX = window.XLSX;
-  const columns = reportColumns(report);
+  const columns = exportColumns(report);
   const last = columns.length - 1;
   const dateRow = Array(columns.length).fill("");
   dateRow[last] = `Downloaded: ${downloadDate()}`;
@@ -29,7 +31,7 @@ export function exportCustomReportExcel(report, rows, marketers = []) {
     [report.title],
     dateRow,
     columns.map((column) => column.label),
-    ...rows.map((row) => columns.map((column) => display(row, column, report, marketers)))
+    ...rows.map((row, index) => columns.map((column) => display(row, column, report, marketers, index)))
   ]);
   const merges = [{ s: { r: 0, c: 0 }, e: { r: 0, c: last } }];
   const dateColumn = columns.findIndex((column) => column.key === "date");
@@ -58,9 +60,9 @@ export function exportCustomReportExcel(report, rows, marketers = []) {
   XLSX.writeFile(book, `${filename(report.title)}_${downloadDate().replaceAll("/", "-")}.xlsx`);
 }
 
-export async function exportCustomReportPDF(report, rows, marketers = []) {
+export async function buildCustomReportPdf(report, rows, marketers = []) {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
-  const columns = reportColumns(report);
+  const columns = exportColumns(report);
   const pdf = new jsPDF({ orientation: columns.length > 6 ? "landscape" : "portrait", unit: "pt", format: "a4" });
   const width = pdf.internal.pageSize.getWidth();
   pdf.setFillColor(122, 15, 43);
@@ -72,24 +74,29 @@ export async function exportCustomReportPDF(report, rows, marketers = []) {
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   pdf.text(`Downloaded: ${downloadDate()}`, width - 24, 49, { align: "right" });
-  const body = rows.map((row) => columns.map((column) => display(row, column, report, marketers)));
-  const dateIndex = columns.findIndex((column) => column.key === "date");
-  if (dateIndex >= 0) dateGroups(rows, report).forEach(({ start, end }) => {
-    if (end > start) {
-      body[start][dateIndex] = { content: body[start][dateIndex], rowSpan: end - start + 1, styles: { valign: "top", halign: "center" } };
-      for (let index = start + 1; index <= end; index++) body[index].splice(dateIndex, 1);
+  const spans = rows.map(() => new Map());
+  const covered = rows.map(() => new Set());
+  const addSpans = (column, groups) => {
+    if (column < 0) return;
+    for (const { start, end } of groups) for (let first = start; first <= end; first += 8) {
+      const last = Math.min(end, first + 7);
+      if (last === first) continue;
+      spans[first].set(column, last - first + 1);
+      for (let index = first + 1; index <= last; index++) covered[index].add(column);
     }
-  });
+  };
+  const dateIndex = columns.findIndex((column) => column.key === "date");
+  addSpans(dateIndex, dateGroups(rows, report));
   if (report.verificationLayout) for (const key of ["verificationMarketerName", "verificationGroupSr"]) {
     const column = columns.findIndex((item) => item.key === key);
-    if (column < 0) continue;
-    personGroups(rows).forEach(({ start, end }) => {
-      if (end > start) {
-        body[start][column] = { content: body[start][column], rowSpan: end - start + 1, styles: { valign: "top", halign: "center" } };
-        for (let index = start + 1; index <= end; index++) body[index].splice(column, 1);
-      }
-    });
+    addSpans(column, personGroups(rows));
   }
+  const body = rows.map((row, index) => columns.flatMap((column, columnIndex) => {
+    if (covered[index].has(columnIndex)) return [];
+    const content = display(row, column, report, marketers, index);
+    const rowSpan = spans[index].get(columnIndex);
+    return [rowSpan ? { content, rowSpan, styles: { valign: "top", halign: "center" } } : content];
+  }));
   autoTable(pdf, {
     startY: 80,
     head: [columns.map((column) => column.label)],
@@ -107,5 +114,10 @@ export async function exportCustomReportPDF(report, rows, marketers = []) {
       pdf.text(`Page ${pageNumber}`, width - 24, bottom - 18, { align: "right" });
     }
   });
+  return pdf;
+}
+
+export async function exportCustomReportPDF(report, rows, marketers = []) {
+  const pdf = await buildCustomReportPdf(report, rows, marketers);
   pdf.save(`${filename(report.title)}_${downloadDate().replaceAll("/", "-")}.pdf`);
 }

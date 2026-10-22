@@ -24,6 +24,7 @@ const reportColumns = (report) => Array.isArray(report.columns) && report.column
 const reportOptions = (value) => ({
   includeMarketers: value?.includeMarketers === true,
   dateRange: value?.dateRange === true,
+  hideDate: value?.hideDate === true,
   filterKeys: [...new Set((Array.isArray(value?.filterKeys) ? value.filterKeys : []).filter((key) => typeof key === "string" && /^[a-z][a-z0-9_]{0,39}$/.test(key)))].slice(0, 12)
 });
 function validateColumns(value, options) {

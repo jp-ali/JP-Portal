@@ -7,7 +7,10 @@ export const DEFAULT_COLUMNS = [
   { key: "remarks", label: "Remarks", type: "remarks" }
 ];
 
-export const reportColumns = (report) => Array.isArray(report?.columns) && report.columns.length ? report.columns : DEFAULT_COLUMNS;
+export const reportColumns = (report) => {
+  const columns = Array.isArray(report?.columns) && report.columns.length ? report.columns : DEFAULT_COLUMNS;
+  return report?.options?.hideDate ? columns.filter((column) => column.key !== "date") : columns;
+};
 
 export function columnsFromHeadings(headings) {
   const labels = headings.split(/[,\n]+/).map((value) => value.trim()).filter(Boolean);

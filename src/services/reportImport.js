@@ -113,8 +113,8 @@ export async function readImportFile(file) {
   if (!file) throw new Error("Choose a PDF or Excel file.");
   if (file.size > 12 * 1024 * 1024) throw new Error("Choose a file under 12 MB.");
   if (/\.pdf$/i.test(file.name)) return readPdf(file);
-  if (/\.(xlsx|xls|xlsm)$/i.test(file.name)) return readExcel(file);
-  throw new Error("Choose a PDF, XLSX or XLS file.");
+  if (/\.(xlsx|xls|xlsm|csv|tsv|ods)$/i.test(file.name)) return readExcel(file);
+  throw new Error("Choose a PDF, Excel, CSV, TSV or ODS file.");
 }
 
 export function buildImportPayload(preview, selectedIndices, title, reportDate) {
@@ -149,5 +149,5 @@ export function buildImportPayload(preview, selectedIndices, title, reportDate) 
   if (!rows.length) throw new Error("Selected headings have no data rows.");
   if (rows.length > 400) throw new Error("This file has more than 400 rows. Split it into smaller reports before importing.");
   if (new TextEncoder().encode(JSON.stringify(rows)).length > 700000) throw new Error("Selected data is too large. Split it into smaller reports before importing.");
-  return { title: title.trim(), date: reportDate, columns, options: { includeMarketers: Boolean(marketerSource), dateRange: Boolean(dateSource), filterKeys: detailColumns.some((column) => column.key === "city") ? ["city"] : [] }, rows };
+  return { title: title.trim(), date: reportDate, columns, options: { includeMarketers: Boolean(marketerSource), dateRange: false, hideDate: true, filterKeys: detailColumns.some((column) => column.key === "city") ? ["city"] : [] }, rows };
 }

@@ -63,11 +63,13 @@ export default function CustomReportTable({ report, columns, rows, marketersList
 
   return <div className="table-scroll other-report-table-wrap">
     <table className="other-report-table"><thead><tr>
+      {report.options?.hideDate && <th>Sr.</th>}
       {columns.map((column) => <th key={column.key}>{column.label}</th>)}
       {verificationMode && !hasNumberColumn && <th>Number</th>}
       {verificationMode && <th>Verification Remarks</th>}
       <th>Action</th>
     </tr></thead><tbody>{rows.map((row, index) => <tr key={row.id}>
+      {report.options?.hideDate && <td>{index + 1}</td>}
       {columns.map((column) => {
         const value = rowValue(row, column, report);
         if (column.key === "date" && index > 0 && value === rowValue(rows[index - 1], column, report)) return null;

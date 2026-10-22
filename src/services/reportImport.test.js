@@ -5,6 +5,7 @@ import autoTable from "jspdf-autotable";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import XLSX from "xlsx-js-style";
 import { buildImportPayload, matrixToImportPreview, pdfLines, pdfPagesToImportPreview, readImportFile, savedReportToImportPreview } from "./reportImport.js";
+import { buildCustomReportPdf } from "./customReportExports.js";
 
 test("Excel export title and download line are skipped before importing selected columns", () => {
   const preview = matrixToImportPreview([
@@ -21,6 +22,7 @@ test("Excel export title and download line are skipped before importing selected
   assert.equal(payload.rows[1].city, "Karachi");
   assert.equal(payload.rows[0].private_note, undefined);
   assert.deepEqual(payload.options.filterKeys, ["city"]);
+  assert.equal(payload.options.hideDate, true);
 });
 
 test("imported marketer column is available for verification grouping", () => {
@@ -61,6 +63,57 @@ test("an XLSX workbook is read from a selected file", async () => {
   const bytes = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
   const preview = await readImportFile(new File([bytes], "contacts.xlsx"));
   assert.equal(preview.rows[0][1], "Lahore");
+});
+
+test("a CSV report can be imported without an Excel-only file restriction", async () => {
+  const preview = await readImportFile(new File(["Name,City,Number\nAli,Lahore,03001234567\nSara,Karachi,03007654321\n"], "contacts.csv"));
+  assert.equal(preview.rows.length, 2);
+  assert.deepEqual(preview.rows[1].slice(0, 3), ["Sara", "Karachi", "03007654321"]);
+});
+
+test("imported PDF has row numbers, no date column, and fills its first page", async () => {
+  const report = {
+    title: "Imported Contacts", date: "2026-10-22",
+    options: { hideDate: true },
+    columns: [
+      { key: "date", label: "Date", type: "date" },
+      { key: "name", label: "Name", type: "text" },
+      { key: "city", label: "City", type: "text" }
+    ]
+  };
+  const rows = Array.from({ length: 54 }, (_, index) => ({ date: "2026-10-22", name: `Person ${index + 1}`, city: index % 2 ? "Karachi" : "Lahore" }));
+  const pdf = await buildCustomReportPdf(report, rows);
+  const document = await pdfjs.getDocument({ data: new Uint8Array(pdf.output("arraybuffer")) }).promise;
+  const firstPage = await document.getPage(1);
+  const pageText = (await firstPage.getTextContent()).items.map((item) => item.str).join(" ");
+  assert.match(pageText, /Sr\./);
+  assert.doesNotMatch(pageText, /\bDate\b/);
+  assert.match(pageText, /Person 1/);
+  assert.match(pageText, /Person 5/);
+});
+
+test("verification PDF does not move a long merged group off its first page", async () => {
+  const report = {
+    title: "Verification", date: "2026-10-22", verificationLayout: true, options: { hideDate: true },
+    columns: [
+      { key: "verificationGroupSr", label: "Sr.", type: "text" },
+      { key: "verificationMarketerName", label: "Marketer Name", type: "text" },
+      { key: "date", label: "Date", type: "date" },
+      { key: "verificationSerial", label: "Sr#", type: "text" },
+      { key: "name", label: "Name", type: "text" }
+    ]
+  };
+  const rows = Array.from({ length: 54 }, (_, index) => ({
+    date: "2026-10-22", verificationGroup: "ali", verificationGroupSr: 1,
+    verificationMarketerName: "Ali", verificationSerial: index + 1, name: `School ${index + 1}`
+  }));
+  const pdf = await buildCustomReportPdf(report, rows);
+  const document = await pdfjs.getDocument({ data: new Uint8Array(pdf.output("arraybuffer")) }).promise;
+  const firstPage = await document.getPage(1);
+  const pageText = (await firstPage.getTextContent()).items.map((item) => item.str).join(" ");
+  assert.match(pageText, /School 1/);
+  assert.match(pageText, /School 5/);
+  assert.match(pageText, /\bDate\b/);
 });
 
 test("all cities survive a multi-page PDF table import", async () => {

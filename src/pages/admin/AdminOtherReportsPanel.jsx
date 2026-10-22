@@ -22,9 +22,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const { adminView, cardStyle, expandedReportKey, fetchMarketers, inputStyle, renderReportExpandButton, reportViewClass, setAdminView, setExpandedReportKey, openVerificationCalls, marketersList = [] } = usePortalContext();
   const [adding, setAdding] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [importType, setImportType] = useState("excel");
-  const excelFileRef = useRef(null);
-  const pdfFileRef = useRef(null);
+  const importFileRef = useRef(null);
   const [importPreview, setImportPreview] = useState(null);
   const [importName, setImportName] = useState("");
   const [importColumns, setImportColumns] = useState([]);
@@ -72,20 +70,18 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
       setImportColumns(preview.headings.slice(0, 18).map(({ index }) => index));
     } catch (cause) { setImportPreview(null); setError(cause.message); }
   };
-  const openImport = (type) => {
+  const openImport = () => {
     resetEditor(); setActionOpen(false); setError("");
-    setImportType(type); setImporting(true); setImportPreview(null); setImportSourceId("");
-    (type === "excel" ? excelFileRef : pdfFileRef).current?.click();
+    setImporting(true); setImportPreview(null); setImportSourceId("");
+    importFileRef.current?.click();
   };
-  const chooseImportFile = async (file, type) => {
+  const chooseImportFile = async (file) => {
     if (!file) return;
-    if (type === "excel" && !/\.(xlsx|xls|xlsm)$/i.test(file.name)) { setError("Choose an Excel workbook (.xlsx, .xls or .xlsm)."); return; }
-    if (type === "pdf" && !/\.pdf$/i.test(file.name)) { setError("Choose a PDF file."); return; }
     setParsingImport(true); setError(""); setImportPreview(null); setImportSourceId("");
     try {
       const preview = await readImportFile(file);
       setImportPreview(preview);
-      setImportName(file.name.replace(/\.(pdf|xlsx|xls|xlsm)$/i, "").replaceAll(/[_-]+/g, " ").slice(0, 120));
+      setImportName(file.name.replace(/\.(pdf|xlsx|xls|xlsm|csv|tsv|ods)$/i, "").replaceAll(/[_-]+/g, " ").slice(0, 120));
       setImportColumns(preview.headings.slice(0, 18).map(({ index }) => index));
     } catch (cause) { setError(cause.message); }
     finally { setParsingImport(false); }
@@ -195,7 +191,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     const validFilters = filterKeys.filter((key) => ["city", "remarks"].includes(key) || customColumns.some((column) => column.key === key));
     setBusy(true); setError("");
     try {
-      const payload = { title: title.trim(), columns: customColumns, options: { includeMarketers, dateRange, filterKeys: validFilters } };
+      const payload = { title: title.trim(), columns: customColumns, options: { includeMarketers, dateRange, hideDate: !!oldReport?.options?.hideDate, filterKeys: validFilters } };
       if (oldReport) {
         await request(`/custom-reports/${oldReport.id}`, { method: "PATCH", body: JSON.stringify(payload) });
         await reload(); resetEditor();
@@ -278,13 +274,10 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     <div className="other-reports-header">
       <div><span className="other-reports-eyebrow">REPORT WORKSPACE</span><h2>{mode === "verification" ? "Verification" : "Other Reports"}</h2><p>{mode === "verification" ? "Review school visits and keep every follow-up in one place." : "A clean space for the reports you create and manage."}</p></div>
       <div className="other-reports-actions">
-        {mode !== "verification" && <><button className="other-reports-btn primary" aria-expanded={actionOpen} onClick={() => setActionOpen((value) => !value)}>Action ▾</button><button className="other-reports-btn excel" onClick={() => openImport("excel")}>Import Excel</button><button className="other-reports-btn" onClick={() => openImport("pdf")}>Import PDF</button></>}
+        {mode !== "verification" && <><button className="other-reports-btn primary" aria-expanded={actionOpen} onClick={() => setActionOpen((value) => !value)}>Action ▾</button><button className="other-reports-btn excel" onClick={openImport}>Import File</button></>}
       </div>
     </div>
-    {mode !== "verification" && <>
-      <input ref={excelFileRef} type="file" accept=".xlsx,.xls,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" className="other-report-import-hidden" aria-label="Choose Excel workbook" onChange={(event) => { chooseImportFile(event.target.files?.[0], "excel"); event.target.value = ""; }} />
-      <input ref={pdfFileRef} type="file" accept=".pdf,application/pdf" className="other-report-import-hidden" aria-label="Choose PDF file" onChange={(event) => { chooseImportFile(event.target.files?.[0], "pdf"); event.target.value = ""; }} />
-    </>}
+    {mode !== "verification" && <input ref={importFileRef} type="file" accept=".pdf,.xlsx,.xls,.xlsm,.csv,.tsv,.ods" className="other-report-import-hidden" aria-label="Choose report file" onChange={(event) => { chooseImportFile(event.target.files?.[0]); event.target.value = ""; }} />}
     {actionOpen && mode !== "verification" && <div className="other-report-action-menu">
       <button className="other-reports-btn" onClick={() => { resetEditor(); setAdding(true); setActionMode(""); }}>＋ Add</button>
       <button className="other-reports-btn" onClick={() => { resetEditor(); setActionMode("remove"); setSelectedReports([]); setConfirmRemoval(false); }}>Remove</button>
@@ -296,8 +289,8 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     {actionMode === "old" && <div className="other-report-old"><h3>Old Reports</h3>{deletedReports.length ? deletedReports.map((item) => <div key={item.id}><strong>{item.title}</strong><button className="other-reports-btn primary" disabled={busy} onClick={() => restoreReport(item.id)}>Restore</button></div>) : <p>No deleted reports.</p>}</div>}
     <div className="other-reports-overview"><span className="other-reports-overview-icon" aria-hidden="true">▦</span><div><strong>{mode === "verification" ? reports.length + 1 : reports.length}</strong><span>{mode === "verification" ? "Available reports" : "Custom reports"}</span></div><p>{mode === "verification" ? "School Visits is ready whenever you need it." : "Create a report and start adding contacts in seconds."}</p></div>
     {importing && mode !== "verification" && <form className="other-report-import" onSubmit={submitImport}>
-      <div className="other-report-import-head"><div><h3>Import {importType === "excel" ? "Excel sheet" : "PDF report"}</h3><p>{importType === "excel" ? "Choose an Excel workbook, then review its headings before saving." : "Choose a PDF with selectable table text, then review its headings before saving."}</p></div><button type="button" className="other-reports-btn" onClick={resetImport}>Cancel</button></div>
-      <button type="button" className="other-reports-btn other-report-import-choose" onClick={() => (importType === "excel" ? excelFileRef : pdfFileRef).current?.click()}>Choose {importType === "excel" ? "Excel workbook (.xlsx, .xls, .xlsm)" : "PDF file"}</button>
+      <div className="other-report-import-head"><div><h3>Import a report</h3><p>Upload a PDF, Excel, CSV, TSV or ODS file. Review its data and headings before saving.</p></div><button type="button" className="other-reports-btn" onClick={resetImport}>Cancel</button></div>
+      <button type="button" className="other-reports-btn other-report-import-choose" onClick={() => importFileRef.current?.click()}>Choose report file</button>
       {reports.some((item) => item.rows?.length) && <label className="other-report-import-file">Or use all rows from a saved report<select value={importSourceId} onChange={(event) => chooseExistingReport(event.target.value)}><option value="">Choose a saved report</option>{reports.filter((item) => item.rows?.length).map((item) => <option key={item.id} value={item.id}>{item.title} ({item.rows.length} rows)</option>)}</select></label>}
       {parsingImport && <p role="status">Reading file…</p>}
       {importPreview && <><label className="other-report-import-name">Report name<input value={importName} onChange={(event) => setImportName(event.target.value)} maxLength={120} required /></label>
