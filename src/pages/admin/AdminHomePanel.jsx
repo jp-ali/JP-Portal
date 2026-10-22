@@ -14,19 +14,18 @@ export default function AdminHomePanel() {
       const row = doc.data();
       return String(row.marketerId || row.marketerEmail || doc.id).toLowerCase();
     })).size;
-    Promise.allSettled([
-      c.fetchAllReports(),
-      c.fetchMarketers(),
-      getDocs(query(collection(c.db, "attendance"), where("date", "==", today))),
-      getDocs(query(collection(c.db, "action_plans"), where("date", "==", today)))
-    ]).then(([reportsResult, marketersResult, attendanceResult, plansResult]) => {
+    c.fetchAllReports().then(() => { if (active) setStatsReady((current) => ({ ...current, reports: true })); }).catch(() => {});
+    c.fetchMarketers().then(() => { if (active) setStatsReady((current) => ({ ...current, marketers: true })); }).catch(() => {});
+    getDocs(query(collection(c.db, "attendance"), where("date", "==", today))).then((snapshot) => {
       if (!active) return;
-      setStatsReady({ reports: reportsResult.status === "fulfilled", marketers: marketersResult.status === "fulfilled", attendance: attendanceResult.status === "fulfilled", plans: plansResult.status === "fulfilled" });
-      setTodayCounts({
-        attendance: attendanceResult.status === "fulfilled" ? countPeople(attendanceResult.value, (row) => row.startMarked || row.endMarked) : 0,
-        plans: plansResult.status === "fulfilled" ? countPeople(plansResult.value) : 0
-      });
-    });
+      setTodayCounts((current) => ({ ...current, attendance: countPeople(snapshot, (row) => row.startMarked || row.endMarked) }));
+      setStatsReady((current) => ({ ...current, attendance: true }));
+    }).catch(() => {});
+    getDocs(query(collection(c.db, "action_plans"), where("date", "==", today))).then((snapshot) => {
+      if (!active) return;
+      setTodayCounts((current) => ({ ...current, plans: countPeople(snapshot) }));
+      setStatsReady((current) => ({ ...current, plans: true }));
+    }).catch(() => {});
     return () => { active = false; };
   }, []);
   const today = c.getDateKey(new Date());

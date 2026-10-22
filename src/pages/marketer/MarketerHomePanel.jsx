@@ -7,7 +7,8 @@ export default function MarketerHomePanel() {
   const [statsReady, setStatsReady] = useState({ visits: false, samples: false });
   useEffect(() => {
     let active = true;
-    Promise.allSettled([c.fetchMarketerReports(c.user.email), c.fetchMarketerSamples(c.user.email)]).then(([visitsResult, samplesResult]) => { if (active) setStatsReady({ visits: visitsResult.status === "fulfilled", samples: samplesResult.status === "fulfilled" }); });
+    c.fetchMarketerReports(c.user.email).then(() => { if (active) setStatsReady((current) => ({ ...current, visits: true })); }).catch(() => {});
+    c.fetchMarketerSamples(c.user.email).then(() => { if (active) setStatsReady((current) => ({ ...current, samples: true })); }).catch(() => {});
     return () => { active = false; };
   }, [c.user.email]);
   const visits = c.marketerReports || [];

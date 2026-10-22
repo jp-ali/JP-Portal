@@ -5,11 +5,11 @@ import { globalStyle, containerStyle, cardStyle, inputStyle, btnPrimary, footerS
 import PortalLoading from "./ui/PortalLoading.jsx";
 
 const loadPortalApp = () => import("./PortalApp.jsx");
-const preloadPortal = () => Promise.all([
+const preloadPortal = (allPages = false) => allPages ? Promise.all([
   loadPortalApp(),
   import("./pages/AdminPortal.jsx"),
   import("./pages/MarketerPortal.jsx")
-]);
+]) : loadPortalApp();
 const PortalApp = lazy(loadPortalApp);
 
 class PortalLoadErrorBoundary extends Component {
@@ -42,6 +42,7 @@ export default function App() {
     if (loginPending) return;
     setError("");
     setLoginPending(true);
+    preloadPortal().catch(() => {});
     try {
       const user = await login(identifier, password);
       setPassword("");

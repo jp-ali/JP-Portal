@@ -255,6 +255,10 @@ const routeSnapshot = {
   attendanceMediaMarketer, selectedAdminAllBoxKey, selectedMarketerForVisits
 };
 const routeHistoryRef = useRef([routeSnapshot]);
+const browserGuardRef = useRef(`jp-portal-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+useEffect(() => {
+  window.history.pushState({ ...window.history.state, jpPortalGuard: browserGuardRef.current }, "", window.location.href);
+}, []);
 useEffect(() => {
   const history = routeHistoryRef.current;
   if (history.at(-1)?.key === routeKey) { history[history.length - 1] = routeSnapshot; return; }
@@ -284,50 +288,55 @@ useLayoutEffect(() => {
   return () => cancelAnimationFrame(frame);
 }, [routeKey]);
 useEffect(() => {
+  const goBack = () => {
+    const cardClose = document.querySelector(".card-designer-preview-modal .card-designer-preview-dialog-head button");
+    if (cardClose) { cardClose.click(); return true; }
+    if (fullScreenImage) {
+      setFullScreenImage(null);
+      setFullScreenMediaRecord(null);
+      return true;
+    }
+    const escapeClose = document.querySelector('[data-escape-close][aria-expanded="true"]');
+    if (escapeClose) { escapeClose.click(); return true; }
+    if (editingVisit) { setEditingVisit(null); return true; }
+    if (expandedReportKey) { setExpandedReportKey(""); return true; }
+    if (adminSidebarOpen || marketerSidebarOpen) {
+      setAdminSidebarOpen(false);
+      setMarketerSidebarOpen(false);
+      return true;
+    }
+    const activeView = user?.role === "admin" ? adminView : marketerView;
+    if (activeView === "home") return false;
+    const history = routeHistoryRef.current;
+    const previous = history.length > 1 ? (history.pop(), history.at(-1)) : null;
+    if (user?.role !== "admin") {
+      if (marketerView === "attendance") stopAttendanceCamera();
+      if (marketerView === "add-visit") stopCamera();
+      setMarketerview(previous?.view || "home");
+      setSelectedMarketerForVisits(previous?.selectedMarketerForVisits || null);
+    } else {
+      if (previous) {
+        setSelectedAdminMarketerBox(previous.selectedAdminMarketerBox);
+        setSelectedAdminSampleMarketerBox(previous.selectedAdminSampleMarketerBox);
+        setSelectedAdminSampleSchoolBox(previous.selectedAdminSampleSchoolBox);
+        setSelectedMarketerDetailBox(previous.selectedMarketerDetailBox);
+        setMediaView(previous.mediaView);
+        setMediaMarketer(previous.mediaMarketer);
+        setAttendanceMediaMarketer(previous.attendanceMediaMarketer);
+        setSelectedAdminAllBoxKey(previous.selectedAdminAllBoxKey);
+        setSelectedMarketerForVisits(previous.selectedMarketerForVisits);
+      }
+      setAdminView(previous?.view || "home");
+    }
+    return true;
+  };
   const onKeyDown = (event) => {
     if (event.key !== "Escape") { homeEscapeCountRef.current = { count: 0, lastAt: 0 }; return; }
     if (event.repeat) return;
     if (document.querySelector(".card-designer-preview-modal")) return;
-    const activeView = user?.role === "admin" ? adminView : marketerView;
     event.preventDefault();
-    if (fullScreenImage) {
+    if (goBack()) {
       homeEscapeCountRef.current = { count: 0, lastAt: 0 };
-      setFullScreenImage(null);
-      setFullScreenMediaRecord(null);
-    } else if (document.querySelector('[data-escape-close][aria-expanded="true"]')) {
-      homeEscapeCountRef.current = { count: 0, lastAt: 0 };
-      document.querySelector('[data-escape-close][aria-expanded="true"]').click();
-    } else if (editingVisit) {
-      homeEscapeCountRef.current = { count: 0, lastAt: 0 };
-      setEditingVisit(null);
-    } else if (expandedReportKey) {
-      homeEscapeCountRef.current = { count: 0, lastAt: 0 };
-      setExpandedReportKey("");
-    } else if (adminSidebarOpen || marketerSidebarOpen) {
-      setAdminSidebarOpen(false);
-      setMarketerSidebarOpen(false);
-    } else if (activeView !== "home") {
-      homeEscapeCountRef.current = { count: 0, lastAt: 0 };
-      const history = routeHistoryRef.current;
-      const previous = history.length > 1 ? (history.pop(), history.at(-1)) : null;
-      if (user?.role !== "admin") {
-        if (marketerView === "attendance") stopAttendanceCamera();
-        if (marketerView === "add-visit") stopCamera();
-        setMarketerview(previous?.view || "home");
-      } else {
-        if (previous) {
-          setSelectedAdminMarketerBox(previous.selectedAdminMarketerBox);
-          setSelectedAdminSampleMarketerBox(previous.selectedAdminSampleMarketerBox);
-          setSelectedAdminSampleSchoolBox(previous.selectedAdminSampleSchoolBox);
-          setSelectedMarketerDetailBox(previous.selectedMarketerDetailBox);
-          setMediaView(previous.mediaView);
-          setMediaMarketer(previous.mediaMarketer);
-          setAttendanceMediaMarketer(previous.attendanceMediaMarketer);
-          setSelectedAdminAllBoxKey(previous.selectedAdminAllBoxKey);
-          setSelectedMarketerForVisits(previous.selectedMarketerForVisits);
-        }
-        setAdminView(previous?.view || "home");
-      }
     } else {
       const now = Date.now();
       const previous = homeEscapeCountRef.current;
@@ -339,8 +348,14 @@ useEffect(() => {
       }
     }
   };
+  const onBrowserBack = () => {
+    window.history.pushState({ ...window.history.state, jpPortalGuard: browserGuardRef.current }, "", window.location.href);
+    homeEscapeCountRef.current = { count: 0, lastAt: 0 };
+    goBack();
+  };
   window.addEventListener("keydown", onKeyDown, true);
-  return () => window.removeEventListener("keydown", onKeyDown, true);
+  window.addEventListener("popstate", onBrowserBack);
+  return () => { window.removeEventListener("keydown", onKeyDown, true); window.removeEventListener("popstate", onBrowserBack); };
 }, [editingVisit, fullScreenImage, expandedReportKey, adminSidebarOpen, marketerSidebarOpen, user?.role, adminView, marketerView, setFullScreenImage, setFullScreenMediaRecord, stopAttendanceCamera, stopCamera, onLogout]);
 const { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanMarketerIds, setAdminActionPlanMarketerIds, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan } = useActionPlans({ user, setUser, setMarketerview, marketersList, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId });
 const { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, getMarketerExpensePetrol, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerIds, setAdminExpenseMarketerIds, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, getAdminExpenseMarketerName, downloadAdminExpenseExcel, downloadAdminExpensePDF } = useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12, groupRowsByMarketerAndDate });
