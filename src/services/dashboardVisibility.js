@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 
 const storageKey = (role, accountId) => `jp-portal-hidden-v1:${role}:${String(accountId || role).toLowerCase()}`;
+const controlsKey = (role, accountId) => `jp-portal-hide-controls-v1:${role}:${String(accountId || role).toLowerCase()}`;
+const controlsEvent = "jp-portal-hide-controls-change";
+const readControls = (key) => {
+  try { return localStorage.getItem(key) !== "off"; } catch { return true; }
+};
 
 function readHidden(key) {
   try {
@@ -11,8 +16,24 @@ function readHidden(key) {
 
 export function useDashboardVisibility(role, accountId) {
   const key = storageKey(role, accountId);
+  const eyeKey = controlsKey(role, accountId);
   const [hidden, setHidden] = useState(() => readHidden(key));
+  const [hideControlsVisible, setHideControlsVisibleState] = useState(() => readControls(eyeKey));
   useEffect(() => { setHidden(readHidden(key)); }, [key]);
+  useEffect(() => {
+    setHideControlsVisibleState(readControls(eyeKey));
+    const sync = (event) => { if (!event.key || event.key === eyeKey) setHideControlsVisibleState(readControls(eyeKey)); };
+    const syncLocal = (event) => { if (event.detail?.key === eyeKey) setHideControlsVisibleState(event.detail.visible); };
+    window.addEventListener("storage", sync);
+    window.addEventListener(controlsEvent, syncLocal);
+    return () => { window.removeEventListener("storage", sync); window.removeEventListener(controlsEvent, syncLocal); };
+  }, [eyeKey]);
+  const setHideControlsVisible = (visible) => {
+    const next = Boolean(visible);
+    setHideControlsVisibleState(next);
+    try { localStorage.setItem(eyeKey, next ? "on" : "off"); } catch { /* Keep this session usable. */ }
+    window.dispatchEvent(new CustomEvent(controlsEvent, { detail: { key: eyeKey, visible: next } }));
+  };
   const update = (next) => {
     setHidden((current) => {
       const updated = next(current);
@@ -22,7 +43,7 @@ export function useDashboardVisibility(role, accountId) {
   };
   const hide = (item) => update((current) => current.some((entry) => entry.key === item.key) ? current : [...current, item]);
   const restore = (itemKey) => update((current) => current.filter((item) => item.key !== itemKey));
-  return { hidden, hide, restore, isHidden: (itemKey) => hidden.some((item) => item.key === itemKey) };
+  return { hidden, hide, restore, isHidden: (itemKey) => hidden.some((item) => item.key === itemKey), hideControlsVisible, setHideControlsVisible };
 }
 
 export const dashboardItemKeys = {
