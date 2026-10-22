@@ -1,22 +1,21 @@
 .marketer-archive-page{color:#2d2430;padding:2px 4px 18px;font-family:inherit}
 .marketer-archive-page *{box-sizing:border-box}
-.marketer-archive-breadcrumb{display:flex;align-items:center;gap:9px;color:#8b8092;font-size:12px;margin:0 0 10px}
-.marketer-archive-breadcrumb button{width:36px;height:32px;display:grid;place-items:center;border:0;border-radius:10px;background:#fff0f4;color:#a8003d;cursor:pointer}
-.marketer-archive-breadcrumb strong{color:#a8003d}.marketer-archive-breadcrumb b{color:#c4b4be}
+.portal-shell .marketer-archive-page .marketer-archive-back{min-height:50px;padding:12px 22px;border-radius:15px;background:#790d2b;color:#fff;font-size:16px;font-weight:800;line-height:1.2;box-shadow:0 5px 14px rgba(111,11,36,.14)}
+.portal-shell .marketer-archive-page .marketer-archive-back:hover{background:#680a24}
 .marketer-archive-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;min-height:94px;padding:16px 22px;border:1px solid #ffdfeb;border-radius:14px;background:linear-gradient(110deg,#fff 0%,#fff6f8 47%,#ffd5e4 100%)}
 .marketer-archive-hero:after{content:"";position:absolute;right:9%;bottom:-80px;width:310px;height:135px;background:rgba(255,130,167,.19);border-radius:50%;transform:rotate(-15deg)}
 .marketer-archive-hero-icon{position:relative;z-index:1;width:57px;height:57px;display:grid;place-items:center;flex:none;border-radius:13px;background:#ffe9f0;color:#99002d}
 .marketer-archive-hero-copy{position:relative;z-index:1}.marketer-archive-hero h1{font-size:24px;line-height:1.2;color:#8c092c;margin:0 0 3px;font-weight:800}.marketer-archive-hero p{font-size:13px;color:#837587;margin:0}
 .marketer-archive-hero-art{position:absolute;right:5%;bottom:2px;display:flex;align-items:center;gap:9px;color:#b80043;opacity:.72;transform:rotate(-7deg)}
 .marketer-archive-hero-art span{display:grid;place-items:center;width:32px;height:25px;border:1px solid #e39eb7;border-radius:5px;background:#fff0f5;font-size:18px}
-.marketer-archive-controls{display:flex;align-items:flex-end;flex-wrap:wrap;gap:8px;margin:11px 0}
+.marketer-archive-controls{display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px;margin:0 0 15px;padding:12px;border:1px solid #eadde1;border-radius:13px;background:#fff;box-shadow:0 5px 15px rgba(67,27,39,.045)}
 .marketer-archive-controls > .verification-marketer-field{flex:1 1 155px !important;min-width:155px !important}
-.marketer-archive-controls > .verification-marketer-field > button{border:1px solid #e9dfe6 !important;border-radius:9px !important;box-shadow:0 3px 11px rgba(109,16,52,.04)}
-.marketer-archive-controls input,.marketer-archive-controls select,.marketer-archive-controls button{font:inherit;font-size:12px}
-.marketer-archive-search{display:flex;align-items:center;gap:9px;flex:2 1 260px;height:38px;padding:0 12px;border:1px solid #e9dfe6;border-radius:9px;background:#fff;color:#0086c2;box-shadow:0 3px 11px rgba(109,16,52,.04)}
-.marketer-archive-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#332735}.marketer-archive-search input::placeholder{color:#9b91a0}
-.marketer-archive-controls select{height:38px;min-width:126px;flex:1 1 127px;padding:0 10px;border:1px solid #e9dfe6;border-radius:9px;background:#fff;color:#443748;cursor:pointer}
-.marketer-archive-controls > button{height:38px;padding:0 12px;border-radius:9px;font-weight:700;cursor:pointer;white-space:nowrap;transition:transform .15s,box-shadow .15s}
+.marketer-archive-controls > .verification-marketer-field > label{font-size:12px !important;font-weight:700 !important;color:#5c484e !important}
+.marketer-archive-controls > .verification-marketer-field > button{height:42px !important;border:1px solid #d7c7cb !important;border-radius:9px !important;box-shadow:none;color:#382a31 !important;font-size:13px !important;font-weight:600 !important}
+.marketer-archive-controls input,.marketer-archive-controls select,.marketer-archive-controls button{font-family:inherit;font-size:13px}
+.marketer-archive-search{display:flex;align-items:center;gap:9px;flex:2 1 260px;height:42px;padding:0 12px;border:1px solid #d7c7cb;border-radius:9px;background:#fff;color:#7a0f2b}
+.marketer-archive-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#332735;font-size:13px}.marketer-archive-search input::placeholder{color:#8a7d82}
+.marketer-archive-controls > button{height:42px;padding:0 14px;border-radius:9px;font-weight:700;cursor:pointer;white-space:nowrap;transition:transform .15s,box-shadow .15s}
 .marketer-archive-controls > button:not(:disabled):hover,.marketer-archive-card-actions button:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 6px 13px rgba(116,0,42,.17)}
 .marketer-archive-controls > button:disabled,.marketer-archive-card-actions button:disabled{opacity:.48;cursor:not-allowed}
 .marketer-archive-select-all{display:flex;align-items:center;gap:6px;border:1px solid #f4dbe4;background:#fff4f7;color:#9b0635}
