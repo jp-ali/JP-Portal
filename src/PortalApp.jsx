@@ -419,6 +419,7 @@ return (
 );
 };
 if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminPortal context={{
+    setUser,
     activeMedia,
     adminActionPlanFromDate,
     adminActionPlanMarketerIds,

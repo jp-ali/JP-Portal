@@ -3,13 +3,23 @@ import { firestore } from "../config/firebase.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { validateCardTemplate } from "./cardTemplateRoutes.js";
 import { convertCardsToCdr } from "../services/cardCdrExport.js";
-import { getOrCreateMarketerCard } from "../services/marketerCardService.js";
+import { defaultAdminCard, getOrCreateMarketerCard, lockMarketerCard } from "../services/marketerCardService.js";
 
 export const cardRoutes = Router();
 cardRoutes.get("/me", requireAuth, async (request, response, next) => {
   if (request.user.role !== "marketer") return response.status(403).json({ error: "Marketer access required" });
   try { response.json({ card: await getOrCreateMarketerCard(request.user.marketerId) }); }
   catch (error) { next(error); }
+});
+cardRoutes.get("/admin-card", requireAuth, async (_request, response, next) => {
+  try {
+    const ref = firestore().collection("savedCards").doc("admincard");
+    const snapshot = await ref.get();
+    if (snapshot.exists && !snapshot.data().deletedAt) return response.json({ card: { id: ref.id, ...snapshot.data() } });
+    const card = defaultAdminCard();
+    await ref.set(card);
+    response.json({ card: { id: ref.id, ...card } });
+  } catch (error) { next(error); }
 });
 cardRoutes.use(requireAuth, requireAdmin);
 const cards = () => firestore().collection("savedCards");
@@ -78,6 +88,10 @@ cardRoutes.get("/:id", async (request, response, next) => {
   try {
     const snapshot = await cards().doc(request.params.id).get();
     if (!snapshot.exists) return response.status(404).json({ error: "Card not found" });
+    if (snapshot.data().marketerId) {
+      const card = await getOrCreateMarketerCard(snapshot.data().marketerId);
+      return card ? response.json({ card }) : response.status(404).json({ error: "Card not found" });
+    }
     response.json({ card: { id: snapshot.id, ...snapshot.data() } });
   } catch (error) { next(error); }
 });
@@ -89,7 +103,7 @@ cardRoutes.put("/:id", async (request, response, next) => {
     const ref = cards().doc(request.params.id);
     const snapshot = await ref.get();
     if (!snapshot.exists || snapshot.data().deletedAt) return response.status(404).json({ error: "Active card not found" });
-    if (snapshot.data().marketerId) data.title = `${data.values.name || "Marketer"} Card`;
+    if (snapshot.data().marketerId) data = lockMarketerCard(snapshot.data(), data);
     const updatedAt = new Date().toISOString();
     await ref.update({ ...data, updatedAt });
     response.json({ card: { id: ref.id, ...snapshot.data(), ...data, updatedAt } });

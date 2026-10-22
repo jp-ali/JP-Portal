@@ -1,5 +1,6 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import MarketerCardPanel from "./MarketerCardPanel.jsx";
 
 export default function MarketerSupportPanel() {
   const { cardStyle, setMarketerview, user } = usePortalContext();
@@ -46,6 +47,7 @@ style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(2
                   </div>
                 </a>
               </div>
+              <div style={{ marginTop: "20px" }}><MarketerCardPanel endpoint="/cards/admin-card" title="Admin Card" embedded /></div>
             </div>
           </div>);
 }

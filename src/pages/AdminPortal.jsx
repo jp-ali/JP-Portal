@@ -6,6 +6,7 @@ import AdminVerificationCallsPanel from "./admin/AdminVerificationCallsPanel.jsx
 import AdminOtherReportsPanel from "./admin/AdminOtherReportsPanel.jsx";
 import AdminCardDesignerPanel from "./admin/AdminCardDesignerPanel.jsx";
 import AdminSavedCardsPanel from "./admin/AdminSavedCardsPanel.jsx";
+import MarketerCardPanel from "./marketer/MarketerCardPanel.jsx";
 import DashboardHiddenPanel from "../ui/DashboardHiddenPanel.jsx";
 import AdminAttendanceMediaPanel from "./admin/AdminAttendanceMediaPanel.jsx";
 import AdminActionPlansPanel from "./admin/AdminActionPlansPanel.jsx";
@@ -124,6 +125,10 @@ setSelectedSavedCardId("");
 setAdminView("card-designer");
 return;
 }
+if (key === "admin-my-card") {
+setAdminView("admin-my-card");
+return;
+}
 if (key === "saved-cards") {
 setAdminView("saved-cards");
 return;
@@ -205,6 +210,7 @@ const adminSidebarItems = [
 { key: "media-active", icon: "🖼️", label: "Media", active: adminView === "media" && mediaView === "active" },
 { key: "media-deleted", icon: "♻️", label: "Recently Deleted", active: adminView === "media" && mediaView === "deleted" },
 { key: "card-designer", icon: "🎨", label: "Card Designer", active: adminView === "card-designer" },
+{ key: "admin-my-card", icon: "▣", label: "My Card", active: adminView === "admin-my-card" },
 { key: "saved-cards", icon: "🪪", label: "Saved Cards", active: adminView === "saved-cards" },
 { key: "hidden", icon: "🙈", label: "Hidden", active: adminView === "hidden" }
 ];
@@ -262,7 +268,8 @@ onClick={() => openAdminSidebarSection(item.key)}
           {["other-reports", "verification-reports", "custom-report"].includes(adminView) && (
 <AdminOtherReportsPanel mode={adminView === "custom-report" ? customReportOrigin : adminView === "verification-reports" ? "verification" : "other"} reports={customReports} setReports={setCustomReports} selectedId={selectedCustomReportId} setSelectedId={setSelectedCustomReportId} loading={customReportsLoading} loadError={customReportsError} reload={reloadCustomReports} onOrigin={setCustomReportOrigin} />
 )}
-          {adminView === "card-designer" && <AdminCardDesignerPanel cardId={selectedSavedCardId} onSaved={setSelectedSavedCardId} onOpenSaved={() => setAdminView("saved-cards")} onBack={() => setAdminView(selectedSavedCardId ? "saved-cards" : "home")} />}
+          {adminView === "card-designer" && <AdminCardDesignerPanel cardId={selectedSavedCardId} onSaved={setSelectedSavedCardId} onOpenSaved={() => setAdminView("saved-cards")} onBack={() => setAdminView(selectedSavedCardId === "admincard" ? "admin-my-card" : selectedSavedCardId ? "saved-cards" : "home")} />}
+          {adminView === "admin-my-card" && <MarketerCardPanel endpoint="/cards/admin-card" title="My Card" onBack={() => setAdminView("home")} onEdit={(id) => { setSelectedSavedCardId(id); setAdminView("card-designer"); }} />}
           {adminView === "saved-cards" && <AdminSavedCardsPanel onBack={() => setAdminView("home")} onEdit={(id) => { setSelectedSavedCardId(id); setAdminView("card-designer"); }} onNew={() => { setSelectedSavedCardId(""); setAdminView("card-designer"); }} />}
           {adminView === "hidden" && <DashboardHiddenPanel role="admin" accountId={context.user?.id || context.user?.email || "admin"} onBack={() => setAdminView("home")} />}
           {adminView === "attendance-media" && (

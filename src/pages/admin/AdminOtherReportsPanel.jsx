@@ -210,7 +210,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
         { key: "verificationMarketerName", label: "Marketer Name", type: "text" },
         { key: "date", label: "Date", type: "date" },
         { key: "verificationSerial", label: "Sr#", type: "text" },
-        ...columns.filter((column) => column.key !== "date" && column.type !== "marketer"),
+        ...columns.filter((column) => column.key !== "date" && column.type !== "marketer").map((column) => column.type === "remarks" ? { ...column, label: "Report Remarks" } : column),
         ...(!columns.some((column) => column.type === "text" && isPhoneColumn(column)) ? [{ key: "verificationNumber", label: "Number", type: "text" }] : []),
         { key: "verificationRemarksText", label: "Remarks", type: "remarks" }
       ] };
@@ -270,7 +270,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
       <div className="other-reports-actions"><button className="other-reports-btn excel" onClick={() => runExport("excel")}>Excel</button><button className="other-reports-btn primary" onClick={() => runExport("pdf")}>PDF</button>{renderReportExpandButton("custom-report", "Expand custom report")}</div>
     </div>
     <div style={cardStyle} className="other-report-detail">
-      <div className="other-reports-header"><input className="other-report-title-input" aria-label="Report title" value={report.title} onChange={(event) => updateReport(report.id, { title: event.target.value })} onBlur={(event) => { const title = event.target.value.trim(); if (!title) { reload(); return; } request(`/custom-reports/${report.id}`, { method: "PATCH", body: JSON.stringify({ title }) }).catch((cause) => { setError(cause.message); reload(); }); }} maxLength={120} /></div>
+      <div className="other-reports-header">{mode === "verification" ? <h2>{report.title}</h2> : <input className="other-report-title-input" aria-label="Report title" value={report.title} onChange={(event) => updateReport(report.id, { title: event.target.value })} onBlur={(event) => { const title = event.target.value.trim(); if (!title) { reload(); return; } request(`/custom-reports/${report.id}`, { method: "PATCH", body: JSON.stringify({ title }) }).catch((cause) => { setError(cause.message); reload(); }); }} maxLength={120} />}</div>
       {error && <p className="other-reports-error" role="alert">{error}</p>}
       <div className="other-report-filter-bar">
         <label className="other-report-search"><span aria-hidden="true">⌕</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search" aria-label="Search report" /></label>
@@ -284,8 +284,8 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
         </div>}
         <button className="other-reports-btn other-report-refresh" title="Refresh report" aria-label="Refresh report" onClick={reload} disabled={loading}>↻</button>
       </div>
-      <div className="other-reports-actions other-report-add-actions"><button className="other-reports-btn primary" onClick={() => addRow(blankRow(report))} disabled={busy}>＋ Add Row</button><button className="other-reports-btn" onClick={() => setQuickOpen((value) => !value)}>＋ Quick Add</button></div>
-      {quickOpen && <form className="other-report-quick" onSubmit={(event) => { event.preventDefault(); if (quickText.trim()) addRow(parseCustomReportText(quickText, columns, parseQuickContact)); }}><label>Paste contact details<textarea value={quickText} onChange={(event) => setQuickText(event.target.value)} placeholder={"Hassan Saif\nCity: Karachi\nCompany name: Merchant Navy\nWhatsApp number: +923052192103"} /></label><button className="other-reports-btn primary" disabled={!quickText.trim() || busy}>Parse and Add</button></form>}
+      {mode !== "verification" && <><div className="other-reports-actions other-report-add-actions"><button className="other-reports-btn primary" onClick={() => addRow(blankRow(report))} disabled={busy}>＋ Add Row</button><button className="other-reports-btn" onClick={() => setQuickOpen((value) => !value)}>＋ Quick Add</button></div>
+      {quickOpen && <form className="other-report-quick" onSubmit={(event) => { event.preventDefault(); if (quickText.trim()) addRow(parseCustomReportText(quickText, columns, parseQuickContact)); }}><label>Paste contact details<textarea value={quickText} onChange={(event) => setQuickText(event.target.value)} placeholder={"Hassan Saif\nCity: Karachi\nCompany name: Merchant Navy\nWhatsApp number: +923052192103"} /></label><button className="other-reports-btn primary" disabled={!quickText.trim() || busy}>Parse and Add</button></form>}</>}
       <CustomReportTable report={report} columns={columns} rows={filtered} marketersList={marketersList} updateRow={updateRow} saveRow={saveRow} updateDateGroup={updateDateGroup} saveDateGroup={saveDateGroup} removeRow={removeRow} verificationMode={mode === "verification"} />
     </div>
   </div>;

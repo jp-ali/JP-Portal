@@ -40,7 +40,17 @@
 @media(max-width:600px) { .card-designer { padding:12px; } .card-designer-preview-area,.card-designer-controls { padding:10px; } .card-designer-head { align-items:flex-start; } }
 .card-designer-v2 { display:grid; gap:18px; }
 .card-designer-v2 .card-designer-head { margin:0; }
-.card-designer-v2 .card-designer-preview-area { display:flex; flex-direction:column; align-items:center; justify-self:center; width:min(100%,460px); box-sizing:border-box; background:linear-gradient(180deg,#fff,#fff9fa); padding:12px; }
+.card-designer-v2 .card-designer-preview-area { display:flex; flex-direction:column; align-items:center; justify-self:center; width:min(100%,920px); box-sizing:border-box; background:linear-gradient(180deg,#fff,#fff9fa); padding:12px; }
+.card-designer-stage { display:grid; grid-template-columns:130px minmax(0,1fr) 130px; align-items:center; gap:14px; width:100%; }
+.card-designer-stage-actions { display:grid; gap:7px; align-content:center; }
+.card-designer-stage-actions button { width:100%; background:#7a0f2b; color:#fff; border-color:#7a0f2b; font-size:11px; padding:8px 5px; }
+.card-designer-stage-actions button:hover:not(:disabled) { background:#620921; }
+.card-designer-nudge { display:grid; justify-items:center; gap:6px; text-align:center; color:#74102d; }
+.card-designer-nudge small { color:#806e74; font-size:11px; }
+.card-designer-nudge-grid { display:grid; grid-template-columns:repeat(2,40px); gap:5px; }
+.card-designer-nudge-grid .up,.card-designer-nudge-grid .down { grid-column:1 / -1; justify-self:center; width:40px; }
+.card-designer-nudge-grid button { padding:7px; font-size:17px; line-height:1; }
+.card-designer-stage .card-designer-preview { max-width:none; }
 .card-designer-v2 .card-designer-preview-head { width:min(100%,420px); margin-bottom:9px; }
 .card-designer-preview-title { display:grid; gap:2px; }
 .card-designer-v2 .card-designer-preview { max-width:420px; box-shadow:0 9px 25px #3410181b; }
@@ -109,3 +119,5 @@
 .saved-cards-empty { border:1px dashed #d8b9c4; border-radius:10px; padding:40px 15px; text-align:center; color:#806e74; }
 @media(max-width:850px) { .card-designer-fields { grid-template-columns:1fr; } }
 @media(max-width:600px) { .card-designer-v2 .card-designer-preview-area,.card-designer-v2 .card-designer-controls,.saved-cards { padding:12px; } .card-designer-field-title { flex-wrap:wrap; } .card-designer-field-buttons { flex-wrap:wrap; } .saved-cards-search { max-width:none; } }
+@media(max-width:740px) { .card-designer-stage { grid-template-columns:minmax(0,1fr); } .card-designer-stage-actions { grid-row:2; display:flex; flex-wrap:wrap; justify-content:center; } .card-designer-stage-actions button { width:auto; } .card-designer-nudge { grid-row:3; } }
+.marketer-my-card-embedded { box-shadow:none; padding:14px; background:#fff9fb; }
