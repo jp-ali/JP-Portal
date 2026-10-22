@@ -83,6 +83,7 @@ const [selectedAdminSampleSchoolBox, setSelectedAdminSampleSchoolBox] = useState
 const [marketerSearch, setMarketerSearch] = useState("");
 const [deleteSearch, setDeleteSearch] = useState("");
 const [visitSearch, setVisitSearch] = useState("");
+const [selectedTodayVisitMarketerEmails, setSelectedTodayVisitMarketerEmails] = useState([]);
 const [fromDate, setFromDate] = useState("");
 const [toDate, setToDate] = useState("");
 const [allVisitsFromDate, setAllVisitsFromDate] = useState("");
@@ -377,6 +378,19 @@ const renderReportExpandButton = (key, title = "Expand report") => expandedRepor
 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
 </button>
 );
+const getFilteredTodayVisitReports = () => {
+  const todayKey = getDateKey(new Date());
+  const search = visitSearch.trim().toLowerCase();
+  const selectedEmails = new Set(selectedTodayVisitMarketerEmails.map((email) => String(email).toLowerCase()));
+  return reports.filter((report) => {
+    if (!report.createdAt || getDateKey(report.createdAt) !== todayKey) return false;
+    const email = String(report.marketerEmail || "").toLowerCase();
+    if (selectedAdminMarketerBox && email !== String(selectedAdminMarketerBox).toLowerCase()) return false;
+    if (selectedEmails.size && !selectedEmails.has(email)) return false;
+    const name = getMarketerName(report.marketerEmail, report.marketerName || report.marketerEmail || "");
+    return !search || email.includes(search) || String(name).toLowerCase().includes(search);
+  });
+};
 const renderExpandedReportChrome = (key) => {
 if (expandedReportKey !== key) return null;
 let excelAction = null;
@@ -399,8 +413,7 @@ pdfAction = () => downloadPDF(list);
 }
 else if (key === "today-visits") {
 refreshAction = () => fetchTodayReports(true);
-const todayReports = reports.filter((r) => r.createdAt && getDateKey(r.createdAt) === getDateKey(new Date()));
-const list = selectedAdminMarketerBox ? todayReports.filter((item) => item.marketerEmail === selectedAdminMarketerBox) : todayReports;
+const list = getFilteredTodayVisitReports();
 excelAction = () => downloadExcel(list, selectedAdminMarketerBox ? `${selectedAdminMarketerBox}_Today_Visits.xlsx` : "All_Today_Visits.xlsx");
 pdfAction = () => downloadPDF(list);
 }
@@ -521,6 +534,7 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     fetchAdminExpenseReport,
     fetchAllReports,
     fetchTodayReports,
+    getFilteredTodayVisitReports,
     fetchAllSamples,
     fetchAreasForCity,
     fetchAttendanceRecords,
@@ -615,6 +629,7 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     selectedDeletedMediaIds,
     selectedMarketerDetailBox,
     selectedMarketersFilter,
+    selectedTodayVisitMarketerEmails,
     selectedMediaIds,
     setAdminActionPlanFromDate,
     setAdminActionPlanMarketerIds,
@@ -683,6 +698,7 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     setVerificationPickerOpen,
     setVerificationToDate,
     setVisitSearch,
+    setSelectedTodayVisitMarketerEmails,
     softDeleteAttendanceMedia,
     softDeleteMedia,
     subordinateMarketerIds,
