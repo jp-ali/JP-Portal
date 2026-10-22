@@ -27,6 +27,7 @@ export default defineConfig({
   server: {
     host: true,
     strictPort: true,
+    allowedHosts: ['.devtunnels.ms'],
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
@@ -35,10 +36,13 @@ export default defineConfig({
             const origin = request.headers.origin;
             if (!origin) return;
             try {
-              // The API receives Vite's local Host header. Preserve the API's
-              // origin check for requests from other sites while allowing the
-              // same-origin frontend at a phone's LAN address.
-              if (new URL(origin).host === request.headers.host) {
+              // A forwarded phone URL can arrive at Vite with a localhost Host.
+              // Keep the API's origin check while passing same-origin requests
+              // from that URL through the local proxy.
+              const originHost = new URL(origin).host;
+              const forwardedHost = String(request.headers['x-forwarded-host'] || '').split(',')[0].trim();
+              const sameOriginRequest = request.headers['sec-fetch-site'] === 'same-origin';
+              if (originHost === request.headers.host || originHost === forwardedHost || sameOriginRequest) {
                 proxyRequest.setHeader('origin', `http://${proxyRequest.getHeader('host')}`);
               }
             } catch {
