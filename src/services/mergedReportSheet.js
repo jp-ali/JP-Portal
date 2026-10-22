@@ -31,3 +31,12 @@ export function mergedReportSheet(XLSX, data, title) {
   for (const address of ["A1", "A2"]) if (sheet[address]) sheet[address].s.font = { bold: true, color: { rgb: "7A0F2B" } };
   return sheet;
 }
+
+export function boldReportTotalRow(XLSX, sheet, data) {
+  if (!data.length) return;
+  const row = data.length + 2;
+  Object.keys(data[0]).forEach((_, column) => {
+    const cell = sheet[XLSX.utils.encode_cell({ r: row, c: column })];
+    if (cell) cell.s = { ...cell.s, font: { ...cell.s?.font, bold: true } };
+  });
+}

@@ -4,6 +4,7 @@ import reportsArt from "../assets/header-reports.png";
 import teamArt from "../assets/header-team.png";
 import schoolArt from "../assets/header-school.png";
 import cardsArt from "../assets/header-cards.png";
+import { dashboardItemKeys, useDashboardVisibility } from "../services/dashboardVisibility.js";
 
 const sectionDetails = {
   attendance: ["Attendance", "Daily readings, expenses and attendance records.", "team", "🕘"],
@@ -36,18 +37,20 @@ const sectionDetails = {
 
 const artByTheme = { media: mediaArt, reports: reportsArt, team: teamArt, school: schoolArt, cards: cardsArt };
 
-export default function DesktopSectionBanner({ view, title, description, theme }) {
+export default function DesktopSectionBanner({ view, title, description, theme, role = "marketer", accountId }) {
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 769px)").matches);
+  const { hide, isHidden } = useDashboardVisibility(role, accountId);
   useEffect(() => {
     const query = window.matchMedia("(min-width: 769px)");
     const update = () => setIsDesktop(query.matches);
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
   }, []);
-  if (!isDesktop || view === "home") return null;
+  if (!isDesktop || view === "home" || (role === "admin" && isHidden(dashboardItemKeys.banner(view)))) return null;
   const [defaultTitle, defaultDescription, defaultTheme, icon] = sectionDetails[view] || ["Portal", "Manage your work in one place.", "reports", "📋"];
   return <header className={`desktop-section-banner desktop-section-banner--${theme || defaultTheme}`}>
     <div className="desktop-section-banner-copy"><span className="desktop-section-banner-icon" aria-hidden="true">{icon}</span><div><h1>{title || defaultTitle}</h1><p>{description || defaultDescription}</p></div></div>
     <img className="desktop-section-banner-art" src={artByTheme[theme || defaultTheme]} alt="" aria-hidden="true" />
+    {role === "admin" && <button type="button" className="portal-dashboard-hide desktop-section-banner-hide" title={`Hide ${title || defaultTitle} header`} aria-label={`Hide ${title || defaultTitle} header`} onClick={() => hide({ key: dashboardItemKeys.banner(view), title: `${title || defaultTitle} header`, type: "Banner" })}><svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.5 10.5 0 0 1 12 5c5.2 0 9 4.1 10 7a13 13 0 0 1-3.1 4.7M6.2 6.2C4.2 7.6 2.8 9.8 2 12c1 2.9 4.8 7 10 7 1.7 0 3.2-.4 4.5-1.1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button>}
   </header>;
 }

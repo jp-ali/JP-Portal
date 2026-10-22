@@ -238,7 +238,7 @@ onClick={() => openAdminSidebarSection(item.key)}
         <div className={`app-responsive admin-desktop-content ${adminSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
           {renderResponsiveStyles()}
           <PortalTopBar role="admin" name="Admin" items={adminSidebarItems} onNavigate={openAdminSidebarSection} onMenu={() => setAdminSidebarOpen(true)} onLogout={handleLogout} />
-          <DesktopSectionBanner view={adminView} title={adminView === "media" && mediaView === "deleted" ? "Recently Deleted" : undefined} />
+          <DesktopSectionBanner view={adminView} role="admin" accountId={context.user?.id || context.user?.email || "admin"} title={adminView === "media" && mediaView === "deleted" ? "Recently Deleted" : undefined} />
           {portalSkeletonLoading && renderRedSkeleton()}
           {adminView === "home" && (
 <AdminHomePanel />
@@ -255,8 +255,8 @@ onClick={() => openAdminSidebarSection(item.key)}
           {["other-reports", "verification-reports", "custom-report"].includes(adminView) && (
 <AdminOtherReportsPanel mode={adminView === "custom-report" ? customReportOrigin : adminView === "verification-reports" ? "verification" : "other"} reports={customReports} setReports={setCustomReports} selectedId={selectedCustomReportId} setSelectedId={setSelectedCustomReportId} loading={customReportsLoading} loadError={customReportsError} reload={reloadCustomReports} onOrigin={setCustomReportOrigin} />
 )}
-          {adminView === "card-designer" && <AdminCardDesignerPanel cardId={selectedSavedCardId} onSaved={setSelectedSavedCardId} onOpenSaved={() => setAdminView("saved-cards")} />}
-          {adminView === "saved-cards" && <AdminSavedCardsPanel onEdit={(id) => { setSelectedSavedCardId(id); setAdminView("card-designer"); }} onNew={() => { setSelectedSavedCardId(""); setAdminView("card-designer"); }} />}
+          {adminView === "card-designer" && <AdminCardDesignerPanel cardId={selectedSavedCardId} onSaved={setSelectedSavedCardId} onOpenSaved={() => setAdminView("saved-cards")} onBack={() => setAdminView(selectedSavedCardId ? "saved-cards" : "home")} />}
+          {adminView === "saved-cards" && <AdminSavedCardsPanel onBack={() => setAdminView("home")} onEdit={(id) => { setSelectedSavedCardId(id); setAdminView("card-designer"); }} onNew={() => { setSelectedSavedCardId(""); setAdminView("card-designer"); }} />}
           {adminView === "hidden" && <DashboardHiddenPanel role="admin" accountId={context.user?.id || context.user?.email || "admin"} onBack={() => setAdminView("home")} />}
           {adminView === "attendance-media" && (
 <AdminAttendanceMediaPanel />

@@ -3,7 +3,7 @@ import { request } from "../../services/authApi.js";
 import { downloadCardSheetCdr, downloadCardSheetPdf, downloadCardSheetSvg, downloadCardSheetShareZip } from "../../services/cardDesigner.js";
 import "../../styles/cardDesigner.css";
 
-export default function AdminSavedCardsPanel({ onEdit, onNew }) {
+export default function AdminSavedCardsPanel({ onEdit, onNew, onBack }) {
   const [cards, setCards] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
@@ -48,6 +48,7 @@ export default function AdminSavedCardsPanel({ onEdit, onNew }) {
     finally { setBusy(false); setMenu(""); }
   };
   return <section className="saved-cards">
+    <div className="portal-section-toolbar"><button type="button" className="portal-section-back" onClick={onBack}>← Back</button></div>
     <header className="saved-cards-head"><div><h2>Saved Cards</h2><p>Select one or more cards to download, remove or restore.</p></div><button type="button" className="primary" onClick={onNew}>+ Create card</button></header>
     <div className="saved-cards-toolbar">
       <label className="saved-cards-search"><span>⌕</span><input type="search" placeholder="Search name, depot, phone or email" value={search} onChange={(event) => { setSearch(event.target.value); setSelectedIds([]); }} /></label>

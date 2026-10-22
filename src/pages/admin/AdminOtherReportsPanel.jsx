@@ -220,10 +220,10 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   };
 
   if (!detail) return <div style={cardStyle} className="other-reports-section">
+    <div className="portal-section-toolbar"><button type="button" className="portal-section-back" onClick={() => setAdminView("home")}>← Back</button></div>
     <div className="other-reports-header">
       <div><span className="other-reports-eyebrow">REPORT WORKSPACE</span><h2>{mode === "verification" ? "Verification" : "Other Reports"}</h2><p>{mode === "verification" ? "Review school visits and keep every follow-up in one place." : "A clean space for the reports you create and manage."}</p></div>
       <div className="other-reports-actions">
-        <button className="other-reports-btn" onClick={() => setAdminView("home")}>← Back</button>
         {mode !== "verification" && <button className="other-reports-btn primary" aria-expanded={actionOpen} onClick={() => setActionOpen((value) => !value)}>Action ▾</button>}
       </div>
     </div>

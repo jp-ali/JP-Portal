@@ -28,6 +28,7 @@ export function useDashboardVisibility(role, accountId) {
 export const dashboardItemKeys = {
   hero: "hero",
   imprints: "imprints",
+  banner: (view) => `banner:${view}`,
   stat: (label) => `stat:${label}`,
   section: (title) => `section:${title}`,
   card: (sectionTitle, title) => `card:${sectionTitle}:${title}`

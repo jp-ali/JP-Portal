@@ -7,7 +7,7 @@ import "../../styles/cardDesigner.css";
 
 const newTemplate = () => ({ image: "", imageWidth: 1658, imageHeight: 951, widthMm: 85.6, fields: defaultCardFields.map((field) => ({ ...field })) });
 
-export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSaved }) {
+export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSaved, onBack }) {
   const [template, setTemplate] = useState(newTemplate);
   const [values, setValues] = useState(() => ({ ...defaultCardValues }));
   const stateRef = useRef({ template: newTemplate(), values: { ...defaultCardValues } });
@@ -136,6 +136,7 @@ export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSav
   </div>;
 
   return <section className="card-designer card-designer-v2">
+    <div className="portal-section-toolbar"><button type="button" className="portal-section-back" onClick={onBack}>← Back</button></div>
     <header className="card-designer-head"><div><h2>Card Designer</h2><p>{editingId ? "Edit your saved card" : "Create a new card"} · Choose a field, then click the card to place its text.</p></div><div className="card-designer-actions"><button type="button" onClick={onOpenSaved}>Saved Cards</button><button type="button" onClick={() => uploadRef.current?.click()}>Change artwork</button><button type="button" onClick={undo} disabled={!undoCount}>Undo (Ctrl+Z)</button></div></header>
     <input ref={uploadRef} className="card-designer-hidden" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => upload(event.target.files?.[0])} />
     {loading && <p>Loading card…</p>}{error && <p className="card-designer-error" role="alert">{error}</p>}{message && <p className="card-designer-success" role="status">{message}</p>}

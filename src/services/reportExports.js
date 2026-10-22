@@ -1,5 +1,5 @@
 import { mergedReportSheet } from "./mergedReportSheet.js";
-import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill } from "./pdfTheme.js";
+import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill, pdfTextWidth, pdfCenteredTextTop } from "./pdfTheme.js";
 import { marketerCityNames } from "../domain/marketerCities.js";
 
 export function createReportExporters({ formatTime12, getMarketerName }) {
@@ -112,15 +112,14 @@ const columns = [
 ["School Name", 30],
 ["Contact Person", 25],
 ["Phone No", 20],
-["Visit Time", 15],
+["Time", 14],
 ["Session", 10],
-["Branches", 12],
+["Branches", 13],
 ["Strength", 12],
 ["Purpose / Details", 28],
 ["Remarks", 30]
 ];
 const esc = (v) => ascii(v).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
-const textWidth = (txt, size) => ascii(txt).length * size * 0.50;
 const wrapText = (value, maxWidth, size) => {
 const txt = ascii(value);
 if (!txt) return ["N/A"];
@@ -152,7 +151,7 @@ const drawText = (xMm, topMm, txt, size = 7, align = "left", bold = false) => {
 const safe = esc(txt);
 const fontName = bold ? "/F2" : "/F1";
 let x = xMm * MM;
-const width = textWidth(txt, size);
+const width = pdfTextWidth(ascii(txt), size, bold);
 if (align === "center") x -= width / 2;
 if (align === "right") x -= width;
 const y = topToPdfY(topMm) - size * 0.80;
@@ -166,7 +165,7 @@ const visible = lines.slice(0, maxLines);
 if (lines.length > maxLines && visible.length) {
 visible[visible.length - 1] = `${visible[visible.length - 1].slice(0, Math.max(1, visible[visible.length - 1].length - 4))}...`;
 }
-const startTop = topMm + 1.7;
+const startTop = topMm === TABLE_TOP ? pdfCenteredTextTop(topMm, hMm, visible.length, size, MM) : topMm + 1.7;
 return visible.map((line, i) => {
 let tx = xMm + 2;
 if (align === "center") tx = xMm + wMm / 2;
@@ -190,7 +189,7 @@ item.strength || "N/A",
 item.purpose || item.sampleDetails || "N/A",
 item.notes || "N/A"
 ];
-const widths = [20, 24, 30, 25, 20, 15, 10, 12, 12, 28, 30];
+const widths = [20, 24, 30, 25, 20, 14, 10, 13, 12, 28, 30];
 const sizes = [5.5, 5.5, 5.6, 5.6, 5.5, 5.4, 5.1, 5.1, 5.1, 5.3, 5.3];
 const lineCounts = values.map((v, i) => wrapText(v, widths[i] * MM - 4 * MM, sizes[i]).length);
 return Math.min(36, Math.max(8, 2.8 + Math.max(...lineCounts) * 3.15));
@@ -207,7 +206,7 @@ c.push(drawText(287, 22.5, "Official Visit Record", 6.5, "right", false));
 let x = LEFT;
 columns.forEach(([heading, width]) => {
 c.push(rectCmd(x, TABLE_TOP, width, 9, 0.55, PDF_TABLE_HEAD));
-c.push(drawWrapped(x, TABLE_TOP, width, 9, heading, 6.5, "center", true));
+c.push(drawWrapped(x, TABLE_TOP, width, 9, heading, heading === "Branches" ? 5.4 : 6.5, "center", true));
 x += width;
 });
 return { content: c, y: TABLE_TOP + 9 };
@@ -292,9 +291,9 @@ drawCell(84, yy, 24, entry.height, item.areaName || "N/A", "left", false, 5.4, f
 drawCell(108, yy, 30, entry.height, item.schoolName || "N/A", "left", false, 5.5, fill);
 drawCell(138, yy, 25, entry.height, item.principalName || "N/A", "left", false, 5.5, fill);
 drawCell(163, yy, 20, entry.height, item.phone || "N/A", "left", false, 5.4, fill);
-drawCell(183, yy, 15, entry.height, formatTime(item), "center", false, 5.3, fill);
-drawCell(198, yy, 10, entry.height, item.session || "N/A", "center", false, 5.1, fill);
-drawCell(208, yy, 12, entry.height, item.branches || "N/A", "center", false, 5.1, fill);
+drawCell(183, yy, 14, entry.height, formatTime(item), "center", false, 5.3, fill);
+drawCell(197, yy, 10, entry.height, item.session || "N/A", "center", false, 5.1, fill);
+drawCell(207, yy, 13, entry.height, item.branches || "N/A", "center", false, 5.1, fill);
 drawCell(220, yy, 12, entry.height, item.strength || "N/A", "center", false, 5.1, fill);
 drawCell(232, yy, 28, entry.height, item.purpose || item.sampleDetails || "N/A", "left", false, 5.3, fill);
 drawCell(260, yy, 30, entry.height, item.notes || "N/A", "left", false, 5.3, fill);
@@ -426,7 +425,6 @@ const columns = [
 ["Assigned KMs/L", 46]
 ];
 const esc = (v) => ascii(v).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
-const textWidth = (txt, size) => ascii(txt).length * size * 0.50;
 const wrapText = (value, maxWidth, size) => {
 const txt = ascii(value);
 if (!txt) return ["N/A"];
@@ -458,7 +456,7 @@ const drawText = (xMm, topMm, txt, size = 7, align = "left", bold = false) => {
 const safe = esc(txt);
 const fontName = bold ? "/F2" : "/F1";
 let x = xMm * MM;
-const width = textWidth(txt, size);
+const width = pdfTextWidth(ascii(txt), size, bold);
 if (align === "center") x -= width / 2;
 if (align === "right") x -= width;
 const y = topToPdfY(topMm) - size * 0.80;
@@ -472,7 +470,7 @@ const visible = lines.slice(0, maxLines);
 if (lines.length > maxLines && visible.length) {
 visible[visible.length - 1] = `${visible[visible.length - 1].slice(0, Math.max(1, visible[visible.length - 1].length - 4))}...`;
 }
-const startTop = topMm + 1.7;
+const startTop = topMm === TABLE_TOP ? pdfCenteredTextTop(topMm, hMm, visible.length, size, MM) : topMm + 1.7;
 return visible.map((line, i) => {
 let tx = xMm + 2;
 if (align === "center") tx = xMm + wMm / 2;

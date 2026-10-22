@@ -4,7 +4,7 @@ import { db } from "../../services/firebase";
 import { getSession } from "../../services/authApi";
 import { formatActionPlanDate } from "../../domain/dates.js";
 import { mergedReportSheet } from "../../services/mergedReportSheet.js";
-import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill } from "../../services/pdfTheme.js";
+import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill, pdfTextWidth, pdfCenteredTextTop } from "../../services/pdfTheme.js";
 
 export function useActionPlans({ user, setUser, setMarketerview, marketersList, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId }) {
 const [actionPlanDate, setActionPlanDate] = useState(getTodayInputDate());
@@ -79,17 +79,34 @@ if (!window.XLSX) {
 alert("Excel library is still loading. Please try again in a moment.");
 return;
 }
-const formatted = rows.map((p, index) => ({
-"Sr.": index + 1,
-"Date": formatActionPlanDate(p.date),
-"Submitted Time": formatTime12(p.createdAt?.toDate ? p.createdAt.toDate() : null),
-"Marketer": p.marketerName || p.marketerEmail || "Marketer",
-"Designation": p.designation || "Regional Manager",
-"City": p.cityName || "N/A",
-"Area": p.areaName || "N/A",
-"Purpose": p.purpose || "N/A"
-}));
+const formatted = [];
+const merges = [];
+groupRowsByMarketerAndDate(rows, { getDateValue: (plan) => plan?.date }).forEach((person, personIndex) => {
+  const personStart = formatted.length;
+  let serial = 0;
+  for (const [date, entries] of person.dates) {
+    const dateStart = formatted.length;
+    entries.forEach((plan) => formatted.push({
+      "Sr.": formatted.length === personStart ? personIndex + 1 : "",
+      "Name": formatted.length === personStart ? person.name : "",
+      "Action Plan Date": formatted.length === dateStart ? formatActionPlanDate(date) : "",
+      "Sr#": ++serial,
+      "Submitted Time": formatTime12(plan.createdAt?.toDate ? plan.createdAt.toDate() : null),
+      "Area": plan.areaName || "N/A",
+      "Purpose": plan.purpose || "N/A",
+      "Designation": plan.designation || "Regional Manager"
+    }));
+    if (entries.length > 1) merges.push({ s: { r: dateStart + 3, c: 2 }, e: { r: formatted.length + 2, c: 2 } });
+  }
+  if (formatted.length - personStart > 1) for (const column of [0, 1]) merges.push({ s: { r: personStart + 3, c: column }, e: { r: formatted.length + 2, c: column } });
+});
 const worksheet = mergedReportSheet(window.XLSX, formatted, "Action Plans Report");
+worksheet["!merges"].push(...merges);
+worksheet["!cols"] = [8, 26, 20, 8, 20, 30, 42, 27].map((wch) => ({ wch }));
+for (let column = 0; column < 8; column++) {
+  const cell = worksheet[window.XLSX.utils.encode_cell({ r: 2, c: column })];
+  if (cell) cell.s = { ...cell.s, font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "7A0F2B" } }, alignment: { horizontal: "center", vertical: "center", wrapText: true } };
+}
 const workbook = window.XLSX.utils.book_new();
 window.XLSX.utils.book_append_sheet(workbook, worksheet, "Action Plans");
 const fromPart = adminActionPlanFromDate || "All";
@@ -103,12 +120,12 @@ try {
 const clean=(v)=>String(v??"N/A").replace(/[\r\n]+/g," ").trim()||"N/A", ascii=(v)=>clean(v).replace(/[^\x20-\x7E]/g,"?");
 const PW=841.89,PH=595.28,MM=72/25.4,L=7,R=290,TOP=38,BOTTOM=193;
 const cols=[["Sr.",8],["Name",34],["Action Plan Date",26],["Sr#",8],["Submitted Time",20],["Area",55],["Purpose",87],["Designation",45]];
-const esc=(v)=>ascii(v).replace(/\\/g,"\\\\").replace(/\(/g,"\\(").replace(/\)/g,"\\)"),tw=(t,z)=>ascii(t).length*z*.50;
+const esc=(v)=>ascii(v).replace(/\\/g,"\\\\").replace(/\(/g,"\\(").replace(/\)/g,"\\)"),tw=(t,z,isBold=false)=>pdfTextWidth(ascii(t),z,isBold);
 const wrap=(v,max,z)=>{const t=ascii(v),n=Math.max(1,Math.floor(max/(z*.50))),w=t.split(/\s+/),a=[];let line="";w.forEach(x=>{const c=line?`${line} ${x}`:x;if(c.length<=n)line=c;else{if(line)a.push(line);line=x;}});if(line)a.push(line);return a.length?a:["N/A"];};
 const y=(top)=>PH-top*MM;
 const rect=(x,top,w,h,stroke=.45,fill=null)=>{const a=[];if(fill)a.push(`${fill[0]} ${fill[1]} ${fill[2]} rg`);a.push(`${stroke} w`,`${(x*MM).toFixed(2)} ${(PH-(top+h)*MM).toFixed(2)} ${(w*MM).toFixed(2)} ${(h*MM).toFixed(2)} re`,fill?"B":"S");return a.join("\n");};
-const text=(x,top,t,z=7,align="left",bold=false)=>{let xx=x*MM,w=tw(t,z);if(align==="center")xx-=w/2;if(align==="right")xx-=w;return `BT ${bold?"/F2":"/F1"} ${z} Tf ${pdfTextFill(top)} rg 1 0 0 1 ${xx.toFixed(2)} ${(y(top)-z*.80).toFixed(2)} Tm (${esc(t)}) Tj ET`;};
-const wrapped=(x,top,w,h,t,z=5.8,bold=false)=>{const lines=wrap(t,w*MM-4*MM,z),lh=z*1.22,max=Math.max(1,Math.floor((h*MM-2.2*MM)/lh)),vis=lines.slice(0,max);if(lines.length>max&&vis.length)vis[vis.length-1]=`${vis[vis.length-1].slice(0,Math.max(1,vis[vis.length-1].length-4))}...`;const st=top+1.7;return vis.map((line,i)=>text(x+w/2,st+i*lh/MM,line,z,"center",bold)).join("\n");};
+const text=(x,top,t,z=7,align="left",bold=false)=>{let xx=x*MM,w=tw(t,z,bold);if(align==="center")xx-=w/2;if(align==="right")xx-=w;return `BT ${bold?"/F2":"/F1"} ${z} Tf ${pdfTextFill(top)} rg 1 0 0 1 ${xx.toFixed(2)} ${(y(top)-z*.80).toFixed(2)} Tm (${esc(t)}) Tj ET`;};
+const wrapped=(x,top,w,h,t,z=5.8,bold=false)=>{const lines=wrap(t,w*MM-4*MM,z),lh=z*1.22,max=Math.max(1,Math.floor((h*MM-2.2*MM)/lh)),vis=lines.slice(0,max);if(lines.length>max&&vis.length)vis[vis.length-1]=`${vis[vis.length-1].slice(0,Math.max(1,vis[vis.length-1].length-4))}...`;const st=top===TOP?pdfCenteredTextTop(top,h,vis.length,z,MM):top+1.7;return vis.map((line,i)=>text(x+w/2,st+i*lh/MM,line,z,"center",bold)).join("\n");};
 const range=`${adminActionPlanFromDate||"All"} to ${adminActionPlanToDate||"All"}`,pages=[];
 const newPage=()=>{const c=[];c.push(rect(L,5,R-L,24,.55,PDF_BANNER),text(148.5,9,"JAVED PUBLISHERS",18,"center",true),text(148.5,15.5,"DAILY ACTION PLAN REPORT",11.5,"center",true),text(10,22.5,`Report Date: ${new Date().toLocaleDateString("en-GB")}`,6.5),text(148.5,22.5,`Total Records: ${rows.length}`,6.5,"center"),text(287,22.5,`Range: ${range}`,6.0,"right"));let x=L;cols.forEach(([h,w])=>{c.push(rect(x,TOP,w,9,.55,PDF_TABLE_HEAD),wrapped(x,TOP,w,9,h,5.8,true));x+=w;});return{content:c,y:TOP+9};};
 let page=newPage();pages.push(page);

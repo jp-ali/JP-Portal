@@ -2,8 +2,8 @@ import { useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { calculatedKms, dailyAssignedKms, dailyPetrolExpense, dailyPetrolRate } from "./expenseCalculations.js";
-import { mergedReportSheet } from "../../services/mergedReportSheet.js";
-import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill } from "../../services/pdfTheme.js";
+import { boldReportTotalRow, mergedReportSheet } from "../../services/mergedReportSheet.js";
+import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill, pdfTextWidth, pdfCenteredTextTop } from "../../services/pdfTheme.js";
 
 export function useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12, groupRowsByMarketerAndDate }) {
 const [expenseReportFromDate, setExpenseReportFromDate] = useState("");
@@ -133,6 +133,7 @@ data.push({
 "Total Other Expense": Number(totalAllOther.toFixed(2))
 });
 const worksheet = mergedReportSheet(window.XLSX, data, "Expense Report");
+boldReportTotalRow(window.XLSX, worksheet, data);
 worksheet["!cols"] = [
 { wch: 6 }, { wch: 15 }, { wch: 24 }, { wch: 16 }, { wch: 16 },
 { wch: 16 }, { wch: 17 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 20 }
@@ -168,7 +169,6 @@ const columns = [
 ["KMs", 18], ["Petrol Expense", 20], ["Transport", 22], ["Night Stay", 22], ["Food", 20], ["Other", 20], ["Total Other", 50]
 ];
 const esc = (v) => ascii(v).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
-const textWidth = (txt, size) => ascii(txt).length * size * 0.50;
 const wrapText = (value, maxWidth, size) => {
 const txt = ascii(value);
 if (!txt) return ["N/A"];
@@ -199,7 +199,7 @@ const drawText = (xMm, topMm, txt, size = 7, align = "left", bold = false) => {
 const safe = esc(txt);
 const fontName = bold ? "/F2" : "/F1";
 let x = xMm * MM;
-const width = textWidth(txt, size);
+const width = pdfTextWidth(ascii(txt), size, bold);
 if (align === "center") x -= width / 2;
 if (align === "right") x -= width;
 const y = topToPdfY(topMm) - size * 0.80;
@@ -211,7 +211,7 @@ const lineH = size * 1.22;
 const maxLines = Math.max(1, Math.floor((hMm * MM - 2.2 * MM) / lineH));
 const visible = lines.slice(0, maxLines);
 if (lines.length > maxLines && visible.length) visible[visible.length - 1] = `${visible[visible.length - 1].slice(0, Math.max(1, visible[visible.length - 1].length - 4))}...`;
-const startTop = topMm + 1.7;
+const startTop = topMm === TABLE_TOP ? pdfCenteredTextTop(topMm, hMm, visible.length, size, MM) : topMm + 1.7;
 return visible.map((line, i) => drawText(xMm + wMm / 2, startTop + i * lineH / MM, line, size, "center", bold)).join("\n");
 };
 const pages = [];
@@ -444,6 +444,7 @@ data.push({
 "Total Other Expense": Number(totalAllOther.toFixed(2))
 });
 const worksheet = mergedReportSheet(window.XLSX, data, "Expense Report");
+boldReportTotalRow(window.XLSX, worksheet, data);
 worksheet["!cols"] = [
 { wch: 6 }, { wch: 28 }, { wch: 15 }, { wch: 24 }, { wch: 16 }, { wch: 16 },
 { wch: 16 }, { wch: 16 }, { wch: 13 }, { wch: 17 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 13 }, { wch: 20 }
@@ -468,7 +469,6 @@ const columns = [
 ["Night Stay", 20], ["Food", 20], ["Other", 20], ["Total Other", 24]
 ];
 const esc = (v) => ascii(v).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
-const textWidth = (txt, size) => ascii(txt).length * size * .50;
 const wrapText = (value, maxWidth, size) => {
 const txt = ascii(value); if (!txt) return ["N/A"];
 const maxChars = Math.max(1, Math.floor(maxWidth / (size * .50)));
@@ -483,14 +483,14 @@ if(fill) parts.push(`${fill[0]} ${fill[1]} ${fill[2]} rg`);
 parts.push(`${stroke} w`, `${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re`, fill?"B":"S"); return parts.join("\n");
 };
 const drawText = (xMm, topMm, txt, size=7, align="left", bold=false) => {
-const safe=esc(txt), fontName=bold?"/F2":"/F1"; let x=xMm*MM; const width=textWidth(txt,size);
+const safe=esc(txt), fontName=bold?"/F2":"/F1"; let x=xMm*MM; const width=pdfTextWidth(ascii(txt),size,bold);
 if(align==="center") x-=width/2; if(align==="right") x-=width; const y=topToPdfY(topMm)-size*.80;
 return `BT ${fontName} ${size} Tf ${pdfTextFill(topMm)} rg 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${safe}) Tj ET`;
 };
 const drawWrapped = (xMm, topMm, wMm, hMm, txt, size=6.0, bold=false) => {
 const lines=wrapText(txt,wMm*MM-4*MM,size), lineH=size*1.22; const maxLines=Math.max(1,Math.floor((hMm*MM-2.2*MM)/lineH));
 const visible=lines.slice(0,maxLines); if(lines.length>maxLines&&visible.length) visible[visible.length-1]=`${visible[visible.length-1].slice(0,Math.max(1,visible[visible.length-1].length-4))}...`;
-const startTop=topMm+1.7;
+const startTop=topMm===TABLE_TOP?pdfCenteredTextTop(topMm,hMm,visible.length,size,MM):topMm+1.7;
 return visible.map((line,i)=>drawText(xMm+wMm/2,startTop+i*lineH/MM,line,size,"center",bold)).join("\n");
 };
 const pages=[];
