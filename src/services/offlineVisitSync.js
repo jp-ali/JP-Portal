@@ -1,6 +1,6 @@
-import { doc, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "./firebase.js";
-import { makeAreaId, makeCityId, makeSchoolId } from "../domain/catalog.js";
+import { makeAreaId, makeCityId, makeSchoolId, normalizeEntityName } from "../domain/catalog.js";
 import { listOfflineVisits, removeOfflineVisit } from "./offlineVisitStore.js";
 
 export async function syncOfflineVisits(user) {
@@ -14,6 +14,16 @@ export async function syncOfflineVisits(user) {
     const cityId = draft.cityId || makeCityId(draft.cityName);
     const areaId = draft.areaId || makeAreaId(cityId, draft.areaName);
     const schoolId = draft.schoolId || makeSchoolId(areaId, draft.schoolName);
+    if (!draft.schoolId && (user.assignedCityIds || []).includes(cityId) && (user.assignedAreaIds || []).includes(areaId)) {
+      const schoolRef = doc(db, "schools", schoolId);
+      if (!(await getDoc(schoolRef)).exists()) await setDoc(schoolRef, {
+          name: draft.schoolName, normalizedName: normalizeEntityName(draft.schoolName),
+          cityId, city: draft.cityName, cityName: draft.cityName,
+          areaId, area: draft.areaName, areaName: draft.areaName,
+          source: "manual-marketer", addedByMarketerEmail: user.email,
+          createdAt: serverTimestamp()
+        });
+    }
     const payload = {
       cityId, cityName: draft.cityName,
       areaId, areaName: draft.areaName,

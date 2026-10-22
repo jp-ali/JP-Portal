@@ -33,6 +33,10 @@ export const saveOfflineVisit = async (draft) => {
   const id = `offline-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
   const record = { ...draft, id, savedAt: new Date().toISOString() };
   await run("readwrite", (store) => store.put(record));
+  window.dispatchEvent(new Event("offline-visits-changed"));
   return record;
 };
-export const removeOfflineVisit = (id) => run("readwrite", (store) => store.delete(id));
+export const removeOfflineVisit = async (id) => {
+  await run("readwrite", (store) => store.delete(id));
+  window.dispatchEvent(new Event("offline-visits-changed"));
+};

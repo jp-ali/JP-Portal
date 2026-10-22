@@ -18,7 +18,7 @@ import PortalTopBar from "../ui/PortalTopBar.jsx";
 import DesktopSectionBanner from "../ui/DesktopSectionBanner.jsx";
 
 function MarketerPortalContent({ context }) {
-  const { containerStyle, fetchCatalogues, fetchMarketerReports, fetchMarketerSamples, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getMarketerName, globalStyle, handleLogout, marketerCss, marketerSidebarOpen, marketerView, notes, openActionPlanForm, openAddVisit, openAttendanceForm, openExpenseReport, openVisitHistory, pdfExportData, pdfTemplateRef, phone, portalSkeletonLoading, principalName, purpose, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderRedSkeleton, renderResponsiveStyles, restoreMedia, setCatalogueSearch, setFullScreenImage, setFullScreenMediaRecord, setMarketerSidebarOpen, setMarketerview, setSampleDetailsText, setSampleHistoryFromDate, setSampleHistorySearch, setSampleHistoryToDate, setSamplePhone, setSamplePrincipalName, setSampleSchoolName, setSampleSuccessMsg, setSelectedAdminMarketerBox, softDeleteMedia, user, setUser } = context;
+  const { containerStyle, fetchCatalogues, fetchMarketerReports, fetchMarketerSamples, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getMarketerName, globalStyle, handleLogout, marketerCss, marketerSidebarOpen, marketerView, notes, onSync, syncState, online, openActionPlanForm, openAddVisit, openAttendanceForm, openExpenseReport, openVisitHistory, pdfExportData, pdfTemplateRef, phone, portalSkeletonLoading, principalName, purpose, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderRedSkeleton, renderResponsiveStyles, restoreMedia, setCatalogueSearch, setFullScreenImage, setFullScreenMediaRecord, setMarketerSidebarOpen, setMarketerview, setSampleDetailsText, setSampleHistoryFromDate, setSampleHistorySearch, setSampleHistoryToDate, setSamplePhone, setSamplePrincipalName, setSampleSchoolName, setSampleSuccessMsg, setSelectedAdminMarketerBox, softDeleteMedia, user, setUser } = context;
 const openMarketerSidebarSection = (key) => {
 setMarketerSidebarOpen(false);
 if (key === "home") { setMarketerview("home"); return; }
@@ -57,7 +57,7 @@ return (
         <div className="marketer-sidebar-head">
           <div className="portal-sidebar-brand"><span className="portal-sidebar-logo">JP<span>.</span></span><strong>JAVED PUBLISHERS</strong></div>
           <div className="marketer-sidebar-head-actions">
-            <button type="button" className="marketer-sidebar-close" onClick={() => setMarketerSidebarOpen(false)} title="Close menu" aria-label="Close menu">◀</button>
+            <button type="button" className="marketer-sidebar-close" onClick={() => setMarketerSidebarOpen(false)} title="Close menu" aria-label="Close menu"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m14 5-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
             <button type="button" className="marketer-sidebar-logout" onClick={() => { setMarketerSidebarOpen(false); handleLogout(); }} title="Logout" aria-label="Logout">{renderLogoutArrowIcon(18)}</button>
           </div>
         </div>
@@ -73,7 +73,7 @@ return (
       </aside>
       <div className={`app-responsive marketer-portal-content ${marketerSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
         {renderResponsiveStyles()}
-        <PortalTopBar role="marketer" name={user?.name || "Marketer"} items={marketerSidebarItems} onNavigate={openMarketerSidebarSection} onMenu={() => setMarketerSidebarOpen(true)} onLogout={handleLogout} profilePhoto={user?.profilePhoto} onProfilePhotoChange={(photo) => setUser((current) => ({ ...current, profilePhoto: photo }))} onExpandProfilePhoto={(photo) => setFullScreenImage(photo)} />
+        <PortalTopBar role="marketer" name={user?.name || "Marketer"} items={marketerSidebarItems} onNavigate={openMarketerSidebarSection} onMenu={() => setMarketerSidebarOpen(true)} onLogout={handleLogout} profilePhoto={user?.profilePhoto} onProfilePhotoChange={(photo) => setUser((current) => ({ ...current, profilePhoto: photo }))} onExpandProfilePhoto={(photo) => setFullScreenImage(photo)} onSync={onSync} syncState={syncState} online={online} />
         <DesktopSectionBanner view={marketerView} />
         {portalSkeletonLoading && renderRedSkeleton()}
         {marketerView === "home" && (

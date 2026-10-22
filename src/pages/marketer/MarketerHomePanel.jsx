@@ -18,7 +18,7 @@ export default function MarketerHomePanel() {
       c.fetchMarketerSamples(c.user.email).then(() => { if (active) setStatsReady((current) => ({ ...current, samples: true })); }).catch(() => {});
     });
     return () => { active = false; };
-  }, [c.user.email]);
+  }, [c.user.email, c.syncState?.syncedAt]);
   const visits = c.marketerReports || [];
   const today = c.getDateKey(new Date());
   const attendance = c.todayAttendance;

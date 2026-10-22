@@ -37,7 +37,7 @@ export default function LoginPage({ context }) {
           <button className="login-submit" type="submit" disabled={loginPending}>{loginPending ? "Signing In..." : "Sign In"}</button>
           {error && <p className="login-error" role="alert">{error}</p>}
         </form>
-        <button className="login-offline" type="button" onClick={onWorkOffline}>{online ? "Work offline / save visits as drafts" : "Open offline Add Visit"}</button>
+        <button className="login-offline" type="button" onClick={onWorkOffline}>Use offline</button>
       </div>
       <p className="login-credit">Created by Ali Ashfaq</p>
     </main>

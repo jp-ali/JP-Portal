@@ -38,7 +38,22 @@ export default function App() {
   const [online, setOnline] = useState(() => navigator.onLine);
   const [offlineMode, setOfflineMode] = useState(false);
   const [offlineProfile, setOfflineProfile] = useState(cachedMarketer);
+  const [syncState, setSyncState] = useState({ pending: 0, busy: false, message: "" });
   const syncing = useRef(null);
+
+  const refreshPending = async () => {
+    const email = String(session.user?.email || "").toLowerCase();
+    const drafts = await listOfflineVisits();
+    const pending = drafts.filter((item) => String(item.ownerEmail || "").toLowerCase() === email).length;
+    setSyncState((current) => ({ ...current, pending }));
+    return pending;
+  };
+  useEffect(() => {
+    refreshPending().catch(() => {});
+    const changed = () => { refreshPending().catch(() => {}); };
+    window.addEventListener("offline-visits-changed", changed);
+    return () => window.removeEventListener("offline-visits-changed", changed);
+  }, [session.user?.email]);
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
@@ -49,23 +64,33 @@ export default function App() {
 
   useEffect(() => {
     if (session.user?.role !== "marketer") return;
-    const profile = { email: session.user.email, name: session.user.name || "", marketerId: session.user.marketerId || "" };
+    const profile = { email: session.user.email, name: session.user.name || "", marketerId: session.user.marketerId || "", assignedCityIds: session.user.assignedCityIds || [], assignedAreaIds: session.user.assignedAreaIds || [] };
     try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch { /* Private browsing may block storage. */ }
     setOfflineProfile(profile);
   }, [session.user]);
 
-  const syncDrafts = async () => {
-    if (!online || session.user?.role !== "marketer") return { synced: 0 };
+  const syncDrafts = async (manual = false) => {
+    if (!online || session.user?.role !== "marketer") return { synced: 0, error: "Connect to the internet and sign in as the same marketer to sync." };
     if (syncing.current) return syncing.current;
     syncing.current = (async () => {
+      setSyncState((current) => ({ ...current, busy: true, message: "" }));
       try {
         const drafts = await listOfflineVisits();
-        if (!drafts.some((item) => String(item.ownerEmail || "").toLowerCase() === String(session.user.email || "").toLowerCase())) return { synced: 0 };
+        if (!drafts.some((item) => String(item.ownerEmail || "").toLowerCase() === String(session.user.email || "").toLowerCase())) {
+          if (manual) setSyncState((current) => ({ ...current, message: drafts.length ? `Pending visits belong to ${drafts[0].ownerEmail}. Sign in with that email to sync.` : "No offline visits pending for this account." }));
+          return { synced: 0 };
+        }
         const { syncOfflineVisits } = await import("./services/offlineVisitSync.js");
-        return await syncOfflineVisits(session.user);
+        const result = await syncOfflineVisits(session.user);
+        setSyncState((current) => ({ ...current, message: result.synced ? `${result.synced} visit(s) synced.` : "", syncedAt: result.synced ? Date.now() : current.syncedAt }));
+        return result;
       }
-      catch (failure) { console.warn("Offline visits remain on this device until sync succeeds:", failure); return { synced: 0, error: failure.message }; }
-      finally { syncing.current = null; }
+      catch (failure) {
+        console.warn("Offline visits remain on this device until sync succeeds:", failure);
+        setSyncState((current) => ({ ...current, message: failure.message || "Sync failed." }));
+        return { synced: 0, error: failure.message };
+      }
+      finally { syncing.current = null; setSyncState((current) => ({ ...current, busy: false })); refreshPending().catch(() => {}); }
     })();
     return syncing.current;
   };
@@ -110,14 +135,14 @@ export default function App() {
     try { localStorage.removeItem(PROFILE_KEY); } catch { /* Ignore blocked storage. */ }
   };
 
-  if ((!online && session.user?.role !== "admin") || offlineMode) {
+  if ((!online && session.user?.role === "marketer") || offlineMode) {
     return <OfflineVisitPortal user={session.user?.role === "marketer" ? session.user : null} cachedProfile={offlineProfile} online={online} onSignIn={() => setOfflineMode(false)} onResume={() => setOfflineMode(false)} onSync={syncDrafts} />;
   }
   if (session.loading) return <PortalLoading />;
   if (session.user) {
     const identity = session.user.marketerId || session.user.email || session.user.role;
     return <PortalLoadErrorBoundary><Suspense fallback={<PortalLoading />}>
-      <PortalApp key={session.user.role + ':' + identity} initialUser={session.user} onLogout={handleLogout} />
+      <PortalApp key={session.user.role + ':' + identity} initialUser={session.user} onLogout={handleLogout} onSync={syncDrafts} syncState={syncState} online={online} />
     </Suspense></PortalLoadErrorBoundary>;
   }
 
