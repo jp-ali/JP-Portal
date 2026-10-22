@@ -6,17 +6,25 @@ const fields = [
   { id: "depotName", label: "Book depot name", x: 8.5, y: 24, fontSize: 68, color: "#242424", align: "left", bold: false },
   { id: "name", label: "Name", x: 8.5, y: 33, fontSize: 58, color: "#242424", align: "left", bold: false },
   { id: "designation", label: "Designation", x: 8.5, y: 41, fontSize: 45, color: "#555555", align: "left", bold: false },
-  { id: "assignedArea", label: "Assigned area", x: 8.5, y: 47, fontSize: 45, color: "#555555", align: "left", bold: false },
-  { id: "phone", label: "Phone", x: 13.2, y: 65.5, fontSize: 42, color: "#242424", align: "left", bold: false },
-  { id: "email", label: "Email", x: 13.2, y: 75, fontSize: 42, color: "#242424", align: "left", bold: false },
-  { id: "website", label: "Website", x: 64.5, y: 75, fontSize: 42, color: "#242424", align: "left", bold: false },
-  { id: "address", label: "Address", x: 13.2, y: 87, fontSize: 42, color: "#242424", align: "left", bold: false }
+  { id: "assignedCity", label: "City", x: 8.5, y: 47, fontSize: 45, color: "#555555", align: "left", bold: false },
+  { id: "phone", label: "Phone", x: 13.2, y: 67, fontSize: 42, color: "#242424", align: "left", bold: false },
+  { id: "email", label: "Email", x: 13.2, y: 76.5, fontSize: 42, color: "#242424", align: "left", bold: false },
+  { id: "website", label: "Website", x: 64.5, y: 76.5, fontSize: 42, color: "#242424", align: "left", bold: false },
+  { id: "address", label: "Address", x: 13.2, y: 88.5, fontSize: 42, color: "#242424", align: "left", bold: false }
 ];
 
-export async function assignedAreaText(areaIds = []) {
-  const ids = [...new Set(areaIds)].slice(0, 20);
-  const snapshots = await Promise.all(ids.map((id) => firestore().collection("areas").doc(id).get()));
-  return snapshots.map((snapshot, index) => snapshot.exists ? snapshot.data().name || ids[index] : ids[index]).join(", ").slice(0, 500);
+export async function assignedCityText(cityIds = []) {
+  const ids = [...new Set(cityIds.filter(Boolean))];
+  if (ids.length !== 1) return "";
+  const snapshot = await firestore().collection("cities").doc(ids[0]).get();
+  return String(snapshot.exists ? snapshot.data().name || ids[0] : ids[0]).slice(0, 500);
+}
+
+export function alignLegacyCardFields(cardFields = []) {
+  const oldY = { phone: 65.5, email: 75, website: 75, address: 87 };
+  return cardFields.map((field) => oldY[field.id] === field.y
+    ? { ...field, y: fields.find((item) => item.id === field.id).y }
+    : field);
 }
 
 export function defaultMarketerCard(marketerId, marketer, now = new Date().toISOString()) {
@@ -31,7 +39,7 @@ export function defaultMarketerCard(marketerId, marketer, now = new Date().toISO
       depotName: "JAVED PUBLISHERS",
       name: marketer.name || "Marketer",
       designation: marketer.designation || "Marketing Coordinator",
-      assignedArea: marketer.assignedArea || "",
+      assignedCity: marketer.assignedCity || "",
       phone: marketer.phone || "",
       email: marketer.email || "",
       website: "javedpublishers.com",
@@ -53,7 +61,7 @@ export function syncMarketerCard(card, marketer, now = new Date().toISOString())
       phone: marketer.phone || card.values?.phone || "",
       email: marketer.email || card.values?.email || "",
       designation: marketer.designation || card.values?.designation || "Marketing Coordinator",
-      assignedArea: marketer.assignedArea ?? card.values?.assignedArea ?? ""
+      assignedCity: card.manualCardCity || marketer.assignedCity || ""
     },
     updatedAt: now
   };
@@ -75,10 +83,14 @@ export async function getOrCreateMarketerCard(marketerId) {
     return { id: cardRef.id, ...created };
   });
   if (!result) return null;
-  const area = await assignedAreaText(result.values?.assignedArea ? [] : (await marketerRef.get()).data()?.assignedAreaIds || []);
+  const city = await assignedCityText((await marketerRef.get()).data()?.assignedCityIds || []);
   const additions = {};
-  if (!result.fields?.some((field) => field.id === "assignedArea")) additions.fields = [...(result.fields || []), { ...fields.find((field) => field.id === "assignedArea") }];
-  if (!result.values?.assignedArea && area) additions.values = { ...result.values, assignedArea: area };
+  const updatedFields = alignLegacyCardFields((result.fields || []).map((field) => field.id === "assignedArea" ? { ...field, id: "assignedCity", label: "City" } : field));
+  if (!updatedFields.some((field) => field.id === "assignedCity")) updatedFields.push({ ...fields.find((field) => field.id === "assignedCity") });
+  if (JSON.stringify(updatedFields) !== JSON.stringify(result.fields)) additions.fields = updatedFields;
+  const updatedValues = { ...result.values, assignedCity: result.manualCardCity || city };
+  delete updatedValues.assignedArea;
+  if (JSON.stringify(updatedValues) !== JSON.stringify(result.values)) additions.values = updatedValues;
   if (Object.keys(additions).length) {
     await cardRef.update(additions);
     return { ...result, ...additions };
@@ -93,7 +105,7 @@ export function defaultAdminCard(now = new Date().toISOString()) {
     phone: "+92-3068482000",
     email: "info@javedpublishers.com"
   }, now);
-  return { ...card, title: "Admin Card", values: { ...card.values, depotName: "Muhammad Ali Ashfaq", name: "", assignedArea: "" } };
+  return { ...card, title: "Admin Card", values: { ...card.values, depotName: "Muhammad Ali Ashfaq", name: "", assignedCity: "" } };
 }
 
 export function lockMarketerCard(original, incoming) {
@@ -107,7 +119,10 @@ export function lockMarketerCard(original, incoming) {
       const moved = incoming.fields.find((item) => item.id === field.id);
       return moved ? { ...field, x: moved.x, y: moved.y } : field;
     }),
-    values: original.values,
+    values: { ...original.values, assignedCity: String(incoming.values?.assignedCity ?? original.values?.assignedCity ?? "") },
+    manualCardCity: String(incoming.values?.assignedCity ?? original.values?.assignedCity ?? "") !== String(original.values?.assignedCity ?? "")
+      ? String(incoming.values.assignedCity).trim()
+      : original.manualCardCity || "",
     title: original.title
   };
 }

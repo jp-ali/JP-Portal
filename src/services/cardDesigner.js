@@ -6,10 +6,10 @@ export const defaultCardFields = [
   { id: "depotName", label: "Book depot name", x: 8.5, y: 24, fontSize: 68, color: "#242424", align: "left", bold: false },
   { id: "name", label: "Name", x: 8.5, y: 33, fontSize: 58, color: "#242424", align: "left", bold: false },
   { id: "designation", label: "Designation", x: 8.5, y: 41, fontSize: 45, color: "#555555", align: "left", bold: false },
-  { id: "phone", label: "Phone", x: 13.2, y: 65.5, fontSize: 42, color: "#242424", align: "left", bold: false },
-  { id: "email", label: "Email", x: 13.2, y: 75, fontSize: 42, color: "#242424", align: "left", bold: false },
-  { id: "website", label: "Website", x: 64.5, y: 75, fontSize: 42, color: "#242424", align: "left", bold: false },
-  { id: "address", label: "Address", x: 13.2, y: 87, fontSize: 42, color: "#242424", align: "left", bold: false }
+  { id: "phone", label: "Phone", x: 13.2, y: 67, fontSize: 42, color: "#242424", align: "left", bold: false },
+  { id: "email", label: "Email", x: 13.2, y: 76.5, fontSize: 42, color: "#242424", align: "left", bold: false },
+  { id: "website", label: "Website", x: 64.5, y: 76.5, fontSize: 42, color: "#242424", align: "left", bold: false },
+  { id: "address", label: "Address", x: 13.2, y: 88.5, fontSize: 42, color: "#242424", align: "left", bold: false }
 ];
 
 export const defaultCardValues = {

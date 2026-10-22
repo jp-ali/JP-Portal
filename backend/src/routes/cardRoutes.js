@@ -3,7 +3,7 @@ import { firestore } from "../config/firebase.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { validateCardTemplate } from "./cardTemplateRoutes.js";
 import { convertCardsToCdr } from "../services/cardCdrExport.js";
-import { defaultAdminCard, getOrCreateMarketerCard, lockMarketerCard } from "../services/marketerCardService.js";
+import { alignLegacyCardFields, defaultAdminCard, getOrCreateMarketerCard, lockMarketerCard } from "../services/marketerCardService.js";
 
 export const cardRoutes = Router();
 cardRoutes.get("/me", requireAuth, async (request, response, next) => {
@@ -15,7 +15,12 @@ cardRoutes.get("/admin-card", requireAuth, async (_request, response, next) => {
   try {
     const ref = firestore().collection("savedCards").doc("admincard");
     const snapshot = await ref.get();
-    if (snapshot.exists && !snapshot.data().deletedAt) return response.json({ card: { id: ref.id, ...snapshot.data() } });
+    if (snapshot.exists && !snapshot.data().deletedAt) {
+      const card = snapshot.data();
+      const fields = alignLegacyCardFields(card.fields || []);
+      if (JSON.stringify(fields) !== JSON.stringify(card.fields)) await ref.update({ fields });
+      return response.json({ card: { id: ref.id, ...card, fields } });
+    }
     const card = defaultAdminCard();
     await ref.set(card);
     response.json({ card: { id: ref.id, ...card } });

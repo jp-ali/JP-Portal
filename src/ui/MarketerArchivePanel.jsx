@@ -113,10 +113,6 @@ export default function MarketerArchivePanel({ mode }) {
 
   return <div className="marketer-archive-page">
     <style>{archiveCss}</style>
-    <nav className="marketer-archive-breadcrumb" aria-label="Breadcrumb">
-      <button type="button" onClick={() => setAdminView("home")} aria-label="Home"><Icon name="home" size={17} /></button>
-      <span>Home</span><b>›</b><span>Marketers</span><b>›</b><strong>{isOld ? "Old Marketers" : "Delete Active Marketer"}</strong>
-    </nav>
     <header className="marketer-archive-hero">
       <div className="marketer-archive-hero-icon"><Icon name={isOld ? "restore" : "trash"} size={28} /></div>
       <div className="marketer-archive-hero-copy">
@@ -125,6 +121,7 @@ export default function MarketerArchivePanel({ mode }) {
       </div>
       <div className="marketer-archive-hero-art" aria-hidden="true"><span>▣</span><span>▣</span><span>▣</span><Icon name={isOld ? "restore" : "trash"} size={68} /></div>
     </header>
+    <div className="portal-section-toolbar"><button type="button" className="portal-section-back" onClick={() => setAdminView("home")}>← Back</button></div>
 
     <div className="marketer-archive-controls">
       <label className="marketer-archive-search"><Icon name="search" size={18} /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search marketer by name or email..." aria-label="Search marketers" /></label>

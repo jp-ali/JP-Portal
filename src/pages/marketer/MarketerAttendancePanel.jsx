@@ -2,11 +2,11 @@ import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
 
 const cameraButtonStyle = (photo, height = 49, fontSize = 20) => ({
-  width: 48, height, boxSizing: "border-box", padding: 0, display: "grid", placeItems: "center",
-  lineHeight: 1, border: "1px solid rgba(143,21,50,.28)", borderRadius: 11,
+  width: 48, height, boxSizing: "border-box", padding: 0, display: "block", position: "relative",
+  lineHeight: 0, border: "1px solid rgba(143,21,50,.28)", borderRadius: 11,
   background: photo ? "#6f0b24" : "#741027", color: "white", fontSize, cursor: "pointer"
 });
-const CameraIcon = () => <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 7h4l2-3h6l2 3h4v13H3V7Z" /><circle cx="12" cy="13" r="3.5" /></svg>;
+const CameraIcon = () => <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", display: "block", pointerEvents: "none" }}><path d="M3 7h4l2-3h6l2 3h4v13H3V7Z" /><circle cx="12" cy="13" r="3.5" /></svg>;
 
 export default function MarketerAttendancePanel() {
   const { attendanceCameraActive, attendanceCameraTarget, attendanceEndPhoto, attendanceEndReading, attendanceFoodExpense, attendanceFoodExpensePhoto, attendanceLeaveReason, attendanceNightStayExpense, attendanceNightStayExpensePhoto, attendanceOtherExpense, attendanceOtherExpensePhoto, attendanceStartPhoto, attendanceStartReading, attendanceSubmitting, attendanceTransportExpense, attendanceTransportExpensePhoto, attendanceType, attendanceVideoRef, btnPrimary, captureAttendancePhoto, cardStyle, formatActionPlanDate, formatTime12, getTodayInputDate, inputStyle, renderExpandedReportChrome, renderReportExpandButton, reportViewClass, setAttendanceEndReading, setAttendanceFoodExpense, setAttendanceLeaveReason, setAttendanceNightStayExpense, setAttendanceOtherExpense, setAttendanceStartReading, setAttendanceTransportExpense, setAttendanceType, setFullScreenImage, setMarketerview, startAttendanceCamera, stopAttendanceCamera, submitAttendanceEnd, submitAttendanceLeave, submitAttendanceStart, todayAttendance, user } = usePortalContext();

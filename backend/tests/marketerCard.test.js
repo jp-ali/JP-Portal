@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { defaultAdminCard, defaultMarketerCard, lockMarketerCard, syncMarketerCard } from "../src/services/marketerCardService.js";
+import { alignLegacyCardFields, defaultAdminCard, defaultMarketerCard, lockMarketerCard, syncMarketerCard } from "../src/services/marketerCardService.js";
 import { validateCard } from "../src/routes/cardRoutes.js";
 
 test("new marketer card uses the default artwork and marketer contact details", () => {
@@ -9,19 +9,19 @@ test("new marketer card uses the default artwork and marketer contact details", 
   assert.equal(card.values.name, "Ali");
   assert.equal(card.values.phone, "+923001234567");
   const designation = card.fields.find((field) => field.id === "designation");
-  const area = card.fields.find((field) => field.id === "assignedArea");
-  assert.equal(area.fontSize, designation.fontSize);
-  assert.equal(area.color, designation.color);
-  assert.ok(area.y > designation.y);
+  const city = card.fields.find((field) => field.id === "assignedCity");
+  assert.equal(city.fontSize, designation.fontSize);
+  assert.equal(city.color, designation.color);
+  assert.ok(city.y > designation.y);
   assert.equal(card.title, "Ali Card");
   assert.ok(card.image.startsWith("data:image/jpeg;base64,"));
   assert.doesNotThrow(() => validateCard({ template: card, values: card.values }));
 });
 
-test("marketer area syncs with the card while other details remain", () => {
-  const card = defaultMarketerCard("marketer123", { name: "Ali", assignedArea: "Lahore" });
-  const change = syncMarketerCard(card, { name: "Ali", assignedArea: "Gulberg" });
-  assert.equal(change.values.assignedArea, "Gulberg");
+test("marketer city syncs with the card while other details remain", () => {
+  const card = defaultMarketerCard("marketer123", { name: "Ali", assignedCity: "Lahore" });
+  const change = syncMarketerCard(card, { name: "Ali", assignedCity: "Karachi" });
+  assert.equal(change.values.assignedCity, "Karachi");
   assert.equal(change.values.website, card.values.website);
   const admin = defaultAdminCard();
   assert.equal(admin.values.name, "");
@@ -37,6 +37,20 @@ test("marketer card changes can move text without replacing its design or accoun
   assert.equal(locked.values.name, "Ali");
   assert.equal(locked.fields.find((field) => field.id === "name").x, 9);
   assert.equal(locked.fields.find((field) => field.id === "name").color, original.fields.find((field) => field.id === "name").color);
+});
+
+test("admin can set a marketer card city without unlocking account details", () => {
+  const original = defaultMarketerCard("marketer123", { name: "Ali", assignedCity: "" });
+  const locked = lockMarketerCard(original, { ...original, values: { ...original.values, name: "Changed", assignedCity: "Lahore" } });
+  assert.equal(locked.values.name, "Ali");
+  assert.equal(locked.values.assignedCity, "Lahore");
+  assert.equal(locked.manualCardCity, "Lahore");
+  assert.equal(syncMarketerCard(locked, { name: "Ali", assignedCity: "Karachi" }).values.assignedCity, "Lahore");
+});
+
+test("legacy icon text positions move to the new aligned positions", () => {
+  const fields = alignLegacyCardFields([{ id: "phone", y: 65.5 }, { id: "email", y: 75 }, { id: "website", y: 75 }, { id: "address", y: 87 }, { id: "phone", y: 68 }]);
+  assert.deepEqual(fields.map((field) => field.y), [67, 76.5, 76.5, 88.5, 68]);
 });
 
 test("marketer contact edits retain customized card artwork and fields", () => {
