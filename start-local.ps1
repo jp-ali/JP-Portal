@@ -1,3 +1,5 @@
+param([switch]$Dev)
+
 $ErrorActionPreference = 'Stop'
 
 $projectRoot = $PSScriptRoot
@@ -31,8 +33,31 @@ if (-not (Test-LocalPort 3001)) {
     -RedirectStandardError (Join-Path $logDir 'api.err.log') | Out-Null
 }
 
+if (-not $Dev) {
+  Push-Location $projectRoot
+  try {
+    & (Get-Command npm.cmd -ErrorAction Stop).Source run build
+    if ($LASTEXITCODE -ne 0) { throw 'Frontend build failed.' }
+  } finally { Pop-Location }
+}
+
+if (Test-LocalPort 5173) {
+  $frontendListener = Get-NetTCPConnection -LocalPort 5173 -State Listen | Select-Object -First 1
+  $frontendProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$($frontendListener.OwningProcess)"
+  $isVite = $frontendProcess.CommandLine -match 'node_modules[\\/]vite[\\/]bin[\\/]vite\.js'
+  $isPreview = $frontendProcess.CommandLine -match 'vite\.js[" ]+preview(?:[" ]|$)'
+  if (-not $isVite) { throw 'Port 5173 is occupied by another application.' }
+  if ($isPreview -eq $Dev) {
+    Stop-Process -Id $frontendListener.OwningProcess -Force
+    for ($attempt = 0; $attempt -lt 20 -and (Test-LocalPort 5173); $attempt++) { Start-Sleep -Milliseconds 250 }
+  }
+}
+
 if (-not (Test-LocalPort 5173)) {
-  Start-Process -FilePath $nodeExe -ArgumentList @('node_modules/vite/bin/vite.js', '--host', '0.0.0.0', '--port', '5173', '--strictPort') `
+  $frontendArgs = @('node_modules/vite/bin/vite.js')
+  if (-not $Dev) { $frontendArgs += 'preview' }
+  $frontendArgs += @('--host', '0.0.0.0', '--port', '5173', '--strictPort')
+  Start-Process -FilePath $nodeExe -ArgumentList $frontendArgs `
     -WorkingDirectory $projectRoot -WindowStyle Hidden `
     -RedirectStandardOutput (Join-Path $logDir 'frontend.out.log') `
     -RedirectStandardError (Join-Path $logDir 'frontend.err.log') | Out-Null

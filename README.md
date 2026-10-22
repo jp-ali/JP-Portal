@@ -17,7 +17,7 @@ This repository is in an incremental React + Express refactor. The Vite frontend
 
 ## Development
 
-On Windows, double-click `start-local.cmd` to start both the frontend and API in the background, then open `http://localhost:5173/`. Run it again after restarting the laptop. It leaves already-running servers alone and writes startup logs under `%TEMP%\jp-portal-local`.
+On Windows, double-click `start-local.cmd` to build the frontend and start the bundled preview plus API in the background, then open `http://localhost:5173/`. Run it again after code changes or restarting the laptop. It writes startup logs under `%TEMP%\jp-portal-local`. For live Vite development instead, run `powershell -ExecutionPolicy Bypass -File .\start-local.ps1 -Dev`; the script switches port 5173 between preview and development modes.
 
 Requirements: Node.js 20 or later and npm.
 
@@ -36,7 +36,7 @@ npm ci
 npm run dev
 ```
 
-The frontend uses `http://localhost:5173` and proxies `/api` to port `3001`. Vite keeps port `5173` fixed so the API can check the configured development origin. The API defaults to port `3001`; set `PORT` in `backend/.env` to choose another port. `GET /api/health` returns `{ "status": "ok" }`.
+The frontend uses `http://localhost:5173` and proxies `/api` to port `3001`. The bundled preview is recommended for mobile access through a tunnel because development mode sends many separate JavaScript modules over the connection. The API defaults to port `3001`; set `PORT` in `backend/.env` to choose another port. `GET /api/health` returns `{ "status": "ok" }`.
 
 The card designer can download PDF, editable SVG, and a WhatsApp ZIP containing SVG without CorelDRAW on the API computer. Native CDR download needs a working CorelDRAW installation on the Windows computer running the API. Set `CORELDRAW_PROG_ID` in `backend/.env` if its installed version differs from 2024 (`CorelDRAW.Application.25`). If CorelDRAW cannot start, the CDR button shows an error and SVG remains available for manual Save As in CorelDRAW.
 
@@ -44,7 +44,7 @@ For phone testing, connect the phone and computer to the same Wi-Fi and open `ht
 
 ## Installable app and offline visits
 
-The production build includes a web manifest and service worker. Serve `dist/` over HTTPS (or `localhost` for desktop testing), open the site once online, and install it from the browser's **Add to Home Screen / Install app** menu. Vite development mode does not register the service worker; a phone opening the plain HTTP LAN development URL cannot install or run the PWA offline.
+The production build includes a web manifest and service worker. Serve `dist/` over HTTPS (or `localhost` for desktop testing), open the site once online, and install it from the browser's **Add to Home Screen / Install app** menu. A VS Code forwarded port must be set to **Public** in the Ports view for an installed phone app to reach it without GitHub tunnel authentication. Vite development mode also registers a service worker, but its many module requests make it unsuitable for a slow mobile tunnel. Plain HTTP LAN URLs cannot use the service worker on a phone.
 
 When a marketer loses the connection, the app shows a limited offline workspace. Add Visit remains available and stores school details plus a compressed photo in that browser's IndexedDB. Other sections appear dimmed. A person who has never signed in can enter a name and marketer email for local drafts, but that is **not an authenticated login**. After internet returns, sign in to the same marketer account; matching drafts upload automatically. If upload fails, drafts remain on the device and retry on the next login or connection. Keep the browser's site data until upload finishes.
 
