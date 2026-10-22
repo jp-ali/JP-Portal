@@ -41,6 +41,7 @@ export default function App() {
   const [offlineProfile, setOfflineProfile] = useState(cachedMarketer);
   const [syncState, setSyncState] = useState({ pending: 0, busy: false, message: "" });
   const syncing = useRef(null);
+  const skipSessionRestore = useRef(false);
 
   const refreshPending = async () => {
     const email = String(session.user?.email || "").toLowerCase();
@@ -99,13 +100,14 @@ export default function App() {
 
   useEffect(() => {
     let active = true;
+    if (skipSessionRestore.current) return;
     if (!online) { setSession((current) => current.loading ? { loading: false, user: null } : current); return; }
     const slowSession = window.setTimeout(() => {
       if (active) setSession((current) => current.loading ? { loading: false, user: null } : current);
     }, 3500);
     getSession()
-      .then((user) => { window.clearTimeout(slowSession); if (active) setSession((current) => current.user ? current : { loading: false, user }); })
-      .catch(() => { window.clearTimeout(slowSession); if (active) setSession((current) => current.user ? current : { loading: false, user: null }); });
+      .then((user) => { window.clearTimeout(slowSession); if (active && !skipSessionRestore.current) setSession((current) => current.user ? current : { loading: false, user }); })
+      .catch(() => { window.clearTimeout(slowSession); if (active && !skipSessionRestore.current) setSession((current) => current.user ? current : { loading: false, user: null }); });
     return () => { active = false; window.clearTimeout(slowSession); };
   }, [online]);
 
@@ -117,6 +119,7 @@ export default function App() {
     try {
       const user = await login(identifier, password);
       setPassword("");
+      skipSessionRestore.current = false;
       setSession({ loading: false, user });
       setOfflineMode(false);
       preloadPortal().catch(() => {});
@@ -136,8 +139,26 @@ export default function App() {
     try { localStorage.removeItem(PROFILE_KEY); } catch { /* Ignore blocked storage. */ }
   };
 
-  if ((!online && session.user?.role === "marketer") || offlineMode) {
-    return <OfflineVisitPortal user={session.user?.role === "marketer" ? session.user : null} cachedProfile={offlineProfile} online={online} onSignIn={() => setOfflineMode(false)} onResume={() => setOfflineMode(false)} onSync={syncDrafts} />;
+  const backFromOffline = () => {
+    skipSessionRestore.current = true;
+    setOfflineMode(false);
+    setSession({ loading: false, user: null });
+    if (online && session.user) logout().catch((failure) => console.warn("Offline exit sign out failed:", failure));
+  };
+  const offlineActive = (!online && session.user?.role === "marketer") || offlineMode;
+  useEffect(() => {
+    if (!offlineActive) return;
+    if (!window.history.state?.jpOfflineVisitGuard) window.history.pushState({ ...window.history.state, jpOfflineVisitGuard: true }, "", window.location.href);
+    const onBrowserBack = () => {
+      window.history.pushState({ ...window.history.state, jpOfflineVisitGuard: true }, "", window.location.href);
+      backFromOffline();
+    };
+    window.addEventListener("popstate", onBrowserBack);
+    return () => window.removeEventListener("popstate", onBrowserBack);
+  }, [offlineActive, online, session.user]);
+
+  if (offlineActive) {
+    return <OfflineVisitPortal user={session.user?.role === "marketer" ? session.user : null} cachedProfile={offlineProfile} online={online} onSignIn={() => setOfflineMode(false)} onResume={() => setOfflineMode(false)} onSync={syncDrafts} onBackToLogin={backFromOffline} />;
   }
   if (session.loading) return <PortalLoading />;
   if (session.user) {

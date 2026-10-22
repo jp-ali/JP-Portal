@@ -1,5 +1,5 @@
 import { confirmAction } from "../ui/confirmDialog.js";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { compressCanvasToTargetDataUrl } from "../services/imageCompression.js";
 import { listOfflineVisits, removeOfflineVisit, saveOfflineVisit } from "../services/offlineVisitStore.js";
 import { readOfflineVisitCatalog } from "../services/offlineVisitCatalog.js";
@@ -34,7 +34,7 @@ function readPhoto(file) {
   });
 }
 
-export default function OfflineVisitPortal({ user, cachedProfile, online, onSignIn, onResume, onSync }) {
+export default function OfflineVisitPortal({ user, cachedProfile, online, onSignIn, onResume, onSync, onBackToLogin }) {
   const [profile, setProfile] = useState(() => user || cachedProfile || null);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -46,6 +46,29 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
   const [catalog, setCatalog] = useState({ cities: [], areas: [], schools: [] });
   const [schoolCustom, setSchoolCustom] = useState(false);
   const [formResetKey, setFormResetKey] = useState(0);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const cameraStream = useRef(null);
+  const cameraVideo = useRef(null);
+  const galleryInput = useRef(null);
+  const cameraOpening = useRef(false);
+  const mounted = useRef(false);
+
+  const stopCamera = () => {
+    cameraStream.current?.getTracks().forEach((track) => track.stop());
+    cameraStream.current = null;
+    if (cameraVideo.current) cameraVideo.current.srcObject = null;
+    setCameraOpen(false);
+  };
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; cameraStream.current?.getTracks().forEach((track) => track.stop()); };
+  }, []);
+  useEffect(() => {
+    if (cameraOpen && cameraVideo.current && cameraStream.current) {
+      cameraVideo.current.srcObject = cameraStream.current;
+      cameraVideo.current.play().catch(() => setMessage("Camera preview could not start. Choose a photo from your device."));
+    }
+  }, [cameraOpen]);
 
   const ownerEmail = String(user?.email || profile?.email || "").trim().toLowerCase();
   const refresh = () => listOfflineVisits().then((items) => setDrafts(items.filter((item) => item.ownerEmail === ownerEmail))).catch((error) => setMessage(error.message));
@@ -91,10 +114,42 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
   const choosePhoto = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    event.target.value = "";
     setBusy(true); setMessage("");
     try { setPhoto(await readPhoto(file)); }
     catch (error) { setMessage(error.message); }
     finally { setBusy(false); }
+  };
+  const startCamera = async () => {
+    if (cameraOpening.current || cameraStream.current) return;
+    setMessage("");
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setMessage("Camera is unavailable here. Use Choose Photo to attach a visit picture.");
+      return;
+    }
+    cameraOpening.current = true;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+      if (!mounted.current) { stream.getTracks().forEach((track) => track.stop()); return; }
+      cameraStream.current = stream;
+      setCameraOpen(true);
+    } catch {
+      if (mounted.current) setMessage("Camera could not open. Allow camera access in your browser, or use Choose Photo.");
+    } finally { cameraOpening.current = false; }
+  };
+  const capturePhoto = () => {
+    const video = cameraVideo.current;
+    if (!video?.videoWidth || !video.videoHeight) { setMessage("Camera is still starting. Try again in a moment."); return; }
+    try {
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(1, 1600 / Math.max(video.videoWidth, video.videoHeight));
+      canvas.width = Math.round(video.videoWidth * scale);
+      canvas.height = Math.round(video.videoHeight * scale);
+      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+      setPhoto(compressCanvasToTargetDataUrl(canvas, 140 * 1024, 1100, 0.7));
+      setMessage("");
+      stopCamera();
+    } catch (error) { setMessage(error.message || "Could not capture this photo."); }
   };
   const save = async (event) => {
     event.preventDefault();
@@ -130,6 +185,7 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
     <style>{offlineCss}</style>
     <header className="offline-header"><div className="offline-logo">JP.</div><div><strong>JAVED PUBLISHERS</strong><small>School Visit Portal</small></div><span className="offline-badge">{online ? "Draft mode" : "Offline"}</span></header>
     <main className="offline-main">
+      <button className="offline-back" type="button" onClick={onBackToLogin}>← Back to Login</button>
       {!profile ? <section className="offline-card offline-identity">
         <h1>Work offline</h1>
         <p>Enter your marketer email to keep drafts separate on this device. This does not verify your account. Sign in when online to upload visits.</p>
@@ -152,7 +208,7 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
             <NumberOrCustomField label="Strength" value={form.strength} onChange={(value) => setForm((current) => ({ ...current, strength: value }))} values={Array.from({ length: 10 }, (_, index) => String((index + 1) * 100))} inputStyle={{}} resetKey={formResetKey} required />
             <label className="offline-wide">Purpose of Visit *<select value={form.purpose} onChange={setField("purpose")} required><option value="">Select purpose</option>{purposes.map((purpose) => <option key={purpose} value={purpose}>{purpose}</option>)}</select></label>
             <label className="offline-wide">Remarks<textarea value={form.notes} onChange={setField("notes")} rows="2" /></label>
-            <label className="offline-wide">Visit photo *<input id="offline-visit-photo" type="file" accept="image/*" capture="environment" onChange={choosePhoto} required={!photo} /></label>
+            <div className="offline-photo-field offline-wide"><strong>Visit photo *</strong><div className="offline-photo-actions"><button type="button" onClick={startCamera} disabled={busy}>📷 Take Photo</button><button type="button" className="offline-secondary" onClick={() => galleryInput.current?.click()} disabled={busy}>Choose Photo</button></div><input ref={galleryInput} id="offline-visit-photo" type="file" accept="image/*" onChange={choosePhoto} className="offline-file-input" aria-label="Choose visit photo" />{cameraOpen && <div className="offline-camera"><video ref={cameraVideo} autoPlay playsInline muted aria-label="Visit camera preview" /><div><button type="button" onClick={capturePhoto}>Capture Photo</button><button type="button" className="offline-secondary" onClick={stopCamera}>Close Camera</button></div></div>}</div>
             {photo && <img className="offline-photo" src={photo} alt="Visit preview" />}
             <button className="offline-save offline-wide" type="submit" disabled={busy}>{busy ? "Saving..." : "Save visit on this device"}</button>
           </form>

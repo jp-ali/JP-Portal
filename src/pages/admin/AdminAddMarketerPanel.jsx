@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import defaultAvatar from "../../assets/default-marketer-avatar.svg";
 import MarketerPhotoControl from "../../ui/MarketerPhotoControl.jsx";
+import { notifyAction } from "../../ui/confirmDialog.js";
 
 export default function AdminAddMarketerPanel() {
   const c = usePortalContext();
@@ -41,7 +42,7 @@ export default function AdminAddMarketerPanel() {
   };
   const submit = (event) => {
     event.preventDefault();
-    if (c.marketerPass !== confirmPassword) { setFormError("New password and confirmation must match."); return; }
+    if (c.marketerPass !== confirmPassword) { notifyAction("New password and confirmation must match."); return; }
     setFormError("");
     c.handleSaveMarketer(event);
   };

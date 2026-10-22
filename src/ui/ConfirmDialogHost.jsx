@@ -47,12 +47,12 @@ export default function ConfirmDialogHost() {
   if (!request) return null;
   return createPortal(<div className="portal-confirm-overlay" data-confirm-dialog onMouseDown={(event) => { if (event.target === event.currentTarget) finish(false); }}>
     <div className="portal-confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="portal-confirm-title" aria-describedby="portal-confirm-message">
-      <span className="portal-confirm-icon" aria-hidden="true">?</span>
-      <h2 id="portal-confirm-title">Please confirm</h2>
+      <span className="portal-confirm-icon" aria-hidden="true">{request.kind === "notice" ? "!" : "?"}</span>
+      <h2 id="portal-confirm-title">{request.kind === "notice" ? "Check password" : "Please confirm"}</h2>
       <p id="portal-confirm-message">{request.message}</p>
       <div className="portal-confirm-actions">
-        <button ref={cancelButton} type="button" className="portal-confirm-cancel" onClick={() => finish(false)}>Cancel</button>
-        <button type="button" className="portal-confirm-accept" onClick={() => finish(true)}>Confirm</button>
+        {request.kind !== "notice" && <button ref={cancelButton} type="button" className="portal-confirm-cancel" onClick={() => finish(false)}>Cancel</button>}
+        <button ref={request.kind === "notice" ? cancelButton : undefined} type="button" className="portal-confirm-accept" onClick={() => finish(true)}>{request.kind === "notice" ? "OK" : "Confirm"}</button>
       </div>
     </div>
   </div>, document.body);
