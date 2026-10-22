@@ -22,6 +22,7 @@ function cachedMarketer() {
 class PortalLoadErrorBoundary extends Component {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error, info) { console.error("Portal failed to load:", error, info); }
   render() {
     if (this.state.failed) return <div role="alert" style={{ padding: "32px", textAlign: "center" }}>Portal could not load. <button type="button" onClick={() => window.location.reload()}>Refresh</button></div>;
     return this.props.children;
