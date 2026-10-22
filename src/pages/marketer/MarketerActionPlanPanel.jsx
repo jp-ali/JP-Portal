@@ -2,13 +2,13 @@ import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
 
 export default function MarketerActionPlanPanel() {
-  const { actionPlanAreaText, actionPlanDate, actionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, btnPrimary, buildActionPlanMessage, cardStyle, handleSendActionPlan, inputStyle, setActionPlanAreaText, setActionPlanDate, setActionPlanPurpose, setMarketerview, user } = usePortalContext();
+  const { actionPlanAreaText, actionPlanDate, actionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, actionPlanShareMessage, shareActionPlan, btnPrimary, buildActionPlanMessage, cardStyle, handleSendActionPlan, inputStyle, setActionPlanAreaText, setActionPlanDate, setActionPlanPurpose, setMarketerview, user } = usePortalContext();
   return (<div>
             <button onClick={() => setMarketerview("home")} style={{ marginBottom: "14px", padding: "8px 14px", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }}>← Back to Menu</button>
             <div style={cardStyle}>
               <h3 style={{ marginTop: 0, color: "#8a253b", fontSize: "18px", marginBottom: "6px" }}>🗓️ Daily Action Plan</h3>
               <p style={{ color: "#78686d", fontSize: "12px", marginTop: 0, marginBottom: "16px" }}>Enter today's area and purpose, then send the prepared Action Plan to WhatsApp.</p>
-              {actionPlanSuccess && <div style={{ marginBottom: "14px", padding: "10px 12px", borderRadius: "10px", background: "rgba(143,21,50,.10)", border: "1px solid rgba(143,21,50,.22)", color: "#8a253b", fontSize: "12px", lineHeight: 1.55 }}>{actionPlanSuccess}</div>}
+              {actionPlanSuccess && <div style={{ marginBottom: "14px", padding: "10px 12px", borderRadius: "10px", background: "rgba(143,21,50,.10)", border: "1px solid rgba(143,21,50,.22)", color: "#8a253b", fontSize: "12px", lineHeight: 1.55 }}><span>{actionPlanSuccess}</span>{actionPlanShareMessage && <button type="button" onClick={() => shareActionPlan()} style={{ ...btnPrimary, display: "block", width: "100%", marginTop: "9px" }}>Share on WhatsApp</button>}</div>}
               <form onSubmit={handleSendActionPlan} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div className="action-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
                   <div>

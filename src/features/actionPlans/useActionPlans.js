@@ -13,6 +13,7 @@ const [actionPlanAreaText, setActionPlanAreaText] = useState("");
 const [actionPlanPurpose, setActionPlanPurpose] = useState("");
 const [actionPlanSubmitting, setActionPlanSubmitting] = useState(false);
 const [actionPlanSuccess, setActionPlanSuccess] = useState("");
+const [actionPlanShareMessage, setActionPlanShareMessage] = useState("");
 const [actionPlans, setActionPlans] = useState([]);
 const actionPlansCache = useRef({ rows: null, loadedAt: 0, pending: null });
 const [adminActionPlanFromDate, setAdminActionPlanFromDate] = useState(getTodayInputDate());
@@ -34,6 +35,20 @@ textarea.select();
 const ok = document.execCommand("copy");
 textarea.remove();
 return ok;
+};
+const shareActionPlan = async (message = actionPlanShareMessage) => {
+if (!message) return;
+if (typeof navigator.share === "function") {
+try {
+await navigator.share({ text: message });
+setActionPlanShareMessage("");
+setActionPlanSuccess("Action plan saved. Select the required chat in WhatsApp and press Send.");
+return;
+} catch (error) {
+if (error?.name === "AbortError") return;
+}
+}
+window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 };
 const buildActionPlanMessage = ({ date, areaName, purposeValue, marketerNameValue, designationValue }) => `Assalam U Alaikum!!
 Action Plan
@@ -171,6 +186,7 @@ setActionPlanDate(getTodayInputDate());
 setActionPlanAreaText("");
 setActionPlanPurpose("");
 setActionPlanSuccess("");
+setActionPlanShareMessage("");
 setMarketerview("action-plan");
 };
 const handleSendActionPlan = async (e) => {
@@ -186,7 +202,6 @@ if (!attendanceBeforePlan?.startMarked || attendanceBeforePlan?.status === "leav
 alert("Please mark Start Time attendance first. Action Plan is available after attendance is marked.");
 return;
 }
-const whatsappWindow = window.open("about:blank", "_blank");
 setActionPlanSubmitting(true);
 try {
 let profile = {
@@ -238,23 +253,20 @@ updatedAt: serverTimestamp()
 }, { merge: true });
 await fetchTodayAttendance(true);
 }
-const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
 try { await copyTextToClipboard(message); } catch (_) {}
-if (whatsappWindow && !whatsappWindow.closed) {
-whatsappWindow.location.href = whatsappUrl;
-} else {
-window.location.href = whatsappUrl;
-}
+setActionPlanShareMessage(message);
 setActionPlanSuccess(
-"Action plan saved. WhatsApp opened with the message ready. Select the required group/chat and press Send."
+"Action plan saved. Tap Share to choose WhatsApp or WhatsApp Business, then select the chat."
 );
+if (typeof navigator.share === "function" && navigator.userActivation?.isActive) {
+try { await navigator.share({ text: message }); setActionPlanShareMessage(""); setActionPlanSuccess("Action plan saved. Select the required chat in WhatsApp and press Send."); } catch (_) {}
+}
 fetchActionPlans(true).catch(() => {});
 } catch (err) {
-if (whatsappWindow && !whatsappWindow.closed) whatsappWindow.close();
 alert("Error saving action plan: " + err.message);
 } finally {
 setActionPlanSubmitting(false);
 }
 };
-return { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanMarketerIds, setAdminActionPlanMarketerIds, formatActionPlanDate, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan };
+return { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, actionPlanShareMessage, shareActionPlan, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanMarketerIds, setAdminActionPlanMarketerIds, formatActionPlanDate, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan };
 }
