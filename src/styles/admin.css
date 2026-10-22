@@ -23,7 +23,9 @@
 .other-report-import-head h3 { margin:0 0 4px; color:#6f0b24; font-size:18px; }
 .other-report-import-head p { margin:0; color:#78686d; font-size:12px; }
 .other-report-import-file,.other-report-import-name { display:grid; gap:7px; color:#6f0b24; font-size:12px; font-weight:700; }
-.other-report-import-file input,.other-report-import-name input { width:min(100%,580px); box-sizing:border-box; min-height:42px; padding:9px; border:1px solid #decbd0; border-radius:9px; background:#fff; color:#3b2329; font:inherit; }
+.other-report-import-file input,.other-report-import-file select,.other-report-import-name input { width:min(100%,580px); box-sizing:border-box; min-height:42px; padding:9px; border:1px solid #decbd0; border-radius:9px; background:#fff; color:#3b2329; font:inherit; }
+.other-report-import-cities { margin:0; padding:10px 12px; border:1px solid #cce8d6; border-radius:9px; background:#f0faf3; color:#215b35; font-size:12px; }
+.other-report-import-cities.is-limited { border-color:#e6bd82; background:#fff7e9; color:#805014; }
 .other-report-import-select { display:grid; gap:10px; }
 .other-report-import-select > div:first-child { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
 .other-report-import-select strong,.other-report-import-sample strong { color:#6f0b24; font-size:13px; }

@@ -1,4 +1,4 @@
-import { columnsFromHeadings } from "../domain/customReportSchema.js";
+import { columnsFromHeadings, reportColumns, rowValue } from "../domain/customReportSchema.js";
 
 const text = (value) => String(value ?? "").trim();
 const headingWords = /\b(date|name|city|area|phone|number|mobile|institute|school|company|remarks|marketer|contact|address|time|session|purpose|strength|branches)\b/i;
@@ -38,6 +38,14 @@ export function matrixToImportPreview(matrix, filename = "") {
   const width = Math.min(80, Math.max(header.length, ...data.map((row) => row.length)));
   const headings = Array.from({ length: width }, (_, index) => ({ index, label: header[index] || `Column ${index + 1}` })).filter(({ index }) => header[index] || data.some((row) => row[index]));
   return { filename, headings, rows: data };
+}
+
+export function savedReportToImportPreview(report) {
+  const columns = reportColumns(report);
+  return matrixToImportPreview([
+    columns.map((column) => column.label),
+    ...(report.rows || []).map((row) => columns.map((column) => rowValue(row, column, report)))
+  ], report.title);
 }
 
 async function readExcel(file) {

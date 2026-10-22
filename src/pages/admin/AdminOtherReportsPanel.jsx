@@ -7,7 +7,7 @@ import CustomReportTable from "./CustomReportTable.jsx";
 import { exportCustomReportExcel, exportCustomReportPDF } from "../../services/customReportExports.js";
 import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
 import { isPhoneColumn } from "../../domain/verificationRemarks.js";
-import { buildImportPayload, readImportFile } from "../../services/reportImport.js";
+import { buildImportPayload, readImportFile, savedReportToImportPreview } from "../../services/reportImport.js";
 import { db } from "../../services/firebase.js";
 import { collection, deleteField, doc, getDocs, runTransaction, updateDoc } from "firebase/firestore";
 
@@ -25,6 +25,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const [importPreview, setImportPreview] = useState(null);
   const [importName, setImportName] = useState("");
   const [importColumns, setImportColumns] = useState([]);
+  const [importSourceId, setImportSourceId] = useState("");
   const [parsingImport, setParsingImport] = useState(false);
   const [actionOpen, setActionOpen] = useState(false);
   const [actionMode, setActionMode] = useState("");
@@ -57,9 +58,19 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
   const availableFilters = columnsFromHeadings(headings).filter((column) => !["city", "remarks"].includes(column.key) && column.type !== "date");
   const toggleFilter = (key) => setFilterKeys((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
   const resetEditor = () => { setAdding(false); setEditingReportId(""); setTitle(""); setHeadings("Name, Number, City, Institute, Remarks"); setIncludeMarketers(false); setDateRange(false); setFilterKeys([]); };
-  const resetImport = () => { setImporting(false); setImportPreview(null); setImportName(""); setImportColumns([]); };
+  const resetImport = () => { setImporting(false); setImportPreview(null); setImportName(""); setImportColumns([]); setImportSourceId(""); };
+  const chooseExistingReport = (id) => {
+    setImportSourceId(id); setError("");
+    const source = reports.find((item) => item.id === id);
+    if (!source) { setImportPreview(null); return; }
+    try {
+      const preview = savedReportToImportPreview(source);
+      setImportPreview(preview); setImportName(`${source.title} - All Cities`.slice(0, 120));
+      setImportColumns(preview.headings.slice(0, 18).map(({ index }) => index));
+    } catch (cause) { setImportPreview(null); setError(cause.message); }
+  };
   const chooseImportFile = async (file) => {
-    setParsingImport(true); setError(""); setImportPreview(null);
+    setParsingImport(true); setError(""); setImportPreview(null); setImportSourceId("");
     try {
       const preview = await readImportFile(file);
       setImportPreview(preview);
@@ -213,6 +224,8 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
       && Object.entries(extraFilterValues).every(([key, value]) => !value || String(row[key] || "") === value);
   }).sort((a, b) => String(a.date || report.date).localeCompare(String(b.date || report.date))), [report, mode, search, cityFilter, remarkFilter, marketerFilter, marketersList, fromDate, toDate, extraFilterValues]);
   const cities = [...new Set((report?.rows || []).map((row) => row.city).filter(Boolean))].sort();
+  const importCityHeading = importPreview?.headings.find(({ label }) => /^city$/i.test(label.trim()));
+  const importCities = importCityHeading ? [...new Set(importPreview.rows.map((row) => String(row[importCityHeading.index] || "").trim()).filter(Boolean))] : [];
   const runExport = async (kind) => {
     const verificationMode = mode === "verification";
     let exportReport = report;
@@ -254,7 +267,7 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     <div className="other-reports-header">
       <div><span className="other-reports-eyebrow">REPORT WORKSPACE</span><h2>{mode === "verification" ? "Verification" : "Other Reports"}</h2><p>{mode === "verification" ? "Review school visits and keep every follow-up in one place." : "A clean space for the reports you create and manage."}</p></div>
       <div className="other-reports-actions">
-        {mode !== "verification" && <><button className="other-reports-btn primary" aria-expanded={actionOpen} onClick={() => setActionOpen((value) => !value)}>Action ▾</button><button className="other-reports-btn" aria-expanded={importing} onClick={() => { resetEditor(); setActionOpen(false); setError(""); setImporting((value) => !value); setImportPreview(null); }}>Import PDF / Excel</button></>}
+        {mode !== "verification" && <><button className="other-reports-btn primary" aria-expanded={actionOpen} onClick={() => setActionOpen((value) => !value)}>Action ▾</button><button className="other-reports-btn" aria-expanded={importing} onClick={() => { resetEditor(); setActionOpen(false); setError(""); if (importing) resetImport(); else setImporting(true); }}>Import PDF / Excel</button></>}
       </div>
     </div>
     {actionOpen && mode !== "verification" && <div className="other-report-action-menu">
@@ -269,10 +282,12 @@ export default function AdminOtherReportsPanel({ mode, reports, setReports, sele
     <div className="other-reports-overview"><span className="other-reports-overview-icon" aria-hidden="true">▦</span><div><strong>{mode === "verification" ? reports.length + 1 : reports.length}</strong><span>{mode === "verification" ? "Available reports" : "Custom reports"}</span></div><p>{mode === "verification" ? "School Visits is ready whenever you need it." : "Create a report and start adding contacts in seconds."}</p></div>
     {importing && mode !== "verification" && <form className="other-report-import" onSubmit={submitImport}>
       <div className="other-report-import-head"><div><h3>Import a report</h3><p>Choose an Excel sheet or a PDF with selectable table text. Review the headings before saving.</p></div><button type="button" className="other-reports-btn" onClick={resetImport}>Cancel</button></div>
-      <label className="other-report-import-file">PDF or Excel file<input type="file" accept=".pdf,.xlsx,.xls,.xlsm,application/pdf" onChange={(event) => chooseImportFile(event.target.files?.[0])} /></label>
+      <label className="other-report-import-file">PDF or Excel file (.xlsx, .xls, .xlsm)<input type="file" accept=".pdf,.xlsx,.xls,.xlsm,application/pdf" onChange={(event) => chooseImportFile(event.target.files?.[0])} /></label>
+      {reports.some((item) => item.rows?.length) && <label className="other-report-import-file">Or use all rows from a saved report<select value={importSourceId} onChange={(event) => chooseExistingReport(event.target.value)}><option value="">Choose a saved report</option>{reports.filter((item) => item.rows?.length).map((item) => <option key={item.id} value={item.id}>{item.title} ({item.rows.length} rows)</option>)}</select></label>}
       {parsingImport && <p role="status">Reading file…</p>}
       {importPreview && <><label className="other-report-import-name">Report name<input value={importName} onChange={(event) => setImportName(event.target.value)} maxLength={120} required /></label>
         <div className="other-report-import-select"><div><strong>Choose the data to show</strong><span>{importColumns.length} of {importPreview.headings.length} headings selected · {importPreview.rows.length} rows found</span></div><div className="other-report-import-checks">{importPreview.headings.map(({ index, label }) => <label key={index}><input type="checkbox" checked={importColumns.includes(index)} onChange={() => setImportColumns((current) => current.includes(index) ? current.filter((item) => item !== index) : [...current, index])} />{label}</label>)}</div></div>
+        {importCityHeading && <p className={`other-report-import-cities${importCities.length === 1 ? " is-limited" : ""}`}>{importCities.length} cit{importCities.length === 1 ? "y" : "ies"} found: {importCities.slice(0, 8).join(", ")}{importCities.length > 8 ? "…" : ""}. {importCities.length === 1 && !importSourceId ? "This file contains only that city. Choose the complete Excel file or a saved report above to include all cities." : "Every city in the selected source will be imported."}</p>}
         <div className="other-report-import-sample"><strong>Preview</strong><div className="table-scroll"><table><thead><tr>{importPreview.headings.filter(({ index }) => importColumns.includes(index)).map(({ index, label }) => <th key={index}>{label}</th>)}</tr></thead><tbody>{importPreview.rows.slice(0, 5).map((row, index) => <tr key={index}>{importPreview.headings.filter((item) => importColumns.includes(item.index)).map((item) => <td key={item.index}>{row[item.index] || "—"}</td>)}</tr>)}</tbody></table></div></div>
         <button type="submit" className="other-reports-btn primary" disabled={busy || !importName.trim() || !importColumns.length}>{busy ? "Importing…" : "Create Imported Report"}</button>
       </>}
