@@ -19,6 +19,8 @@
 .other-report-filter-chip { padding:6px 9px; border:1px solid #d7a8b7; border-radius:999px; background:#fff3f6; color:#7a0f2b; font-size:11px; font-weight:700; font-family:inherit; cursor:pointer; }
 .other-reports-add > button { justify-self:start; }
 .other-report-import { display:grid; gap:16px; margin:14px 0 20px; padding:18px; border:1px solid #e7cdd5; border-radius:15px; background:linear-gradient(145deg,#fff,#fff8fa); box-shadow:0 8px 20px #6f0b2410; }
+.other-report-import-hidden { display:none; }
+.other-report-import-choose { justify-self:start; white-space:normal; }
 .other-report-import-head { display:flex; align-items:start; justify-content:space-between; gap:12px; }
 .other-report-import-head h3 { margin:0 0 4px; color:#6f0b24; font-size:18px; }
 .other-report-import-head p { margin:0; color:#78686d; font-size:12px; }
