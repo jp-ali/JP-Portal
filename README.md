@@ -15,6 +15,12 @@ This repository is in an incremental React + Express refactor. The Vite frontend
 - `src/ui/`: shared presentation styles, decoration, and report tables.
 - `legacy/`: unused WhatsApp bot prototype retained for reference. The root duplicate Firebase file and old catalogue-removal scripts were removed because they were not imported or run by either application.
 
+## GitHub Pages preview
+
+GitHub Pages must publish the compiled Vite build, not the repository root. In **Settings → Pages**, set **Build and deployment → Source** to **GitHub Actions**. In **Settings → Secrets and variables → Actions → Variables**, add the `VITE_FIREBASE_*` values listed in `.env.example` using the values from your local frontend `.env`. The `Deploy frontend to GitHub Pages` workflow then builds with the `/JP-Portal/` base path and publishes `dist/` at `https://jp-ali.github.io/JP-Portal/`.
+
+This is a frontend preview only. GitHub Pages cannot run the Express API in `backend/`; `/api/auth/login` and the other `/api` routes need a separately hosted backend. This portal currently expects same-origin API sessions, so a GitHub Pages preview cannot be used to test sign-in or authenticated features. For full portal testing, use the local server or deploy the frontend and backend together behind one origin as described below.
+
 ## Development
 
 On Windows, double-click `start-local.cmd` to build the frontend and start the bundled preview plus API in the background, then open `http://localhost:5173/`. Run it again after code changes or restarting the laptop. It writes startup logs under `%TEMP%\jp-portal-local`. For live Vite development instead, run `powershell -ExecutionPolicy Bypass -File .\start-local.ps1 -Dev`; the script switches port 5173 between preview and development modes.

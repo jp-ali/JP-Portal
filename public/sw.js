@@ -1,6 +1,8 @@
 const DEV = new URL(self.location.href).searchParams.has("dev");
 const CACHE = DEV ? "jp-portal-pwa-dev" : "jp-portal-pwa-v1";
-const PRECACHE = self.__PRECACHE__ || ["/", "/index.html", "/manifest.webmanifest", "/icons/app-icon.svg", "/icons/icon-192.png", "/icons/icon-512.png"];
+const BASE = new URL(self.registration.scope).pathname;
+const PRECACHE = self.__PRECACHE__ || ["", "index.html", "manifest.webmanifest", "icons/app-icon.svg", "icons/icon-192.png", "icons/icon-512.png"].map((path) => `${BASE}${path}`);
+const INDEX = `${BASE}index.html`;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
@@ -30,11 +32,11 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(fetch(request).then((response) => {
-      if (!response.ok) return caches.match("/index.html").then((cached) => cached || response);
+      if (!response.ok) return caches.match(INDEX).then((cached) => cached || response);
       const copy = response.clone();
-      caches.open(CACHE).then((cache) => cache.put("/index.html", copy));
+      caches.open(CACHE).then((cache) => cache.put(INDEX, copy));
       return response;
-    }).catch(() => caches.match("/index.html")));
+    }).catch(() => caches.match(INDEX)));
     return;
   }
   if (DEV && ["script", "style"].includes(request.destination)) {

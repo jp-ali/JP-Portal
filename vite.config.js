@@ -14,7 +14,8 @@ function offlinePrecache() {
       if (!entry) throw new Error('Missing PWA entry bundle')
       // Offline Add Visit lives in the entry bundle. Keep installation small;
       // other portal chunks are cached when opened online.
-      const files = ['/', '/index.html', '/manifest.webmanifest', '/icons/app-icon.svg', '/icons/icon-192.png', '/icons/icon-512.png', ...assets.filter((file) => /^(index-[\w-]+\.(js|css)|login-reference-panel-[\w-]+\.webp|dashboard-books-mobile-[\w-]+\.webp)$/.test(file)).map((file) => `/assets/${file}`)]
+      const base = process.env.GITHUB_PAGES === 'true' ? '/JP-Portal/' : '/'
+      const files = ['', 'index.html', 'manifest.webmanifest', 'icons/app-icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', ...assets.filter((file) => /^(index-[\w-]+\.(js|css)|login-reference-panel-[\w-]+\.webp|dashboard-books-mobile-[\w-]+\.webp)$/.test(file)).map((file) => `assets/${file}`)].map((file) => `${base}${file}`)
       const swPath = join(dist, 'sw.js')
       const sw = await readFile(swPath, 'utf8')
       await writeFile(swPath, sw.replace('self.__PRECACHE__ ||', `${JSON.stringify(files)} ||`).replace('jp-portal-pwa-v1', `jp-portal-pwa-${entry}`))
@@ -23,6 +24,7 @@ function offlinePrecache() {
 }
 
 export default defineConfig({
+  base: process.env.GITHUB_PAGES === 'true' ? '/JP-Portal/' : '/',
   plugins: [react(), offlinePrecache()],
   server: {
     host: true,
