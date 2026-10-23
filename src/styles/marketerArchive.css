@@ -1,9 +1,9 @@
 .marketer-archive-page{color:#2d2430;padding:0 0 18px;font-family:inherit}
 .marketer-archive-page *{box-sizing:border-box}
-.portal-shell .marketer-archive-page > .portal-section-toolbar{margin:16px 0;min-height:50px}
-.portal-shell .marketer-archive-page .marketer-archive-back{min-height:50px;padding:12px 22px;border-radius:15px;background:#790d2b;color:#fff;font-size:16px;font-weight:800;line-height:1.2;box-shadow:0 5px 14px rgba(111,11,36,.14)}
-.portal-shell .marketer-archive-page .marketer-archive-back:hover{background:#680a24}
-.marketer-archive-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;min-height:94px;padding:16px 22px;border:1px solid #ffdfeb;border-radius:14px;background:linear-gradient(110deg,#fff 0%,#fff6f8 47%,#ffd5e4 100%)}
+.portal-shell .marketer-archive-page > .portal-section-toolbar{margin:0 0 14px;min-height:35px}
+.portal-shell .marketer-archive-page .marketer-archive-back{min-height:35px;padding:8px 14px;border-radius:10px;background:linear-gradient(135deg,#6f0b24,#86132f);color:#fff;font-size:13px;font-weight:600;line-height:1.25;box-shadow:0 4px 10px rgba(122,15,43,.14)}
+.portal-shell .marketer-archive-page .marketer-archive-back:hover{background:linear-gradient(135deg,#62081f,#77102a)}
+.marketer-archive-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;min-height:94px;margin-bottom:14px;padding:16px 22px;border:1px solid #ffdfeb;border-radius:14px;background:linear-gradient(110deg,#fff 0%,#fff6f8 47%,#ffd5e4 100%)}
 .marketer-archive-hero:after{content:"";position:absolute;right:9%;bottom:-80px;width:310px;height:135px;background:rgba(255,130,167,.19);border-radius:50%;transform:rotate(-15deg)}
 .marketer-archive-hero-icon{position:relative;z-index:1;width:57px;height:57px;display:grid;place-items:center;flex:none;border-radius:13px;background:#ffe9f0;color:#99002d}
 .marketer-archive-hero-copy{position:relative;z-index:1}.marketer-archive-hero h1{font-size:24px;line-height:1.2;color:#8c092c;margin:0 0 3px;font-weight:800}.marketer-archive-hero p{font-size:13px;color:#837587;margin:0}
