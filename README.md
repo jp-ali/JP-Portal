@@ -17,7 +17,7 @@ This repository is in an incremental React + Express refactor. The Vite frontend
 
 ## GitHub Pages preview
 
-GitHub Pages must publish the compiled Vite build, not the repository root. In **Settings → Pages**, set **Build and deployment → Source** to **GitHub Actions**. In **Settings → Secrets and variables → Actions → Variables**, add the `VITE_FIREBASE_*` values listed in `.env.example` using the values from your local frontend `.env`. The `Deploy frontend to GitHub Pages` workflow then builds with the `/JP-Portal/` base path and publishes `dist/` at `https://jp-ali.github.io/JP-Portal/`.
+GitHub Pages must publish the compiled Vite build, not the repository root. In **Settings → Pages**, set **Build and deployment → Source** to **GitHub Actions**. The `Deploy frontend to GitHub Pages` workflow then builds with the `/JP-Portal/` base path and publishes `dist/` at `https://jp-ali.github.io/JP-Portal/`. To preview frontend screens that use Firestore, add the `VITE_FIREBASE_*` values listed in `.env.example` under **Settings → Secrets and variables → Actions → Variables**, using the values from your local frontend `.env`.
 
 This is a frontend preview only. GitHub Pages cannot run the Express API in `backend/`; `/api/auth/login` and the other `/api` routes need a separately hosted backend. This portal currently expects same-origin API sessions, so a GitHub Pages preview cannot be used to test sign-in or authenticated features. For full portal testing, use the local server or deploy the frontend and backend together behind one origin as described below.
 

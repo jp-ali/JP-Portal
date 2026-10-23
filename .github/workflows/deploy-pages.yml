@@ -24,18 +24,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - name: Check frontend configuration
-        env:
-          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
-          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
-          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
-        run: |
-          for name in VITE_FIREBASE_API_KEY VITE_FIREBASE_PROJECT_ID VITE_FIREBASE_APP_ID; do
-            if [ -z "${!name}" ]; then
-              echo "Missing repository variable: $name" >&2
-              exit 1
-            fi
-          done
       - name: Build frontend
         env:
           GITHUB_PAGES: 'true'
