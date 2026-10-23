@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import loginReferencePanel from "../assets/login-reference-panel.webp";
 import loginCss from "../styles/login.css?raw";
+import { isIosHomeScreenApp, refreshHomeScreenApp } from "../services/pwaRefresh.js";
 
 function PersonIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4.5 21c.3-4.5 3.2-7 7.5-7s7.2 2.5 7.5 7H4.5Z" fill="currentColor"/></svg>;
@@ -38,6 +39,7 @@ export default function LoginPage({ context }) {
           {error && <p className="login-error" role="alert">{error}</p>}
         </form>
         <button className="login-offline" type="button" onClick={onWorkOffline}>Use offline</button>
+        {isIosHomeScreenApp() && <button className="login-refresh-app" type="button" onClick={refreshHomeScreenApp}>↻ Refresh app</button>}
       </div>
       <p className="login-credit">Created by Ali Ashfaq</p>
     </main>
