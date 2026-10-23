@@ -1,4 +1,4 @@
-import { applicationDefault, getApps, initializeApp } from "firebase-admin/app";
+import { applicationDefault, cert, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
@@ -10,6 +10,7 @@ function credentialsError(message) {
 
 function checkLocalCredentials() {
   if (process.env.NODE_ENV === "production") return;
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) return;
   const credentialPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   if (credentialPath) {
     if (!existsSync(credentialPath)) {
@@ -28,8 +29,16 @@ function checkLocalCredentials() {
 
 export function firestore() {
   checkLocalCredentials();
+  let credential;
+  try {
+    credential = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
+      ? cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON))
+      : applicationDefault();
+  } catch {
+    throw credentialsError("Firebase server credentials are invalid. Check FIREBASE_SERVICE_ACCOUNT_JSON.");
+  }
   const app = getApps()[0] || initializeApp({
-    credential: applicationDefault(),
+    credential,
     projectId: process.env.FIREBASE_PROJECT_ID
   });
   return getFirestore(app);

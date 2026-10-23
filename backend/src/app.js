@@ -1,5 +1,7 @@
 import express from "express";
 import "dotenv/config";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { authRoutes } from "./routes/authRoutes.js";
 import { marketerRoutes } from "./routes/marketerRoutes.js";
 import { visitRoutes } from "./routes/visitRoutes.js";
@@ -41,6 +43,16 @@ app.use("/api/visits", visitRoutes);
 app.use("/api/custom-reports", customReportRoutes);
 app.use("/api/card-template", cardTemplateRoutes);
 app.use("/api/cards", cardRoutes);
+
+const frontendDirectory = fileURLToPath(new URL("../../dist/", import.meta.url));
+const frontendIndex = fileURLToPath(new URL("../../dist/index.html", import.meta.url));
+if (existsSync(frontendIndex)) {
+  app.use(express.static(frontendDirectory));
+  app.use((request, response, next) => {
+    if (request.method !== "GET" || request.path === "/api" || request.path.startsWith("/api/")) return next();
+    return response.sendFile(frontendIndex);
+  });
+}
 
 app.use((error, _request, response, _next) => {
   if (error instanceof SyntaxError && "body" in error) {

@@ -21,6 +21,12 @@ GitHub Pages must publish the compiled Vite build, not the repository root. In *
 
 This is a frontend preview only. GitHub Pages cannot run the Express API in `backend/`; `/api/auth/login` and the other `/api` routes need a separately hosted backend. This portal currently expects same-origin API sessions, so a GitHub Pages preview cannot be used to test sign-in or authenticated features. For full portal testing, use the local server or deploy the frontend and backend together behind one origin as described below.
 
+## Full online portal deployment
+
+The repository includes `render.yaml` for one Node web service that builds the frontend and serves both `dist/` and `/api` from the same URL. In Render, create a **Blueprint** from this GitHub repository. Set the required environment values when prompted: copy the `VITE_FIREBASE_*` entries from the local frontend `.env`, set `ADMIN_PASSWORD_HASH` from `backend/.env`, and set `FIREBASE_SERVICE_ACCOUNT_JSON` to the complete Firebase service-account JSON as one environment value. Keep those server credentials in Render only. Render generates a separate `SESSION_SECRET` for the service. After deployment, open the Render URL and confirm `/api/health` returns `{ "status": "ok" }` before signing in. Use that Render URL for login testing; the GitHub Pages URL remains a frontend preview.
+
+The Free Render plan can spin down after inactivity, so its first request may take longer. Native CDR export requires CorelDRAW on Windows and is unavailable on a Linux web service; PDF and SVG export remain available.
+
 ## Development
 
 On Windows, double-click `start-local.cmd` to build the frontend and start the bundled preview plus API in the background, then open `http://localhost:5173/`. Run it again after code changes or restarting the laptop. It writes startup logs under `%TEMP%\jp-portal-local`. For live Vite development instead, run `powershell -ExecutionPolicy Bypass -File .\start-local.ps1 -Dev`; the script switches port 5173 between preview and development modes.
