@@ -14,7 +14,7 @@ test("new marketer card uses the default artwork and marketer contact details", 
   assert.equal(city.fontSize, designation.fontSize);
   assert.equal(city.color, designation.color);
   assert.ok(city.y > designation.y);
-  assert.equal(card.fields.find((field) => field.id === "depotName").fontSize, 55);
+  assert.equal(card.fields.find((field) => field.id === "depotName").fontSize, 60);
   assert.equal(card.title, "Ali Card");
   assert.ok(card.image.startsWith("data:image/jpeg;base64,"));
   assert.doesNotThrow(() => validateCard({ template: card, values: card.values }));
@@ -65,7 +65,8 @@ test("saved marketer card header moves to the new layout unless its position was
   ]);
   assert.deepEqual(fields.map(({ x, y }) => [x, y]), [[50, 14], [8.5, 24], [12, 38], [8.5, 41]]);
   assert.equal(fields[0].align, "center");
-  assert.equal(alignMarketerHeaderFields([{ id: "depotName", x: 50, y: 14, fontSize: 50 }])[0].fontSize, 55);
+  assert.equal(alignMarketerHeaderFields([{ id: "depotName", x: 50, y: 14, fontSize: 50 }])[0].fontSize, 60);
+  assert.equal(alignMarketerHeaderFields([{ id: "depotName", x: 50, y: 14, fontSize: 55 }])[0].fontSize, 60);
 });
 
 test("marketer contact edits retain customized card artwork and fields", () => {
