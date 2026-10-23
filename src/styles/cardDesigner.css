@@ -15,7 +15,10 @@
 .card-designer-preview-head span { font-size:12px; color:#78666d; }
 .card-designer-preview { position:relative; width:100%; max-width:850px; overflow:hidden; cursor:crosshair; container-type:inline-size; background:#f7f0f2; border:1px solid #e1ccd2; border-radius:8px; }
 .card-designer-preview img { display:block; width:100%; height:100%; object-fit:fill; user-select:none; pointer-events:none; }
+@font-face { font-family:"Poppins Card"; src:url("../assets/fonts/Poppins-Regular.ttf") format("truetype"); font-weight:400; font-display:swap; }
+@font-face { font-family:"Poppins Card"; src:url("../assets/fonts/Poppins-SemiBold.ttf") format("truetype"); font-weight:600 700; font-display:swap; }
 .card-designer-overlay { position:absolute; display:block; width:max-content; max-width:95%; line-height:1.2; white-space:pre-line; font-family:Arial,sans-serif; pointer-events:none; }
+.marketer-card-preview .card-designer-overlay,.marketer-linked-card .card-designer-overlay { font-family:"Poppins Card",Arial,sans-serif; }
 .card-designer-overlay.selected { outline:1px dashed #7a0f2b; outline-offset:3px; }
 .card-designer-empty { min-height:270px; display:grid; place-items:center; text-align:center; padding:20px; border:2px dashed #d8b9c4; border-radius:12px; color:#806e74; background:#fff8fa; }
 .card-designer-export { justify-content:flex-start; margin-top:14px; }

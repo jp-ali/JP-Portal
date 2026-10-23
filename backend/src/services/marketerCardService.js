@@ -3,7 +3,7 @@ import { firestore } from "../config/firebase.js";
 
 const image = `data:image/jpeg;base64,${readFileSync(new URL("../../assets/card-blank-template.jpg", import.meta.url)).toString("base64")}`;
 const fields = [
-  { id: "depotName", label: "Book depot name", x: 50, y: 14, fontSize: 50, color: "#242424", align: "center", bold: true },
+  { id: "depotName", label: "Book depot name", x: 50, y: 14, fontSize: 55, color: "#242424", align: "center", bold: true },
   { id: "name", label: "Name", x: 8.5, y: 24, fontSize: 68, color: "#242424", align: "left", bold: false },
   { id: "designation", label: "Designation", x: 8.5, y: 33, fontSize: 45, color: "#555555", align: "left", bold: false },
   { id: "assignedCity", label: "City", x: 8.5, y: 41, fontSize: 45, color: "#555555", align: "left", bold: false },
@@ -31,6 +31,9 @@ export function alignMarketerHeaderFields(cardFields = []) {
   const previous = { depotName: 24, name: 33, designation: 41, assignedCity: 47 };
   return cardFields.map((field) => {
     const next = fields.find((item) => item.id === field.id);
+    if (field.id === "depotName" && field.x === 50 && field.y === 14 && field.fontSize === 50) {
+      return { ...field, fontSize: next.fontSize };
+    }
     if (!next || field.x !== 8.5 || field.y !== previous[field.id]) return field;
     return { ...field, x: next.x, y: next.y, fontSize: next.fontSize, align: next.align, bold: next.bold };
   });

@@ -23,7 +23,7 @@ function cardObjects(card) {
       value = `| ${value}`;
     }
     if (field.id === "designation" && !values.name && y === 41) y = 33;
-    return linesFor(value).map((line, index) => `<text x="${x * width / 100}" y="${y * height / 100 + index * field.fontSize * 1.2}" fill="${field.color}" font-family="Arial, sans-serif" font-size="${field.fontSize}" font-weight="${field.bold ? 700 : 400}" text-anchor="${{ left: "start", center: "middle", right: "end" }[field.align]}">${escapeXml(line)}</text>`);
+    return linesFor(value).map((line, index) => `<text x="${x * width / 100}" y="${y * height / 100 + index * field.fontSize * 1.2}" fill="${field.color}" font-family="${card.marketerId ? "Poppins, Arial, sans-serif" : "Arial, sans-serif"}" font-size="${field.fontSize}" font-weight="${field.bold ? 600 : 400}" text-anchor="${{ left: "start", center: "middle", right: "end" }[field.align]}">${escapeXml(line)}</text>`);
   }).join("\n");
   return `<image x="0" y="0" width="${width}" height="${height}" xlink:href="${image}"/>\n${labels}`;
 }

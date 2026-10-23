@@ -36,7 +36,7 @@ export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSav
       try {
         if (cardId) {
           const { card } = await request(`/cards/${encodeURIComponent(cardId)}`);
-          if (active) { setLinkedMarketer(Boolean(card.marketerId)); install({ image: card.image, imageWidth: card.imageWidth, imageHeight: card.imageHeight, widthMm: card.widthMm, fields: card.fields }, card.values, card.id); }
+          if (active) { setLinkedMarketer(Boolean(card.marketerId)); install({ image: card.image, imageWidth: card.imageWidth, imageHeight: card.imageHeight, widthMm: card.widthMm, fields: card.fields, marketerId: card.marketerId || "" }, card.values, card.id); }
         } else {
           const blob = await fetch(defaultCardArt).then((response) => response.blob());
           const image = await prepareCardImage(blob);
@@ -138,7 +138,7 @@ export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSav
     changeField(selected === "phone2" ? "phone" : selected, { x: Math.round(Math.max(0, Math.min(100, (event.clientX - rect.left) / rect.width * 100)) * 10) / 10,
       y: Math.round(Math.max(0, Math.min(100, (event.clientY - rect.top) / rect.height * 100)) * 10) / 10 });
   };
-  const renderPreview = () => <div className="card-designer-preview" onClick={place} role="presentation" style={{ aspectRatio: `${template.imageWidth} / ${template.imageHeight}` }}><img src={template.image} alt="Card background" draggable="false" />
+  const renderPreview = () => <div className={`card-designer-preview${linkedMarketer ? " marketer-linked-card" : ""}`} onClick={place} role="presentation" style={{ aspectRatio: `${template.imageWidth} / ${template.imageHeight}` }}><img src={template.image} alt="Card background" draggable="false" />
     {cardRenderEntries(template, values).map(({ field, value }) => <span key={field.id} className={`card-designer-overlay ${field.id === selected ? "selected" : ""}`} style={{ left: `${field.x}%`, top: `${field.y}%`, color: field.color, fontSize: `${field.fontSize / template.imageWidth * 100}cqw`, fontWeight: field.bold ? 700 : 400, transform: `translate(${field.align === "center" ? "-50%" : field.align === "right" ? "-100%" : "0"}, -100%)`, textAlign: field.align }}>{value}</span>)}
   </div>;
 

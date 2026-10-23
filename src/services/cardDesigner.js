@@ -83,7 +83,7 @@ function svgCardObjects(template, values) {
     const x = field.x * width / 100;
     const y = field.y * height / 100 + index * field.fontSize * 1.2;
     const anchor = { left: "start", center: "middle", right: "end" }[field.align];
-    return `<text x="${x}" y="${y}" fill="${field.color}" font-family="Arial, sans-serif" font-size="${field.fontSize}" font-weight="${field.bold ? 700 : 400}" text-anchor="${anchor}">${escapeXml(line)}</text>`;
+    return `<text x="${x}" y="${y}" fill="${field.color}" font-family="${template.marketerId ? "Poppins, Arial, sans-serif" : "Arial, sans-serif"}" font-size="${field.fontSize}" font-weight="${field.bold ? 600 : 400}" text-anchor="${anchor}">${escapeXml(line)}</text>`;
   })).join("\n");
   return `<image x="0" y="0" width="${width}" height="${height}" xlink:href="${image}"/>\n${labels}`;
 }
@@ -194,12 +194,44 @@ export async function downloadCardSheetCdr(ids, values = {}) {
   return saveDownload(file, ids.length === 1 ? cardFileName(values, "cdr") : "Cards-Corel-Sheet.cdr");
 }
 
+let poppinsFontPromise;
+
+async function poppinsFonts() {
+  if (!poppinsFontPromise) {
+    const urls = [
+      new URL("../assets/fonts/Poppins-Regular.ttf", import.meta.url),
+      new URL("../assets/fonts/Poppins-SemiBold.ttf", import.meta.url)
+    ];
+    poppinsFontPromise = Promise.all(urls.map(async (url) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Card font could not load (${response.status}).`);
+      const blob = await response.blob();
+      const data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(",")[1]);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+      return data;
+    }));
+  }
+  return poppinsFontPromise;
+}
+
+async function registerPoppins(pdf) {
+  const [regular, semibold] = await poppinsFonts();
+  pdf.addFileToVFS("Poppins-Regular.ttf", regular);
+  pdf.addFont("Poppins-Regular.ttf", "Poppins", "normal");
+  pdf.addFileToVFS("Poppins-SemiBold.ttf", semibold);
+  pdf.addFont("Poppins-SemiBold.ttf", "Poppins", "bold");
+}
+
 function drawPdfCard(pdf, template, values, x, y, width, height) {
   pdf.addImage(template.image, "JPEG", x, y, width, height);
   cardRenderEntries(template, values).forEach(({ field, value }) => {
     const rgb = field.color.match(/[0-9a-f]{2}/gi).map((part) => parseInt(part, 16));
     pdf.setTextColor(...rgb);
-    pdf.setFont("helvetica", field.bold ? "bold" : "normal");
+    pdf.setFont(template.marketerId ? "Poppins" : "helvetica", field.bold ? "bold" : "normal");
     pdf.setFontSize(Math.max(4, field.fontSize * width / template.imageWidth * 72 / 25.4));
     pdf.text(value, x + field.x * width / 100, y + field.y * height / 100, { align: field.align, baseline: "alphabetic" });
   });
@@ -210,6 +242,7 @@ export async function downloadCardPdf(template, values) {
   const { imageWidth: width, imageHeight: height, widthMm } = template;
   const heightMm = widthMm * height / width;
   const pdf = new jsPDF({ unit: "mm", format: [widthMm, heightMm], orientation: widthMm >= heightMm ? "landscape" : "portrait" });
+  if (template.marketerId) await registerPoppins(pdf);
   drawPdfCard(pdf, template, values, 0, 0, widthMm, heightMm);
   return saveDownload(pdf.output("blob"), cardFileName(values, "pdf"));
 }
@@ -218,6 +251,7 @@ export async function downloadCardSheetPdf(cards) {
   if (!cards.length) throw new Error("Select at least one card.");
   const { jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  if (cards.some((card) => card.marketerId)) await registerPoppins(pdf);
   cards.forEach((card, index) => {
     if (index && index % CARDS_PER_SHEET === 0) pdf.addPage();
     const { x, y, width, height } = sheetPlacement(card, index);
