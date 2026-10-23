@@ -83,19 +83,30 @@ export async function getOrCreateMarketerCard(marketerId) {
   const db = firestore();
   const marketerRef = db.collection("marketers").doc(marketerId);
   const cardRef = db.collection("savedCards").doc(marketerId);
-  const result = await db.runTransaction(async (transaction) => {
-    const [marketer, card] = await Promise.all([transaction.get(marketerRef), transaction.get(cardRef)]);
-    if (!marketer.exists) return null;
-    if (card.exists) return card.data().deletedAt ? null : { id: card.id, ...card.data() };
-    if (marketer.data().cardProvisionedAt) return null;
-    const now = new Date().toISOString();
-    const created = defaultMarketerCard(marketerId, marketer.data(), now);
-    transaction.set(cardRef, created);
-    transaction.update(marketerRef, { cardProvisionedAt: now });
-    return { id: cardRef.id, ...created };
-  });
+  const [marketerSnapshot, cardSnapshot] = await Promise.all([marketerRef.get(), cardRef.get()]);
+  if (!marketerSnapshot.exists) return null;
+  let result;
+  if (cardSnapshot.exists) {
+    result = cardSnapshot.data().deletedAt ? null : { id: cardSnapshot.id, ...cardSnapshot.data() };
+  } else if (!marketerSnapshot.data().cardProvisionedAt) {
+    result = await db.runTransaction(async (transaction) => {
+      const [marketer, card] = await Promise.all([transaction.get(marketerRef), transaction.get(cardRef)]);
+      if (!marketer.exists) return null;
+      if (card.exists) return card.data().deletedAt ? null : { id: card.id, ...card.data() };
+      if (marketer.data().cardProvisionedAt) return null;
+      const now = new Date().toISOString();
+      const created = defaultMarketerCard(marketerId, marketer.data(), now);
+      transaction.set(cardRef, created);
+      transaction.update(marketerRef, { cardProvisionedAt: now });
+      return { id: cardRef.id, ...created };
+    });
+  }
   if (!result) return null;
-  const city = await assignedCityText((await marketerRef.get()).data()?.assignedCityIds || []);
+  const cityIds = [...new Set((marketerSnapshot.data().assignedCityIds || []).filter(Boolean))];
+  const cityIdsUnchanged = JSON.stringify(cityIds) === JSON.stringify(result.syncedAssignedCityIds);
+  const city = (result.manualCardCity || cityIdsUnchanged)
+    ? result.values?.assignedCity || ""
+    : await assignedCityText(cityIds);
   const additions = {};
   const updatedFields = alignMarketerHeaderFields(alignLegacyCardFields((result.fields || []).map((field) => field.id === "assignedArea" ? { ...field, id: "assignedCity", label: "City" } : field)));
   if (!updatedFields.some((field) => field.id === "assignedCity")) updatedFields.push({ ...fields.find((field) => field.id === "assignedCity") });
@@ -103,6 +114,7 @@ export async function getOrCreateMarketerCard(marketerId) {
   const updatedValues = { ...result.values, depotName: "JAVED PUBLISHERS", assignedCity: result.manualCardCity || city };
   delete updatedValues.assignedArea;
   if (JSON.stringify(updatedValues) !== JSON.stringify(result.values)) additions.values = updatedValues;
+  if (!cityIdsUnchanged) additions.syncedAssignedCityIds = cityIds;
   if (Object.keys(additions).length) {
     await cardRef.update(additions);
     return { ...result, ...additions };

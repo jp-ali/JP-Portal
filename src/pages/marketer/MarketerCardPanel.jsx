@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { PortalContext } from "../../context/PortalContext.jsx";
 import { request } from "../../services/authApi.js";
 import { cardRenderEntries, downloadCardPdf } from "../../services/cardDesigner.js";
 import "../../styles/cardDesigner.css";
+
+const cardCache = new Map();
 
 function CardPreview({ card }) {
   return <div className="card-designer-preview marketer-card-preview" style={{ aspectRatio: `${card.imageWidth} / ${card.imageHeight}` }}>
@@ -12,17 +15,29 @@ function CardPreview({ card }) {
 }
 
 export default function MarketerCardPanel({ onBack, endpoint = "/cards/me", title = "My Card", embedded = false, onEdit }) {
-  const [card, setCard] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user } = useContext(PortalContext);
+  const cacheKey = `${user?.marketerId || user?.email || "guest"}:${endpoint}`;
+  const activeKey = useRef(cacheKey);
+  activeKey.current = cacheKey;
+  const [card, setCard] = useState(() => cardCache.get(cacheKey) || null);
+  const [loading, setLoading] = useState(() => !cardCache.has(cacheKey));
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState(false);
-  const load = async () => {
-    setLoading(true); setError("");
-    try { setCard((await request(endpoint)).card); }
-    catch (failure) { setError(failure.message); }
-    finally { setLoading(false); }
+  const load = async (key = cacheKey) => {
+    setLoading(!cardCache.has(key)); setError("");
+    try {
+      const freshCard = (await request(endpoint)).card;
+      if (freshCard) cardCache.set(key, freshCard);
+      else cardCache.delete(key);
+      if (key === activeKey.current) setCard(freshCard);
+    }
+    catch (failure) { if (key === activeKey.current) setError(failure.message); }
+    finally { if (key === activeKey.current) setLoading(false); }
   };
-  useEffect(() => { load(); }, [endpoint]);
+  useEffect(() => {
+    setCard(cardCache.get(cacheKey) || null);
+    load(cacheKey);
+  }, [cacheKey]);
   useEffect(() => {
     if (!expanded) return;
     const onEscape = (event) => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); setExpanded(false); } };
@@ -36,8 +51,8 @@ export default function MarketerCardPanel({ onBack, endpoint = "/cards/me", titl
   return <section className={`marketer-my-card${embedded ? " marketer-my-card-embedded" : ""}`}>
     {onBack && <div className="portal-section-toolbar"><button type="button" className="portal-section-back" onClick={onBack}>← Back</button></div>}
     <header><h2>{title}</h2><p>{title === "My Card" ? "Your business card is ready to view and download." : "View and download the admin business card."}</p></header>
-    {loading && <p>Loading card…</p>}
-    {error && <p className="card-designer-error" role="alert">{error} <button type="button" onClick={load}>Retry</button></p>}
+    {loading && !card && <p>Loading card…</p>}
+    {error && <p className="card-designer-error" role="alert">{error} <button type="button" onClick={() => load()}>Retry</button></p>}
     {!loading && !error && !card && <p>Your card is not available. Please contact admin.</p>}
     {card && <div className="marketer-my-card-content"><CardPreview card={card} /><div className="marketer-my-card-actions"><button type="button" onClick={() => setExpanded(true)}>Expand</button><button type="button" onClick={download}>Download PDF</button>{onEdit && <button type="button" onClick={() => onEdit(card.id)}>Edit Card</button>}</div></div>}
     {expanded && card && createPortal(<div className="card-designer-preview-modal" onMouseDown={(event) => { if (event.target === event.currentTarget) setExpanded(false); }} role="presentation"><div className="card-designer-preview-dialog" role="dialog" aria-modal="true" aria-label="Expanded business card"><div className="card-designer-preview-dialog-head"><strong>{title}</strong><button type="button" onClick={() => setExpanded(false)}>Close ×</button></div><CardPreview card={card} /></div></div>, document.body)}
