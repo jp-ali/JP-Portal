@@ -42,7 +42,7 @@ export default function AdminAddMarketerPanel() {
   };
   const submit = (event) => {
     event.preventDefault();
-    if (c.marketerPass !== confirmPassword) { notifyAction("New password and confirmation must match."); return; }
+    if (c.marketerPass !== confirmPassword) { notifyAction("New password and confirmation must match.", "Check password"); return; }
     setFormError("");
     c.handleSaveMarketer(event);
   };

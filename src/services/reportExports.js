@@ -1,3 +1,4 @@
+import { showNotice as alert } from "../ui/confirmDialog.js";
 import { mergedReportSheet } from "./mergedReportSheet.js";
 import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill, pdfTextWidth, pdfCenteredTextTop } from "./pdfTheme.js";
 import { marketerCityNames } from "../domain/marketerCities.js";

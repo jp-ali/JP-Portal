@@ -1,3 +1,4 @@
+import { showNotice as alert } from "../ui/confirmDialog.js";
 let pendingExcel;
 
 export async function ensureExcelReady() {

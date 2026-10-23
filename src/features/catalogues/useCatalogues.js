@@ -1,4 +1,4 @@
-import { confirmAction } from "../../ui/confirmDialog.js";
+import { confirmAction, showNotice as alert } from "../../ui/confirmDialog.js";
 import { useRef, useState } from "react";
 import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
 import { db } from "../../services/firebase";

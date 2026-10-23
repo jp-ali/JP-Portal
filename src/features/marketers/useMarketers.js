@@ -1,4 +1,4 @@
-import { confirmAction } from "../../ui/confirmDialog.js";
+import { confirmAction, showNotice as alert } from "../../ui/confirmDialog.js";
 import { useRef, useState } from "react";
 import { listMarketers, listDeletedMarketers, listAccessibleMarketers, createMarketer, updateMarketer, archiveMarketer, restoreMarketer, removeDeletedMarketer } from "../../services/marketerApi.js";
 

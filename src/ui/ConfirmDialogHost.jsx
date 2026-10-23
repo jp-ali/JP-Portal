@@ -48,7 +48,7 @@ export default function ConfirmDialogHost() {
   return createPortal(<div className="portal-confirm-overlay" data-confirm-dialog onMouseDown={(event) => { if (event.target === event.currentTarget) finish(false); }}>
     <div className="portal-confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="portal-confirm-title" aria-describedby="portal-confirm-message">
       <span className="portal-confirm-icon" aria-hidden="true">{request.kind === "notice" ? "!" : "?"}</span>
-      <h2 id="portal-confirm-title">{request.kind === "notice" ? "Check password" : "Please confirm"}</h2>
+      <h2 id="portal-confirm-title">{request.kind === "notice" ? request.title : "Please confirm"}</h2>
       <p id="portal-confirm-message">{request.message}</p>
       <div className="portal-confirm-actions">
         {request.kind !== "notice" && <button ref={cancelButton} type="button" className="portal-confirm-cancel" onClick={() => finish(false)}>Cancel</button>}
