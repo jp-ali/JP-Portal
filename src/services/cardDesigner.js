@@ -23,9 +23,19 @@ export const defaultCardValues = {
   address: "Main outfall road, sanint nagar, Lahore, Punjab"
 };
 
+function cardDisplayCase(value) {
+  return String(value ?? "").replace(/\p{L}+/gu, (word) => {
+    if (/[\p{Lu}]/u.test(word) && /[\p{Ll}]/u.test(word)) return word;
+    return word[0].toUpperCase() + word.slice(1).toLowerCase();
+  });
+}
+
 export function cardRenderEntries(template, values) {
   return template.fields.map((field) => {
     let value = String(values[field.id] || "");
+    if (template.marketerId && ["name", "designation", "assignedCity"].includes(field.id)) {
+      value = cardDisplayCase(value);
+    }
     let y = field.y;
     let x = field.x;
     if (field.id === "phone2") {
