@@ -3,10 +3,10 @@ import { firestore } from "../config/firebase.js";
 
 const image = `data:image/jpeg;base64,${readFileSync(new URL("../../assets/card-blank-template.jpg", import.meta.url)).toString("base64")}`;
 const fields = [
-  { id: "depotName", label: "Book depot name", x: 8.5, y: 24, fontSize: 68, color: "#242424", align: "left", bold: false },
-  { id: "name", label: "Name", x: 8.5, y: 33, fontSize: 58, color: "#242424", align: "left", bold: false },
-  { id: "designation", label: "Designation", x: 8.5, y: 41, fontSize: 45, color: "#555555", align: "left", bold: false },
-  { id: "assignedCity", label: "City", x: 8.5, y: 47, fontSize: 45, color: "#555555", align: "left", bold: false },
+  { id: "depotName", label: "Book depot name", x: 50, y: 14, fontSize: 50, color: "#242424", align: "center", bold: true },
+  { id: "name", label: "Name", x: 8.5, y: 24, fontSize: 68, color: "#242424", align: "left", bold: false },
+  { id: "designation", label: "Designation", x: 8.5, y: 33, fontSize: 45, color: "#555555", align: "left", bold: false },
+  { id: "assignedCity", label: "City", x: 8.5, y: 41, fontSize: 45, color: "#555555", align: "left", bold: false },
   { id: "phone", label: "Phone", x: 13.2, y: 67, fontSize: 42, color: "#242424", align: "left", bold: false },
   { id: "email", label: "Email", x: 13.2, y: 76.5, fontSize: 42, color: "#242424", align: "left", bold: false },
   { id: "website", label: "Website", x: 64.5, y: 76.5, fontSize: 42, color: "#242424", align: "left", bold: false },
@@ -25,6 +25,15 @@ export function alignLegacyCardFields(cardFields = []) {
   return cardFields.map((field) => oldY[field.id] === field.y
     ? { ...field, y: fields.find((item) => item.id === field.id).y }
     : field);
+}
+
+export function alignMarketerHeaderFields(cardFields = []) {
+  const previous = { depotName: 24, name: 33, designation: 41, assignedCity: 47 };
+  return cardFields.map((field) => {
+    const next = fields.find((item) => item.id === field.id);
+    if (!next || field.x !== 8.5 || field.y !== previous[field.id]) return field;
+    return { ...field, x: next.x, y: next.y, fontSize: next.fontSize, align: next.align, bold: next.bold };
+  });
 }
 
 export function defaultMarketerCard(marketerId, marketer, now = new Date().toISOString()) {
@@ -85,10 +94,10 @@ export async function getOrCreateMarketerCard(marketerId) {
   if (!result) return null;
   const city = await assignedCityText((await marketerRef.get()).data()?.assignedCityIds || []);
   const additions = {};
-  const updatedFields = alignLegacyCardFields((result.fields || []).map((field) => field.id === "assignedArea" ? { ...field, id: "assignedCity", label: "City" } : field));
+  const updatedFields = alignMarketerHeaderFields(alignLegacyCardFields((result.fields || []).map((field) => field.id === "assignedArea" ? { ...field, id: "assignedCity", label: "City" } : field)));
   if (!updatedFields.some((field) => field.id === "assignedCity")) updatedFields.push({ ...fields.find((field) => field.id === "assignedCity") });
   if (JSON.stringify(updatedFields) !== JSON.stringify(result.fields)) additions.fields = updatedFields;
-  const updatedValues = { ...result.values, assignedCity: result.manualCardCity || city };
+  const updatedValues = { ...result.values, depotName: "JAVED PUBLISHERS", assignedCity: result.manualCardCity || city };
   delete updatedValues.assignedArea;
   if (JSON.stringify(updatedValues) !== JSON.stringify(result.values)) additions.values = updatedValues;
   if (Object.keys(additions).length) {
@@ -105,7 +114,8 @@ export function defaultAdminCard(now = new Date().toISOString()) {
     phone: "+92-3068482000",
     email: "info@javedpublishers.com"
   }, now);
-  return { ...card, title: "Admin Card", values: { ...card.values, depotName: "Muhammad Ali Ashfaq", name: "", assignedCity: "" } };
+  const adminHeader = { depotName: { x: 8.5, y: 24, fontSize: 68, align: "left", bold: false }, name: { x: 8.5, y: 33, fontSize: 58, align: "left", bold: false }, designation: { x: 8.5, y: 41 }, assignedCity: { x: 8.5, y: 47 } };
+  return { ...card, title: "Admin Card", fields: card.fields.map((field) => ({ ...field, ...adminHeader[field.id] })), values: { ...card.values, depotName: "Muhammad Ali Ashfaq", name: "", assignedCity: "" } };
 }
 
 export function lockMarketerCard(original, incoming) {
