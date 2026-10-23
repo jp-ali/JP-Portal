@@ -6,13 +6,14 @@
 .catalogue-refresh-mobile:disabled { cursor:wait; opacity:.55; }
 .catalogue-mobile-file-button,.catalogue-mobile-file-name { display:none; }
 @media (max-width:650px) {
-  .catalogue-upload-form { grid-template-columns:minmax(0,1fr) !important; width:100%; box-sizing:border-box; }
+  .catalogue-upload-form { grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important; align-items:start !important; width:100%; box-sizing:border-box; }
   .catalogue-upload-form > div { min-width:0; }
+  .catalogue-upload-form > div:first-child { grid-column:1 / -1; }
   .catalogue-upload-form input[type="text"] { width:100%; box-sizing:border-box; }
-  .catalogue-upload-form > button[type="submit"] { width:100%; }
+  .catalogue-upload-form > button[type="submit"] { width:100%; min-width:0; margin-top:21px; padding:0 6px !important; }
   .catalogue-file-picker { position:relative; }
   .catalogue-file-picker .catalogue-file-input { position:absolute; width:1px !important; height:1px !important; min-height:0 !important; padding:0 !important; opacity:0; overflow:hidden; }
-  .catalogue-mobile-file-button { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:0 18px; border:1px solid #ddcbd0; border-radius:9px; background:#fff; color:#7a0f2b; font-size:12px; font-weight:800; cursor:pointer; box-sizing:border-box; }
+  .catalogue-mobile-file-button { display:flex; align-items:center; justify-content:center; width:100%; min-height:42px; padding:0 8px; border:1px solid #ddcbd0; border-radius:9px; background:#fff; color:#7a0f2b; font-size:12px; font-weight:800; cursor:pointer; box-sizing:border-box; }
   .catalogue-file-input:disabled + .catalogue-mobile-file-button { opacity:.55; cursor:wait; }
   .catalogue-mobile-file-name { display:block; margin-top:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#5c484e; font-size:11px; }
   .catalogue-search-row { justify-content:space-between; flex-wrap:nowrap; }
