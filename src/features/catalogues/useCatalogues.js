@@ -1,18 +1,16 @@
 import { confirmAction, showNotice as alert } from "../../ui/confirmDialog.js";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
 import { db } from "../../services/firebase";
 
 export function useCatalogues(user) {
 const [catalogues, setCatalogues] = useState([]);
 const [catalogueTitle, setCatalogueTitle] = useState("");
-const [catalogueFile, setCatalogueFile] = useState(null);
+const [catalogueLink, setCatalogueLink] = useState("");
 const [catalogueUploading, setCatalogueUploading] = useState(false);
-const [catalogueUploadProgress, setCatalogueUploadProgress] = useState(0);
 const [catalogueLoading, setCatalogueLoading] = useState(false);
 const [catalogueActionId, setCatalogueActionId] = useState("");
 const [catalogueSearch, setCatalogueSearch] = useState("");
-const catalogueFileInputRef = useRef(null);
 const fetchCatalogues = async () => {
 setCatalogueLoading(true);
 try {
@@ -43,15 +41,6 @@ if (n < 1024 * 1024) return `${Math.max(1, Math.round(n / 1024))} KB`;
 return `${(n / (1024 * 1024)).toFixed(n >= 10 * 1024 * 1024 ? 1 : 2)} MB`;
 };
 
-const bytesToBase64 = (bytes) => {
-let binary = "";
-const STEP = 0x8000;
-for (let i = 0; i < bytes.length; i += STEP) {
-binary += String.fromCharCode(...bytes.subarray(i, Math.min(i + STEP, bytes.length)));
-}
-return btoa(binary);
-};
-
 const base64ToBytes = (value) => {
 const binary = atob(String(value || ""));
 const bytes = new Uint8Array(binary.length);
@@ -62,74 +51,57 @@ return bytes;
 const handleUploadCatalogue = async (event) => {
 event?.preventDefault?.();
 if (user?.role !== "admin") {
-alert("Only admin can upload catalogues.");
+alert("Only admin can add catalogues.");
 return;
 }
 const title = catalogueTitle.trim();
-const file = catalogueFile;
 if (!title) {
 alert("Please enter catalogue title.");
 return;
 }
-if (!file) {
-alert("Please select a PDF catalogue.");
-return;
-}
-const isPdf = file.type === "application/pdf" || String(file.name || "").toLowerCase().endsWith(".pdf");
-if (!isPdf) {
-alert("Only PDF files can be uploaded in Catalogues.");
-return;
-}
-if (!file.size) {
-alert("The selected PDF is empty.");
+let sourceUrl;
+try {
+sourceUrl = new URL(catalogueLink.trim());
+if (sourceUrl.protocol !== "https:") throw new Error("HTTPS is required");
+} catch {
+alert("Enter a valid HTTPS catalogue link, such as a Dropbox share link.");
 return;
 }
 setCatalogueUploading(true);
-setCatalogueUploadProgress(0);
 const catalogueRef = doc(collection(db, "catalogues"));
-const createdChunkRefs = [];
 try {
-const buffer = await file.arrayBuffer();
-const bytes = new Uint8Array(buffer);
-const RAW_CHUNK_SIZE = 480 * 1024;
-const chunkCount = Math.ceil(bytes.length / RAW_CHUNK_SIZE);
-for (let index = 0; index < chunkCount; index++) {
-const start = index * RAW_CHUNK_SIZE;
-const end = Math.min(start + RAW_CHUNK_SIZE, bytes.length);
-const chunkRef = doc(db, "catalogues", catalogueRef.id, "chunks", String(index).padStart(5, "0"));
-createdChunkRefs.push(chunkRef);
-await setDoc(chunkRef, {
-index,
-data: bytesToBase64(bytes.subarray(start, end))
-});
-setCatalogueUploadProgress(Math.round(((index + 1) / chunkCount) * 100));
-}
+const pathName = decodeURIComponent(sourceUrl.pathname.split("/").filter(Boolean).pop() || "");
+const fileName = /\.pdf$/i.test(pathName) ? pathName : `${title}.pdf`;
 await setDoc(catalogueRef, {
 title,
-fileName: file.name || `${title}.pdf`,
-fileSize: file.size,
+fileName,
+sourceUrl: sourceUrl.href,
+sourceType: "link",
 mimeType: "application/pdf",
-chunkCount,
 status: "ready",
 uploadedBy: user?.email || "admin",
 uploadedByName: user?.name || "Admin",
 uploadedAt: serverTimestamp()
 });
 setCatalogueTitle("");
-setCatalogueFile(null);
-if (catalogueFileInputRef.current) catalogueFileInputRef.current.value = "";
+setCatalogueLink("");
 await fetchCatalogues();
-alert("Catalogue uploaded successfully.");
+alert("Catalogue link added successfully.");
 } catch (err) {
-console.error("Catalogue upload error:", err);
-for (const refItem of createdChunkRefs) {
-try { await deleteDoc(refItem); } catch (_) {}
-}
-try { await deleteDoc(catalogueRef); } catch (_) {}
-alert("Catalogue could not be uploaded: " + err.message);
+console.error("Catalogue link error:", err);
+alert("Catalogue link could not be added: " + err.message);
 } finally {
 setCatalogueUploading(false);
-setCatalogueUploadProgress(0);
+}
+};
+
+const openCatalogueLink = (catalogue) => {
+try {
+const url = new URL(catalogue.sourceUrl);
+if (url.protocol !== "https:") throw new Error("Invalid catalogue link.");
+window.open(url.href, "_blank", "noopener,noreferrer");
+} catch {
+alert("This catalogue link is invalid. Ask admin to update it.");
 }
 };
 
@@ -148,6 +120,7 @@ return new Blob(chunks.map((item) => base64ToBytes(item.data)), { type: "applica
 };
 
 const viewCatalogue = async (catalogue) => {
+if (catalogue?.sourceUrl) { openCatalogueLink(catalogue); return; }
 const popup = window.open("", "_blank");
 if (popup) {
 try {
@@ -180,6 +153,7 @@ setCatalogueActionId("");
 };
 
 const downloadCatalogue = async (catalogue) => {
+if (catalogue?.sourceUrl) { openCatalogueLink(catalogue); return; }
 setCatalogueActionId(`download:${catalogue?.id || ""}`);
 try {
 const blob = await buildCatalogueBlob(catalogue);
@@ -208,12 +182,14 @@ if (!catalogue?.id) return;
 if (!await confirmAction(`Delete catalogue \"${catalogue.title || catalogue.fileName || "Catalogue"}\"? Marketers will no longer be able to view or download it.`)) return;
 setCatalogueActionId(`delete:${catalogue.id}`);
 try {
+if (!catalogue.sourceUrl) {
 const chunkSnap = await getDocs(collection(db, "catalogues", catalogue.id, "chunks"));
 const refs = chunkSnap.docs.map((d) => d.ref);
 for (let start = 0; start < refs.length; start += 400) {
 const batch = writeBatch(db);
 refs.slice(start, start + 400).forEach((refItem) => batch.delete(refItem));
 await batch.commit();
+}
 }
 await deleteDoc(doc(db, "catalogues", catalogue.id));
 setCatalogues((prev) => prev.filter((item) => item.id !== catalogue.id));
@@ -234,5 +210,5 @@ const getFilteredCatalogues = () => {
   );
 };
 
-return { catalogues, catalogueTitle, setCatalogueTitle, catalogueFile, setCatalogueFile, catalogueUploading, catalogueUploadProgress, catalogueLoading, catalogueActionId, catalogueSearch, setCatalogueSearch, catalogueFileInputRef, fetchCatalogues, formatCatalogueFileSize, handleUploadCatalogue, viewCatalogue, downloadCatalogue, deleteCatalogue, getFilteredCatalogues };
+return { catalogues, catalogueTitle, setCatalogueTitle, catalogueLink, setCatalogueLink, catalogueUploading, catalogueLoading, catalogueActionId, catalogueSearch, setCatalogueSearch, fetchCatalogues, formatCatalogueFileSize, handleUploadCatalogue, viewCatalogue, downloadCatalogue, deleteCatalogue, getFilteredCatalogues };
 }

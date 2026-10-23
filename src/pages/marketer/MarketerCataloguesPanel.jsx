@@ -34,7 +34,7 @@ return (
                         <div style={{ minWidth:0 }}>
                           <div style={{ color:"#3b2329", fontSize:"13px", fontWeight:900, lineHeight:1.35, wordBreak:"break-word" }}>{catalogue.title || "Catalogue"}</div>
                           <div style={{ color:"#78686d", fontSize:"10.5px", marginTop:"4px", wordBreak:"break-word" }}>{catalogue.fileName || "catalogue.pdf"}</div>
-                          <div style={{ color:"#8a757b", fontSize:"10px", marginTop:"4px" }}>{formatCatalogueFileSize(catalogue.fileSize)} • {uploadedDate}</div>
+                          <div style={{ color:"#8a757b", fontSize:"10px", marginTop:"4px" }}>{catalogue.sourceUrl ? "Catalogue link" : formatCatalogueFileSize(catalogue.fileSize)} • {uploadedDate}</div>
                         </div>
                       </div>
                       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"7px" }}>

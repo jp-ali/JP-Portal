@@ -105,7 +105,7 @@ return `${y}-${m}-${day}`;
 };
 const visitForm = useVisitFormState();
 const { visitCityId, setVisitCityId, visitAreaId, setVisitAreaId, visitSchoolIds, setVisitSchoolIds, visitCitySearch, setVisitCitySearch, visitAreaSearch, setVisitAreaSearch, visitSchoolSearch, setVisitSchoolSearch, visitSession, setVisitSession, visitBranches, setVisitBranches, visitStrength, setVisitStrength, visitCityPickerOpen, setVisitCityPickerOpen, visitAreaPickerOpen, setVisitAreaPickerOpen, visitSchoolPickerOpen, setVisitSchoolPickerOpen, visitAddSchoolOpen, setVisitAddSchoolOpen, visitSchoolManagerOpen, setVisitSchoolManagerOpen, visitSchoolsLoading, setVisitSchoolsLoading, visitSchoolLoadError, setVisitSchoolLoadError, schoolName, setSchoolName, principalName, setPrincipalName, phone, setPhone, purpose, setPurpose, notes, setNotes, imageFile, setImageFile, loading, setLoading, successMsg, setSuccessMsg, sampleSchoolName, setSampleSchoolName, samplePrincipalName, setSamplePrincipalName, samplePhone, setSamplePhone, sampleDetailsText, setSampleDetailsText, sampleLoading, setSampleLoading, sampleSuccessMsg, setSampleSuccessMsg, isCameraActive, setIsCameraActive, videoRef, streamRef } = visitForm;
-const { catalogues, catalogueTitle, setCatalogueTitle, catalogueFile, setCatalogueFile, catalogueUploading, catalogueUploadProgress, catalogueLoading, catalogueActionId, catalogueSearch, setCatalogueSearch, catalogueFileInputRef, fetchCatalogues, formatCatalogueFileSize, handleUploadCatalogue, viewCatalogue, downloadCatalogue, deleteCatalogue, getFilteredCatalogues } = useCatalogues(user);
+const { catalogues, catalogueTitle, setCatalogueTitle, catalogueLink, setCatalogueLink, catalogueUploading, catalogueLoading, catalogueActionId, catalogueSearch, setCatalogueSearch, fetchCatalogues, formatCatalogueFileSize, handleUploadCatalogue, viewCatalogue, downloadCatalogue, deleteCatalogue, getFilteredCatalogues } = useCatalogues(user);
 const pdfTemplateRef = useRef(null);
 const [pdfExportData, setPdfExportData] = useState([]);
 const getDateKey = (value) => {
@@ -500,11 +500,10 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     bulkDeleteMedia,
     cardStyle,
     catalogueActionId,
-    catalogueFileInputRef,
+    catalogueLink,
     catalogueLoading,
     catalogueSearch,
     catalogueTitle,
-    catalogueUploadProgress,
     catalogueUploading,
     citiesList,
     containerStyle,
@@ -663,7 +662,7 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     setAttendanceMediaMarketer,
     setAttendanceMediaToDate,
     setAttendancePetrolRates,
-    setCatalogueFile,
+    setCatalogueLink,
     setCatalogueSearch,
     setCatalogueTitle,
     setDeleteSearch,
