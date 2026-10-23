@@ -128,8 +128,10 @@ export default function MarketerArchivePanel({ mode }) {
       <MarketerMultiSelect marketers={rows} selected={marketerIds} onChange={setMarketerIds} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" height={38} />
       <MarketerMultiSelect marketers={cityOptions.map(([id, name]) => ({ id, name }))} selected={cityKeys} onChange={setCityKeys} inputStyle={inputStyle} valueKey="id" emptyLabel="All Cities" itemLabel="City" pluralLabel="Cities" height={38} />
       <button className="marketer-archive-select-all" type="button" onClick={toggleAll} disabled={!filtered.length || busy}><span className="marketer-archive-small-check">{allFilteredSelected ? "✓" : ""}</span>{allFilteredSelected ? "Deselect All" : "Select All"}</button>
-      {isOld && <button className="marketer-archive-bulk-restore" type="button" onClick={() => runBulk("restore")} disabled={!selectedRows.length || busy}>Restore Selected ({selectedRows.length})</button>}
-      <button className="marketer-archive-bulk-delete" type="button" onClick={() => runBulk(isOld ? "remove" : "archive")} disabled={!selectedRows.length || busy}>Delete Selected ({selectedRows.length})</button>
+      {isOld ? <div className="marketer-archive-bulk-actions">
+        <button className="marketer-archive-bulk-restore" type="button" onClick={() => runBulk("restore")} disabled={!selectedRows.length || busy}>Restore Selected ({selectedRows.length})</button>
+        <button className="marketer-archive-bulk-delete" type="button" onClick={() => runBulk("remove")} disabled={!selectedRows.length || busy}>Delete Selected ({selectedRows.length})</button>
+      </div> : <button className="marketer-archive-bulk-delete" type="button" onClick={() => runBulk("archive")} disabled={!selectedRows.length || busy}>Delete Selected ({selectedRows.length})</button>}
     </div>
 
     {visible.length ? <div className="marketer-archive-grid">{visible.map((marketer) => <article key={marketer.id} className={`marketer-archive-card${selected.has(marketer.id) ? " is-selected" : ""}`}>
