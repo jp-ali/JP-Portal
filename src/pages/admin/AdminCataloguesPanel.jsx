@@ -3,7 +3,7 @@ import React from "react";
 import "../../styles/catalogueControls.css";
 
 export default function AdminCataloguesPanel() {
-  const { cardStyle, catalogueActionId, catalogueFileInputRef, catalogueLoading, catalogueSearch, catalogueTitle, catalogueUploadProgress, catalogueUploading, deleteCatalogue, downloadCatalogue, fetchCatalogues, formatCatalogueFileSize, getFilteredCatalogues, handleUploadCatalogue, inputStyle, setAdminView, setCatalogueFile, setCatalogueSearch, setCatalogueTitle, viewCatalogue } = usePortalContext();
+  const { cardStyle, catalogueActionId, catalogueFile, catalogueFileInputRef, catalogueLoading, catalogueSearch, catalogueTitle, catalogueUploadProgress, catalogueUploading, deleteCatalogue, downloadCatalogue, fetchCatalogues, formatCatalogueFileSize, getFilteredCatalogues, handleUploadCatalogue, inputStyle, setAdminView, setCatalogueFile, setCatalogueSearch, setCatalogueTitle, viewCatalogue } = usePortalContext();
   return (<div>
               <button type="button" onClick={() => setAdminView("home")} style={{ marginBottom:"14px", padding:"8px 14px", background:"linear-gradient(135deg,#6f0b24,#86132f)", color:"white", border:"none", borderRadius:"10px", fontWeight:700, cursor:"pointer", fontSize:"13px" }}>← Back to Menu</button>
               <div style={cardStyle}>
@@ -11,14 +11,16 @@ export default function AdminCataloguesPanel() {
                   <h3 style={{ margin:"0 0 4px", color:"#3b2329", fontSize:"18px" }}>📚 Catalogues</h3>
                   <p style={{ margin:0, color:"#78686d", fontSize:"11.5px" }}>Upload PDF catalogues for marketers. Only Admin can add or delete catalogue files.</p>
                 </div>
-                <form onSubmit={handleUploadCatalogue} style={{ display:"grid", gridTemplateColumns:"minmax(180px,1fr) minmax(220px,1.25fr) auto", gap:"9px", alignItems:"end", marginBottom:"18px", padding:"14px", border:"1px solid #eadce0", borderRadius:"12px", background:"#fffafa" }}>
+                <form className="catalogue-upload-form" onSubmit={handleUploadCatalogue} style={{ display:"grid", gridTemplateColumns:"minmax(180px,1fr) minmax(220px,1.25fr) auto", gap:"9px", alignItems:"end", marginBottom:"18px", padding:"14px", border:"1px solid #eadce0", borderRadius:"12px", background:"#fffafa" }}>
                   <div>
                     <label style={{ display:"block", fontSize:"11px", color:"#5c484e", fontWeight:800, marginBottom:"5px" }}>Catalogue Title</label>
                     <input type="text" value={catalogueTitle} onChange={(e)=>setCatalogueTitle(e.target.value)} placeholder="e.g. School Catalogue 2026" disabled={catalogueUploading} style={{ ...inputStyle, height:"42px", background:"#fff" }} />
                   </div>
-                  <div>
+                  <div className="catalogue-file-picker">
                     <label style={{ display:"block", fontSize:"11px", color:"#5c484e", fontWeight:800, marginBottom:"5px" }}>Select PDF</label>
-                    <input ref={catalogueFileInputRef} type="file" accept="application/pdf,.pdf" onChange={(e)=>setCatalogueFile(e.target.files?.[0] || null)} disabled={catalogueUploading} style={{ width:"100%", minHeight:"42px", padding:"8px", border:"1px solid #ddcbd0", borderRadius:"9px", background:"#fff", color:"#3f3035", fontSize:"11px" }} />
+                    <input id="catalogue-pdf-file" className="catalogue-file-input" ref={catalogueFileInputRef} type="file" accept="application/pdf,.pdf" onChange={(e)=>setCatalogueFile(e.target.files?.[0] || null)} disabled={catalogueUploading} aria-label="Choose PDF file" style={{ width:"100%", minHeight:"42px", padding:"8px", border:"1px solid #ddcbd0", borderRadius:"9px", background:"#fff", color:"#3f3035", fontSize:"11px" }} />
+                    <label className="catalogue-mobile-file-button" htmlFor="catalogue-pdf-file">Choose File</label>
+                    {catalogueFile && <small className="catalogue-mobile-file-name" title={catalogueFile.name}>{catalogueFile.name}</small>}
                   </div>
                   <button type="submit" disabled={catalogueUploading} style={{ height:"42px", padding:"0 16px", border:"none", borderRadius:"9px", background:catalogueUploading?"#8d7d81":"linear-gradient(135deg,#6f0b24,#86132f)", color:"#fff", fontWeight:900, fontSize:"11px", cursor:catalogueUploading?"wait":"pointer", whiteSpace:"nowrap" }}>{catalogueUploading ? `Uploading ${catalogueUploadProgress}%` : "➕ Upload PDF"}</button>
                   {catalogueUploading && <div style={{ gridColumn:"1 / -1", height:"6px", borderRadius:"999px", background:"#eadde1", overflow:"hidden" }}><div style={{ width:`${catalogueUploadProgress}%`, height:"100%", background:"linear-gradient(90deg,#6f0b24,#a52a4d)", transition:"width .2s ease" }} /></div>}
