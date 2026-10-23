@@ -1,5 +1,6 @@
-.marketer-archive-page{color:#2d2430;padding:2px 4px 18px;font-family:inherit}
+.marketer-archive-page{color:#2d2430;padding:0 0 18px;font-family:inherit}
 .marketer-archive-page *{box-sizing:border-box}
+.portal-shell .marketer-archive-page > .portal-section-toolbar{margin:16px 0;min-height:50px}
 .portal-shell .marketer-archive-page .marketer-archive-back{min-height:50px;padding:12px 22px;border-radius:15px;background:#790d2b;color:#fff;font-size:16px;font-weight:800;line-height:1.2;box-shadow:0 5px 14px rgba(111,11,36,.14)}
 .portal-shell .marketer-archive-page .marketer-archive-back:hover{background:#680a24}
 .marketer-archive-hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;min-height:94px;padding:16px 22px;border:1px solid #ffdfeb;border-radius:14px;background:linear-gradient(110deg,#fff 0%,#fff6f8 47%,#ffd5e4 100%)}
