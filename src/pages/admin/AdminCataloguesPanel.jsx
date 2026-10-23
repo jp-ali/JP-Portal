@@ -1,5 +1,6 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import "../../styles/catalogueControls.css";
 
 export default function AdminCataloguesPanel() {
   const { cardStyle, catalogueActionId, catalogueFileInputRef, catalogueLoading, catalogueSearch, catalogueTitle, catalogueUploadProgress, catalogueUploading, deleteCatalogue, downloadCatalogue, fetchCatalogues, formatCatalogueFileSize, getFilteredCatalogues, handleUploadCatalogue, inputStyle, setAdminView, setCatalogueFile, setCatalogueSearch, setCatalogueTitle, viewCatalogue } = usePortalContext();
@@ -22,9 +23,9 @@ export default function AdminCataloguesPanel() {
                   <button type="submit" disabled={catalogueUploading} style={{ height:"42px", padding:"0 16px", border:"none", borderRadius:"9px", background:catalogueUploading?"#8d7d81":"linear-gradient(135deg,#6f0b24,#86132f)", color:"#fff", fontWeight:900, fontSize:"11px", cursor:catalogueUploading?"wait":"pointer", whiteSpace:"nowrap" }}>{catalogueUploading ? `Uploading ${catalogueUploadProgress}%` : "➕ Upload PDF"}</button>
                   {catalogueUploading && <div style={{ gridColumn:"1 / -1", height:"6px", borderRadius:"999px", background:"#eadde1", overflow:"hidden" }}><div style={{ width:`${catalogueUploadProgress}%`, height:"100%", background:"linear-gradient(90deg,#6f0b24,#a52a4d)", transition:"width .2s ease" }} /></div>}
                 </form>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:"8px", flexWrap:"wrap", marginBottom:"12px" }}>
+                <div className="catalogue-search-row" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:"8px", marginBottom:"12px" }}>
                   <input type="text" value={catalogueSearch} onChange={(e)=>setCatalogueSearch(e.target.value)} placeholder="🔍 Search catalogues..." style={{ ...inputStyle, maxWidth:"360px", height:"40px", background:"#fff" }} />
-                  <button type="button" onClick={fetchCatalogues} disabled={catalogueLoading} style={{ width:"42px", height:"40px", border:"1px solid #ddcbd0", borderRadius:"9px", background:"#fff", color:"#7a0f2b", fontWeight:900, fontSize:"18px", cursor:catalogueLoading?"wait":"pointer" }}>↻</button>
+                  <button type="button" aria-label="Refresh catalogues" onClick={fetchCatalogues} disabled={catalogueLoading} style={{ width:"42px", height:"40px", border:"1px solid #ddcbd0", borderRadius:"9px", background:"#fff", color:"#7a0f2b", fontWeight:900, fontSize:"18px", cursor:catalogueLoading?"wait":"pointer" }}>↻</button>
                 </div>
                 {catalogueLoading ? (
 <div style={{ padding:"24px", textAlign:"center", color:"#7a0f2b", fontWeight:800 }}>Loading catalogues...</div>

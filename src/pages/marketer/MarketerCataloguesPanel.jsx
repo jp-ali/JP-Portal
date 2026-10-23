@@ -1,5 +1,6 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
+import "../../styles/catalogueControls.css";
 
 export default function MarketerCataloguesPanel() {
   const { cardStyle, catalogueActionId, catalogueLoading, catalogueSearch, downloadCatalogue, fetchCatalogues, formatCatalogueFileSize, getFilteredCatalogues, inputStyle, setCatalogueSearch, setMarketerview, viewCatalogue } = usePortalContext();
@@ -11,9 +12,12 @@ export default function MarketerCataloguesPanel() {
                   <h3 style={{ margin:"0 0 4px", color:"#3b2329", fontSize:"18px" }}>📚 Catalogues</h3>
                   <p style={{ margin:0, color:"#78686d", fontSize:"11.5px" }}>Open or download the latest PDF catalogues shared by Admin.</p>
                 </div>
-                <button type="button" onClick={fetchCatalogues} disabled={catalogueLoading} style={{ width:"42px", height:"40px", border:"1px solid #ddcbd0", borderRadius:"9px", background:"#fff", color:"#7a0f2b", fontWeight:900, fontSize:"18px", cursor:catalogueLoading?"wait":"pointer" }}>↻</button>
+                <button type="button" className="catalogue-refresh-desktop" aria-label="Refresh catalogues" onClick={fetchCatalogues} disabled={catalogueLoading} style={{ width:"42px", height:"40px", border:"1px solid #ddcbd0", borderRadius:"9px", background:"#fff", color:"#7a0f2b", fontWeight:900, fontSize:"18px", cursor:catalogueLoading?"wait":"pointer" }}>↻</button>
               </div>
-              <input type="text" value={catalogueSearch} onChange={(e)=>setCatalogueSearch(e.target.value)} placeholder="🔍 Search catalogues..." style={{ ...inputStyle, maxWidth:"420px", height:"40px", background:"#fff", marginBottom:"14px" }} />
+              <div className="catalogue-search-row catalogue-marketer-search-row">
+                <input type="text" value={catalogueSearch} onChange={(e)=>setCatalogueSearch(e.target.value)} placeholder="🔍 Search catalogues..." style={{ ...inputStyle, maxWidth:"420px", height:"40px", background:"#fff" }} />
+                <button type="button" className="catalogue-refresh-mobile" aria-label="Refresh catalogues" onClick={fetchCatalogues} disabled={catalogueLoading}>↻</button>
+              </div>
               {catalogueLoading ? (
 <div style={{ padding:"24px", textAlign:"center", color:"#7a0f2b", fontWeight:800 }}>Loading catalogues...</div>
 ) : getFilteredCatalogues().length === 0 ? (

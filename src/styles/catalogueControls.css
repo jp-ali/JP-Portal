@@ -1,0 +1,12 @@
+.catalogue-search-row { display:flex; align-items:center; gap:8px; min-width:0; }
+.catalogue-search-row input { min-width:0; }
+.catalogue-search-row > button { flex:0 0 42px; }
+.catalogue-marketer-search-row { margin-bottom:14px; }
+.catalogue-refresh-mobile { display:none; width:42px; height:40px; border:1px solid #ddcbd0; border-radius:9px; background:#fff; color:#7a0f2b; font-size:18px; font-weight:900; cursor:pointer; }
+.catalogue-refresh-mobile:disabled { cursor:wait; opacity:.55; }
+@media (max-width:650px) {
+  .catalogue-search-row { justify-content:space-between; flex-wrap:nowrap; }
+  .catalogue-search-row input { flex:1 1 0; width:0 !important; max-width:none !important; }
+  .catalogue-refresh-desktop { display:none; }
+  .catalogue-refresh-mobile { display:grid; place-items:center; }
+}
