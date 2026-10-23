@@ -102,10 +102,9 @@ style={{ padding: "6px 12px", background: "linear-gradient(135deg,#6f0b24,#86132
 <>
                     <h3 style={{ marginTop: 0, color: "#3b2329", fontSize: "17px", marginBottom: "12px" }}><span style={{display:"inline-flex",verticalAlign:"middle",marginRight:"7px"}}>{renderMarketerPersonIcon(20, true)}</span>Active Marketers Details</h3>
                     <div className="marketer-detail-filters">
-                      <label className="marketer-detail-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search marketer by name or email..." value={marketerSearch} onChange={(event) => setMarketerSearch(event.target.value)} aria-label="Search marketers" /></label>
+                      <div className="marketer-detail-search-group"><label className="marketer-detail-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search marketer by name or email..." value={marketerSearch} onChange={(event) => setMarketerSearch(event.target.value)} aria-label="Search marketers" /></label><button type="button" className="marketer-detail-refresh" onClick={refresh} disabled={refreshing} aria-label="Refresh marketers" title="Refresh marketers">↻</button></div>
                       <MarketerMultiSelect marketers={marketersList} selected={selectedMarketerIds} onChange={setSelectedMarketerIds} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" height={42} />
                       <MarketerMultiSelect marketers={cityOptions} selected={selectedCityKeys} onChange={setSelectedCityKeys} inputStyle={inputStyle} valueKey="id" emptyLabel="All Cities" itemLabel="City" pluralLabel="Cities" height={42} />
-                      <button type="button" className="marketer-detail-refresh" onClick={refresh} disabled={refreshing} aria-label="Refresh marketers" title="Refresh marketers">↻</button>
                     </div>
                     {filteredMarketers.length === 0 ? (
 <p style={{ color: "#78686d", fontSize: "14px" }}>No marketers found.</p>

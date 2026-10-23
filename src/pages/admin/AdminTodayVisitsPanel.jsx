@@ -19,12 +19,12 @@ export default function AdminTodayVisitsPanel() {
     </div>
     <div style={cardStyle}>
       <h3 style={{ marginTop: 0, color: "#3b2329", fontSize: "17px", marginBottom: "14px" }}>☀️ Today's Visits</h3>
-      <div style={{ display: "flex", alignItems: "flex-end", flexWrap: "wrap", gap: "8px", marginBottom: "16px" }}>
-        <div style={{ flex: "1 1 120px", minWidth: "115px" }}>
+      <div className="today-visits-filters" style={{ display: "flex", alignItems: "flex-end", flexWrap: "wrap", gap: "8px", marginBottom: "16px" }}>
+        <div className="today-visits-search-field" style={{ flex: "1 1 120px", minWidth: "115px" }}>
           <label htmlFor="today-visits-search" style={{ display: "block", fontSize: "11px", color: "#5c484e", fontWeight: 700, marginBottom: "4px" }}>Search</label>
           <input id="today-visits-search" type="search" placeholder="🔍 Name or email..." value={visitSearch} onChange={(event) => setVisitSearch(event.target.value)} style={{ ...inputStyle, width: "100%", height: "42px", boxSizing: "border-box", fontSize: "13px", padding: "8px 10px" }} />
         </div>
-        <div style={{ flex: "1.4 1 170px", minWidth: "170px", display: "flex" }}>
+        <div className="today-visits-marketer-select" style={{ flex: "1.4 1 170px", minWidth: "170px", display: "flex" }}>
           <MarketerMultiSelect marketers={marketersList} selected={selectedTodayVisitMarketerEmails} onChange={setSelectedTodayVisitMarketerEmails} inputStyle={inputStyle} />
         </div>
         <button className="white-refresh-btn" type="button" title="Refresh today's visits" aria-label="Refresh today's visits" onClick={() => Promise.all([fetchTodayReports(true), fetchMarketers(true)])} style={{ width: "42px", minWidth: "42px", height: "42px", padding: 0, background: "#fff", color: "#7a0f2b", border: "1px solid #ddcbd0", borderRadius: "9px", fontWeight: 900, fontSize: "18px", cursor: "pointer" }}>↻</button>
