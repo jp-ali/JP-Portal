@@ -48,12 +48,15 @@
 .news-admin-page .news-panel-heading>.news-report-actions{margin-left:auto}
 .news-admin-page .news-report-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:7px}
 .news-admin-page .news-report-actions button{white-space:nowrap}
-.news-admin-page .news-history-filters{grid-template-columns:minmax(210px,1.4fr) repeat(2,minmax(145px,.9fr)) auto}
+.news-admin-page .news-history-filters{width:100%;max-width:100%;min-width:0;box-sizing:border-box;grid-template-columns:minmax(0,1.4fr) repeat(2,minmax(0,.9fr)) auto}
+.news-admin-page .news-history-filters>*{min-width:0}
 .news-admin-page .news-export-excel,.news-admin-page .news-export-pdf{min-height:36px;padding:0 12px;border:0;border-radius:8px;color:#fff;font-size:11px;font-weight:800;cursor:pointer}
 .news-admin-page .news-export-excel{background:#15803d}
 .news-admin-page .news-export-pdf{background:linear-gradient(135deg,#6f0b24,#86132f)}
 .news-admin-page .news-export-excel:disabled,.news-admin-page .news-export-pdf:disabled{opacity:.55;cursor:wait}
 .news-admin-page .admin-report-expanded.news-history{border-radius:0!important;box-shadow:none!important}
+@media(max-width:1050px){.news-admin-page .news-history-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.news-admin-page .news-history-filters>.news-primary{width:100%}}
+@media(max-width:750px){.news-admin-page .news-history-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.news-admin-page .news-history-filters>.verification-marketer-field{grid-column:1/-1}}
 @media(max-width:800px){.news-admin-page .news-add-layout{grid-template-columns:1fr}.news-admin-page .news-panel-heading{flex-wrap:wrap}.news-admin-page .news-panel-heading>.news-report-actions{width:100%;margin-left:0;justify-content:flex-start}}
 @media(max-width:500px){.news-admin-page .news-add-controls{align-items:flex-start}.news-admin-page .news-add-buttons>button{width:72px;padding:0 7px}.news-admin-page .news-schedule-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.news-admin-page .news-schedule-fields label:last-child{grid-column:1/-1}.news-admin-page .news-history-filters>.verification-marketer-field{grid-column:1/-1}.news-admin-page .news-report-actions{justify-content:space-between;gap:5px}.news-admin-page .news-report-actions button{flex:1;padding:0 7px}}
 .news-admin-page .news-add-form{padding:28px 30px 32px;border:1px solid #f2b9cd;border-radius:18px;background:#fff;box-shadow:0 8px 20px rgba(125,20,51,.07)}

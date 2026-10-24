@@ -35,18 +35,22 @@ export function createExpenseNewsPdf({ marketer, rows, fromDate, toDate }) {
     const left = 34;
     const width = pageWidth - 68;
     const rowHeight = 22;
-    const drawPageTitle = (section) => {
+    const drawPageTitle = () => {
       doc.rect(0, 0, pageWidth, 91).fill(maroon);
       doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(20).text("JAVED PUBLISHERS", left, 20, { width, align: "center" });
       doc.fontSize(12).text("EXPENSE REPORT", left, 49, { width, align: "center" });
-      doc.fillColor(maroon).fontSize(10).text(section, left, 110);
-      doc.fillColor("#333333").font("Helvetica").fontSize(9).text(`Marketer: ${marketer.name || marketer.email || "Marketer"}`, left, 130);
-      doc.text(`Date range: ${fromDate} to ${toDate}`, left, 146);
+      doc.fillColor("#333333").font("Helvetica").fontSize(9).text(`Marketer: ${marketer.name || marketer.email || "Marketer"}`, left, 110);
+      doc.text(`Date range: ${fromDate} to ${toDate}`, left, 126);
+    };
+    let y = 0;
+    const startPage = () => {
+      doc.addPage();
+      drawPageTitle();
+      y = 155;
     };
     const drawTable = (section, columns, values, total) => {
-      doc.addPage();
-      drawPageTitle(section);
-      let y = 176;
+      const sectionHeight = 18;
+      const bottom = () => doc.page.height - 75;
       const header = () => {
         let x = left;
         columns.forEach(([label, cellWidth]) => {
@@ -56,9 +60,17 @@ export function createExpenseNewsPdf({ marketer, rows, fromDate, toDate }) {
         });
         y += rowHeight;
       };
-      header();
+      const sectionHeader = () => {
+        doc.fillColor(maroon).font("Helvetica-Bold").fontSize(10).text(section, left, y, { width });
+        y += sectionHeight;
+        header();
+      };
+      const nextSectionY = y > 155 ? y + 16 : y;
+      if (!doc.page || nextSectionY + sectionHeight + rowHeight * 3 > bottom()) startPage();
+      else y = nextSectionY;
+      sectionHeader();
       const drawRow = (cells, strong = false) => {
-        if (y + rowHeight > doc.page.height - 75) { doc.addPage(); drawPageTitle(section); y = 176; header(); }
+        if (y + rowHeight > bottom()) { startPage(); sectionHeader(); }
         let x = left;
         cells.forEach((cell, index) => {
           const cellWidth = columns[index][1];
