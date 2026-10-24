@@ -4,6 +4,7 @@ import { deleteNews, listNews, publishNews, restoreNews } from "../../services/n
 import { exportNewsExcel, exportNewsPDF } from "../../services/newsExports.js";
 import { confirmAction, showNotice } from "../../ui/confirmDialog.js";
 import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
+import ReportMarketerFilterBar from "../../ui/ReportMarketerFilterBar.jsx";
 import { dashboardItemKeys, useDashboardVisibility } from "../../services/dashboardVisibility.js";
 import "../../styles/news.css";
 import "../../styles/adminNews.css";
@@ -36,7 +37,7 @@ function PanelHeading({ icon, title, description, action }) {
 }
 
 function NewsMarketerSelect({ marketers, selected, onChange, inputStyle, label = "Select Marketer(s)" }) {
-  return <div className="news-marketer-select"><span className="news-marketer-select-icon" aria-hidden="true">👥</span><MarketerMultiSelect marketers={marketers} selected={selected} onChange={onChange} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" label={label} /></div>;
+  return <MarketerMultiSelect marketers={marketers} selected={selected} onChange={onChange} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" label={label} />;
 }
 
 function ReportActions({ reportKey, renderReportExpandButton, onExcel, onPdf, onRefresh, busy }) {
@@ -56,6 +57,8 @@ export default function AdminNewsPanel({ mode = "add" }) {
   const [toDate, setToDate] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
   const [recordIds, setRecordIds] = useState([]);
+  const [recordFromDate, setRecordFromDate] = useState("");
+  const [recordToDate, setRecordToDate] = useState("");
   const [historySelectedIds, setHistorySelectedIds] = useState([]);
   const [historyFromDraft, setHistoryFromDraft] = useState("");
   const [historyToDraft, setHistoryToDraft] = useState("");
@@ -79,7 +82,11 @@ export default function AdminNewsPanel({ mode = "add" }) {
   useEffect(() => { fetchMarketers().catch(() => {}); void reload(); }, [mode]);
 
   const recordNews = useMemo(() => news.filter((item) => Boolean(item.deletedAt) === (mode === "deleted"))
-    .filter((item) => isForSelection(item, recordIds)), [news, mode, recordIds]);
+    .filter((item) => isForSelection(item, recordIds))
+    .filter((item) => {
+      const date = pakistanDateKey(mode === "deleted" ? item.deletedAt : item.createdAt);
+      return date && (!recordFromDate || date >= recordFromDate) && (!recordToDate || date <= recordToDate);
+    }), [news, mode, recordIds, recordFromDate, recordToDate]);
   const expenseHistory = useMemo(() => news.filter((item) => !item.deletedAt && (item.kind === "expense" || (!item.kind && item.fromDate)))
     .filter((item) => isForSelection(item, historyFilters.ids))
     .filter((item) => !historyFilters.from || item.toDate >= historyFilters.from)
@@ -208,9 +215,13 @@ export default function AdminNewsPanel({ mode = "add" }) {
     {(mode === "old" || mode === "deleted") && <>
       <section className={`news-card news-history ${reportViewClass(expandedKey)}`}>
         {expandedChrome(recordNews, current.title)}
-        <PanelHeading icon="▤" title={current.title} description={mode === "deleted" ? "Restore deleted messages and expense reports." : "Previously sent messages and expense reports."}
+        <PanelHeading icon="▤" title={current.title} description={mode === "deleted" ? "Filter by deletion date and restore removed news." : "Filter previously sent news by sent date."}
           action={reportActions(recordNews, current.title)} />
-        <div className="news-filter-bar"><NewsMarketerSelect marketers={marketersList} selected={recordIds} onChange={setRecordIds} inputStyle={inputStyle} /></div>
+        <ReportMarketerFilterBar fromDate={recordFromDate} toDate={recordToDate}
+          onFromDate={setRecordFromDate} onToDate={setRecordToDate}
+          onClear={() => { setRecordFromDate(""); setRecordToDate(""); }}
+          marketers={marketersList} selected={recordIds} onSelected={setRecordIds}
+          onRefresh={() => void reload()} inputStyle={inputStyle} valueKey="id" />
         {loading && <p>Loading news...</p>}{error && <p role="alert">{error}</p>}
         {!loading && !error && !recordNews.length && <p>No {mode === "deleted" ? "deleted" : "sent"} news found.</p>}
         <div className="news-list">{recordNews.map((item, index) => <article className={`news-entry news-entry--${index % 4}`} key={item.id}>
