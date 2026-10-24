@@ -205,7 +205,7 @@ const adminSidebarItems = [
 { key: "visits", icon: "📊", label: "All Visits & Reports", active: adminView === "visits" },
 { key: "sample-details", icon: "📦", label: "Sample Details", active: adminView === "sample-details" },
 { key: "expense-report", icon: "🧾", label: "Expense Report", active: adminView === "expense-report" },
-{ key: "news", icon: "📰", label: "News", active: ["news", "news-add", "news-old"].includes(adminView) },
+{ key: "news", icon: "📰", label: "News", active: ["news", "news-add", "news-expense", "news-old"].includes(adminView) },
 { key: "marketers-detail", icon: renderMarketerPersonIcon(18, true), label: "Marketer Details", active: adminView === "marketers-detail" },
 { key: "add-marketer", icon: "➕", label: "Add Marketer", active: adminView === "add-marketer" },
 { key: "delete-marketer", icon: "🗑️", label: "Delete Marketer", active: adminView === "delete-marketer" },
@@ -299,7 +299,7 @@ onClick={() => openAdminSidebarSection(item.key)}
           {adminView === "expense-report" && (
 <AdminExpenseReportPanel />
 )}
-          {["news", "news-add", "news-old"].includes(adminView) && <AdminNewsPanel mode={adminView === "news-add" ? "add" : adminView === "news-old" ? "old" : "home"} />}
+          {["news", "news-add", "news-expense", "news-old"].includes(adminView) && <AdminNewsPanel mode={adminView === "news-add" ? "add" : adminView === "news-expense" ? "expense" : adminView === "news-old" ? "old" : "home"} />}
           {adminView === "marketers-detail" && (
 <AdminMarketersDetailPanel />
 )}

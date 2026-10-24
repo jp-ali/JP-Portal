@@ -80,8 +80,10 @@ export default function AdminHomePanel() {
     { title: "Card Designer", description: "Create and edit card designs", icon: "🎨", tone: "rose", onClick: () => c.setAdminView("card-designer") },
     { title: "Saved Cards", description: "Find, download or restore cards", icon: "🪪", tone: "violet", onClick: () => c.setAdminView("saved-cards") }
   ] });
-  sections.push({ title: "News", icon: "📰", description: "Send expense report notices", items: [
-    { title: "News", description: "Add news and view old news", icon: "📰", tone: "rose", onClick: () => c.setAdminView("news") }
+  sections.push({ title: "News", icon: "📰", description: "Send updates and expense reports", items: [
+    { title: "Add News", description: "Write and send an update", icon: "✉️", tone: "rose", onClick: () => c.setAdminView("news-add") },
+    { title: "Expense News", description: "Send expense report PDFs", icon: "📄", tone: "mint", onClick: () => c.setAdminView("news-expense") },
+    { title: "Old News", description: "Review and restore news", icon: "🗂️", tone: "violet", onClick: () => c.setAdminView("news-old") }
   ] });
   return <DashboardHome role="admin" accountId={c.user?.id || c.user?.email || "admin"} stats={stats} sections={sections} />;
 }

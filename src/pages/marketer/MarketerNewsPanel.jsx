@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { usePortalContext } from "../../context/PortalContext.jsx";
-import { listNews } from "../../services/newsApi.js";
+import { listNews, newsReportUrl } from "../../services/newsApi.js";
 import { enableNewsNotifications, newsNotificationStatus } from "../../services/newsPush.js";
 import "../../styles/news.css";
 
@@ -25,7 +25,8 @@ export default function MarketerNewsPanel() {
         url.searchParams.delete("news");
         window.history.replaceState(window.history.state, "", url.href);
       }
-      if (selected) openExpenseReport({ fromDate: selected.fromDate, toDate: selected.toDate });
+      if (selected?.kind === "expense") window.location.assign(newsReportUrl(selected.id));
+      else if (selected?.fromDate) openExpenseReport({ fromDate: selected.fromDate, toDate: selected.toDate });
     })
       .catch((failure) => { if (active) setError(failure.message); })
       .finally(() => { if (active) setLoading(false); });
@@ -42,11 +43,11 @@ export default function MarketerNewsPanel() {
 
   return <div className="news-page">
     <div className="portal-section-toolbar"><button type="button" className="portal-section-back news-back" onClick={() => setMarketerview("home")}>← Back to Menu</button></div>
-    <section className="news-card news-enable"><div className="news-section-head"><div><h2>News</h2><p>Expense report notices from Admin.</p></div>{!enabled && <button type="button" className="news-primary" onClick={enable} disabled={enabling}>{enabling ? "Enabling..." : "Enable Notifications"}</button>}</div>
+    <section className="news-card news-enable"><div className="news-section-head"><div><h2>News</h2><p>Updates and expense reports from Admin.</p></div>{!enabled && <button type="button" className="news-primary" onClick={enable} disabled={enabling}>{enabling ? "Enabling..." : "Enable Notifications"}</button>}</div>
       {enabled && <p className="news-status">🔔 Phone notifications are enabled on this device.</p>}{notice && <p className="news-status" role="status">{notice}</p>}
     </section>
     <section className="news-card">{loading && <p>Loading news...</p>}{error && <p role="alert">{error}</p>}{!loading && !error && !news.length && <p>No news yet.</p>}
-      <div className="news-list">{news.map((item) => <article className="news-entry" key={item.id}><strong>{item.title}</strong><small>{item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : ""}</small>{item.message && <p>{item.message}</p>}<span>Your expense report: {item.fromDate} to {item.toDate}</span><button type="button" className="news-primary" onClick={() => openExpenseReport({ fromDate: item.fromDate, toDate: item.toDate })}>Open My Expense Report →</button></article>)}</div>
+      <div className="news-list">{news.map((item) => <article className="news-entry" key={item.id}><strong>{item.title || "News"}</strong><small>{item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : ""}</small>{item.message && <p>{item.message}</p>}{item.fromDate && <span>Your expense report: {item.fromDate} to {item.toDate}</span>}{item.kind === "expense" ? <div className="news-entry-actions"><a className="news-primary" href={newsReportUrl(item.id)} target="_blank" rel="noopener noreferrer">Open PDF →</a><a className="news-primary" href={newsReportUrl(item.id, true)}>Download PDF</a></div> : item.fromDate && <button type="button" className="news-primary" onClick={() => openExpenseReport({ fromDate: item.fromDate, toDate: item.toDate })}>Open My Expense Report →</button>}</article>)}</div>
     </section>
   </div>;
 }
