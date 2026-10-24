@@ -68,13 +68,15 @@ self.addEventListener("push", (event) => {
   const title = String(data.title || "Javed Publishers News").slice(0, 120);
   const body = String(data.body || "Open your expense report.").slice(0, 300);
   const newsId = typeof data.newsId === "string" && /^[a-zA-Z0-9_-]{1,100}$/.test(data.newsId) ? data.newsId : "";
-  event.waitUntil(self.registration.showNotification(title, {
+  event.waitUntil(Promise.all([self.registration.showNotification(title, {
     body,
     icon: `${BASE}icons/icon-192.png`,
     badge: `${BASE}icons/icon-192.png`,
     tag: newsId ? `jp-news-${newsId}` : "jp-news",
     data: { url: `${BASE}?news=${encodeURIComponent(newsId)}` }
-  }));
+  }), self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+    clients.forEach((client) => client.postMessage({ type: "NEWS_RECEIVED", newsId }));
+  })]));
 });
 
 self.addEventListener("notificationclick", (event) => {

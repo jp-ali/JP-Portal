@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { usePortalContext } from "../../context/PortalContext.jsx";
-import { listNews, newsReportUrl } from "../../services/newsApi.js";
+import { listNews, markNewsRead, newsReportUrl } from "../../services/newsApi.js";
 import { enableNewsNotifications, newsNotificationStatus } from "../../services/newsPush.js";
 import "../../styles/news.css";
 
-export default function MarketerNewsPanel() {
+export default function MarketerNewsPanel({ onRead }) {
   const { openExpenseReport, setMarketerview } = usePortalContext();
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,6 +19,8 @@ export default function MarketerNewsPanel() {
       if (!active) return;
       const items = result.news || [];
       setNews(items);
+      const unreadIds = items.filter((item) => !item.read).map((item) => item.id);
+      if (unreadIds.length) markNewsRead(unreadIds).then(() => onRead?.(unreadIds)).catch(() => {});
       const url = new URL(window.location.href);
       const selected = items.find((item) => item.id === url.searchParams.get("news"));
       if (url.searchParams.has("news")) {

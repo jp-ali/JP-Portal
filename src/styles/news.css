@@ -4,3 +4,12 @@
 .news-choice-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.news-filter-bar{display:flex;align-items:end;gap:12px;margin-bottom:14px;padding:14px;border:1px solid #ead7dd;border-radius:12px;background:#fff}.news-filter-bar .news-primary{flex:none}.news-entry-actions{display:flex;flex-wrap:wrap;gap:8px}.news-entry-actions a{display:inline-flex;align-items:center;text-decoration:none}
 @media(max-width:850px){.news-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.news-choice-grid,.news-date-grid{grid-template-columns:1fr}.news-card{padding:16px}.news-choice{min-height:150px}.news-section-head{align-items:flex-start;flex-wrap:wrap}.news-filter-bar{flex-wrap:wrap}}
+.portal-dashboard-link-badge{position:absolute;top:10px;right:10px;padding:4px 8px;border-radius:999px;background:#8b1030;color:#fff;font-size:10px;font-weight:900;line-height:1;box-shadow:0 3px 8px rgba(111,11,36,.2)}
+.marketer-news-sidebar-badge{margin-left:auto;min-width:20px;height:20px;padding:0 5px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#a71339;color:#fff;font-size:11px;font-weight:900;box-sizing:border-box}
+.marketer-sidebar-item.active .marketer-news-sidebar-badge{background:#fff;color:#7a0f2b}
+.marketer-news-alert{position:relative;display:flex;align-items:center;gap:12px;margin:10px 0 14px;border:1px solid #e2b2c1;border-radius:13px;background:linear-gradient(110deg,#fff7fa,#fce3ea);box-shadow:0 7px 20px rgba(122,15,43,.1);animation:marketer-news-slide-in .3s ease-out}
+.marketer-news-alert-open{display:flex;align-items:center;gap:11px;min-width:0;flex:1;padding:11px 13px;border:0;background:transparent;color:#651027;text-align:left;cursor:pointer}
+.marketer-news-alert-open strong,.marketer-news-alert-open small{display:block}.marketer-news-alert-open strong{font-size:14px;font-weight:900}.marketer-news-alert-open small{margin-top:2px;font-size:11px;color:#79545f}
+.marketer-news-alert-icon{display:grid;place-items:center;flex:none;width:37px;height:37px;border-radius:10px;background:#fff;font-size:20px}
+.marketer-news-alert-close{align-self:flex-start;display:grid;place-items:center;flex:none;width:27px;height:27px;margin:7px 8px 0 0;border:0;border-radius:50%;background:#fff;color:#7a0f2b;font-size:21px;line-height:1;cursor:pointer}
+@keyframes marketer-news-slide-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}

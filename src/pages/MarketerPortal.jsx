@@ -12,7 +12,9 @@ import MarketerAddVisitPanel from "./marketer/MarketerAddVisitPanel.jsx";
 import MarketerTodayVisitsPanel from "./marketer/MarketerTodayVisitsPanel.jsx";
 import MarketerRangeVisitsPanel from "./marketer/MarketerRangeVisitsPanel.jsx";
 import MarketerCardPanel from "./marketer/MarketerCardPanel.jsx";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { listNews } from "../services/newsApi.js";
+import "../styles/news.css";
 import PhotoViewer from "../ui/PhotoViewer.jsx";
 import VisitEditDialog from "../ui/VisitEditDialog.jsx";
 import PortalTopBar from "../ui/PortalTopBar.jsx";
@@ -20,6 +22,27 @@ import DesktopSectionBanner from "../ui/DesktopSectionBanner.jsx";
 
 function MarketerPortalContent({ context }) {
   const { containerStyle, fetchCatalogues, fetchMarketerReports, fetchMarketerSamples, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getMarketerName, globalStyle, handleLogout, marketerCss, marketerSidebarOpen, marketerView, notes, onSync, syncState, online, openActionPlanForm, openAddVisit, openAttendanceForm, openExpenseReport, openVisitHistory, pdfExportData, pdfTemplateRef, phone, portalSkeletonLoading, principalName, purpose, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderRedSkeleton, renderResponsiveStyles, restoreMedia, setCatalogueSearch, setFullScreenImage, setFullScreenMediaRecord, setMarketerSidebarOpen, setMarketerview, setSampleDetailsText, setSampleHistoryFromDate, setSampleHistorySearch, setSampleHistoryToDate, setSamplePhone, setSamplePrincipalName, setSampleSchoolName, setSampleSuccessMsg, setSelectedAdminMarketerBox, softDeleteMedia, user, setUser } = context;
+  const [newsStatus, setNewsStatus] = useState([]);
+  const [dismissedNews, setDismissedNews] = useState("");
+  const unreadIds = newsStatus.filter((item) => !item.read).map((item) => item.id);
+  const unreadCount = unreadIds.length;
+  const unreadKey = unreadIds.join("|");
+  useEffect(() => {
+    let active = true;
+    const refresh = () => {
+      if (document.visibilityState === "hidden") return;
+      listNews().then((result) => {
+        if (active) setNewsStatus((result.news || []).map((item) => ({ id: item.id, read: Boolean(item.read) })));
+      }).catch(() => {});
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 60000);
+    document.addEventListener("visibilitychange", refresh);
+    const onPush = (event) => { if (event.data?.type === "NEWS_RECEIVED") refresh(); };
+    navigator.serviceWorker?.addEventListener("message", onPush);
+    return () => { active = false; window.clearInterval(timer); document.removeEventListener("visibilitychange", refresh); navigator.serviceWorker?.removeEventListener("message", onPush); };
+  }, [user?.marketerId]);
+  const onNewsRead = (ids) => setNewsStatus((current) => current.map((item) => ids.includes(item.id) ? { ...item, read: true } : item));
 const openMarketerSidebarSection = (key) => {
 setMarketerSidebarOpen(false);
 if (key === "home") { setMarketerview("home"); return; }
@@ -46,7 +69,7 @@ const marketerSidebarItems = [
 { key: "add-sample", icon: "📦", label: "Add Sample", active: marketerView === "add-sample" },
 { key: "sample-history", icon: "📋", label: "Sample History", active: marketerView === "sample-history" },
 { key: "expense-report", icon: "🧾", label: "Expense Report", active: marketerView === "expense-report" },
-{ key: "news", icon: "📰", label: "News", active: marketerView === "news" },
+{ key: "news", icon: "📰", label: "News", badge: unreadCount, active: marketerView === "news" },
 { key: "catalogues", icon: "📚", label: "Catalogues", active: marketerView === "catalogues" },
 { key: "my-card", icon: "▣", label: "My Card", active: marketerView === "my-card" },
 { key: "support", icon: "🎧", label: "Support", active: marketerView === "support" },
@@ -68,7 +91,7 @@ return (
           {marketerSidebarItems.map((item) => (
 <button type="button" key={item.key} className={`marketer-sidebar-item ${item.active ? "active" : ""}`} onClick={() => openMarketerSidebarSection(item.key)}>
               <span className="marketer-sidebar-icon">{item.icon}</span>
-              <span>{item.label}</span>
+              <span>{item.label}</span>{item.badge > 0 && <span className="marketer-news-sidebar-badge" aria-label={`${item.badge} unread news`}>{item.badge}</span>}
             </button>
 ))}
         </nav>
@@ -77,10 +100,11 @@ return (
       <div className={`app-responsive marketer-portal-content ${marketerSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
         {renderResponsiveStyles()}
         <PortalTopBar role="marketer" name={user?.name || "Marketer"} items={marketerSidebarItems} onNavigate={openMarketerSidebarSection} onMenu={() => setMarketerSidebarOpen(true)} onLogout={handleLogout} profilePhoto={user?.profilePhoto} onProfilePhotoChange={(photo) => setUser((current) => ({ ...current, profilePhoto: photo }))} onExpandProfilePhoto={(photo) => setFullScreenImage(photo)} onSync={onSync} syncState={syncState} online={online} />
+        {unreadCount > 0 && unreadKey !== dismissedNews && marketerView !== "news" && <div className="marketer-news-alert" role="status"><button type="button" className="marketer-news-alert-open" onClick={() => setMarketerview("news")}><span className="marketer-news-alert-icon" aria-hidden="true">📰</span><span><strong>New news available</strong><small>{unreadCount} unread {unreadCount === 1 ? "update" : "updates"} · Tap to view</small></span></button><button type="button" className="marketer-news-alert-close" onClick={() => setDismissedNews(unreadKey)} aria-label="Close news alert">×</button></div>}
         <DesktopSectionBanner view={marketerView} />
         {portalSkeletonLoading && renderRedSkeleton()}
         {marketerView === "home" && (
-<MarketerHomePanel />
+<MarketerHomePanel unreadNewsCount={unreadCount} />
 )}
         {marketerView === "attendance" && (
 <MarketerAttendancePanel />
@@ -91,7 +115,7 @@ return (
         {marketerView === "expense-report" && (
 <MarketerExpenseReportPanel />
 )}
-        {marketerView === "news" && <MarketerNewsPanel />}
+        {marketerView === "news" && <MarketerNewsPanel onRead={onNewsRead} />}
         {marketerView === "catalogues" && (
 <MarketerCataloguesPanel />
 )}

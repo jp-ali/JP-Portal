@@ -108,6 +108,18 @@ test("news publishing requires admin and a valid report date range", async () =>
   assert.equal(invalid.status, 400);
 });
 
+test("only marketers can mark news as read", async () => {
+  const path = `${baseUrl}/api/news/read`;
+  assert.equal((await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).status, 401);
+  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const admin = await fetch(path, {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
+    body: JSON.stringify({ ids: [] })
+  });
+  assert.equal(admin.status, 403);
+});
+
 test("imported reports require admin authentication and reject invalid rows", async () => {
   const path = `${baseUrl}/api/custom-reports/import`;
   assert.equal((await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).status, 401);

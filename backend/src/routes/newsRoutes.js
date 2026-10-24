@@ -55,8 +55,36 @@ async function sendPush(db, recipients, news) {
 newsRoutes.get("/", async (request, response, next) => {
   try {
     const snapshot = await firestore().collection("news").orderBy("createdAt", "desc").limit(200).get();
-    response.json({ news: snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))
-      .filter((item) => visibleTo(item, request.user)) });
+    const news = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))
+      .filter((item) => visibleTo(item, request.user));
+    if (request.user.role === "marketer") {
+      const reads = await firestore().collection("marketerNewsReads").doc(request.user.marketerId).collection("items").get();
+      const readIds = new Set(reads.docs.map((item) => item.id));
+      response.json({ news: news.map((item) => ({ ...item, read: readIds.has(item.id) })) });
+    } else response.json({ news });
+  } catch (error) { next(error); }
+});
+
+newsRoutes.post("/read", async (request, response, next) => {
+  if (request.user.role !== "marketer") return response.status(403).json({ error: "Marketer account required" });
+  const ids = request.body?.ids;
+  if (!Array.isArray(ids) || ids.length > 200 || ids.some((id) => typeof id !== "string" || !/^[a-zA-Z0-9_-]{1,100}$/.test(id))) {
+    return response.status(400).json({ error: "Invalid news selection" });
+  }
+  try {
+    const db = firestore();
+    const uniqueIds = [...new Set(ids)];
+    const documents = await Promise.all(uniqueIds.map((id) => db.collection("news").doc(id).get()));
+    const batch = db.batch();
+    let marked = 0;
+    documents.forEach((item) => {
+      if (!item.exists || !visibleTo(item.data(), request.user)) return;
+      batch.set(db.collection("marketerNewsReads").doc(request.user.marketerId).collection("items").doc(item.id),
+        { readAt: new Date().toISOString() });
+      marked++;
+    });
+    if (marked) await batch.commit();
+    response.json({ marked });
   } catch (error) { next(error); }
 });
 
@@ -172,6 +200,10 @@ newsRoutes.get("/:id/report", async (request, response, next) => {
       const part = await report.ref.collection("chunks").doc(String(index)).get();
       if (!part.exists) return response.status(500).json({ error: "Expense report is incomplete" });
       chunks.push(Buffer.from(part.data().data, "base64"));
+    }
+    if (request.user.role === "marketer") {
+      await firestore().collection("marketerNewsReads").doc(marketerId).collection("items").doc(request.params.id)
+        .set({ readAt: new Date().toISOString() });
     }
     response.set("Content-Type", "application/pdf");
     response.set("Content-Disposition", `${request.query.download === "1" ? "attachment" : "inline"}; filename="expense-report-${request.params.id}.pdf"`);
