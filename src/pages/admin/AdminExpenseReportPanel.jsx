@@ -4,7 +4,7 @@ import ReportMarketerFilterBar from "../../ui/ReportMarketerFilterBar.jsx";
 
 export default function AdminExpenseReportPanel() {
   const { adminExpenseFromDate, adminExpenseLoading, adminExpenseMarketerIds, adminExpenseToDate, cardStyle, downloadAdminExpenseExcel, downloadAdminExpensePDF, fetchAdminExpenseReport, formatActionPlanDate, formatTime12, getFilteredAdminExpenseRows, getAdminExpenseValues, groupRowsByMarketerAndDate, inputStyle, marketersList, renderExpandedReportChrome, renderReportExpandButton, reportViewClass, setAdminExpenseFromDate, setAdminExpenseMarketerIds, getAdminExpenseMarketerName, setAdminExpenseToDate, setAdminView } = usePortalContext();
-  return (<div className={reportViewClass("expense-report")}>
+  return (<div className={`${reportViewClass("expense-report")} expense-report-page`}>
               {renderExpandedReportChrome("expense-report")}
               <div className="report-normal-toolbar" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:"8px", flexWrap:"wrap", marginBottom:"14px" }}>
                 <button onClick={() => setAdminView("home")} style={{ padding:"8px 14px", background:"linear-gradient(135deg,#6f0b24,#86132f)", color:"white", border:"none", borderRadius:"10px", fontWeight:700, cursor:"pointer", fontSize:"13px" }}>← Back to Menu</button>
