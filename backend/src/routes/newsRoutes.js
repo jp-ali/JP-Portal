@@ -105,7 +105,7 @@ newsRoutes.post("/schedules", requireAdmin, async (request, response, next) => {
   const date = request.body?.date;
   const time = request.body?.time;
   const selectedIds = request.body?.recipientIds;
-  if (!message || message.length > 2000 || !Array.isArray(selectedIds)
+  if (!message || !Array.isArray(selectedIds)
     || selectedIds.some((id) => typeof id !== "string" || id.length > 200)) {
     return response.status(400).json({ error: "Enter news text and a valid marketer selection." });
   }
@@ -156,7 +156,7 @@ newsRoutes.post("/", requireAdmin, async (request, response, next) => {
   const fromDate = request.body?.fromDate;
   const toDate = request.body?.toDate;
   const selectedIds = request.body?.recipientIds;
-  if (!kind || message.length > 2000 || (kind === "general" && !message)
+  if (!kind || (kind === "general" && !message)
     || (kind === "expense" && (!validDate(fromDate) || !validDate(toDate) || fromDate > toDate))
     || (selectedIds !== undefined && (!Array.isArray(selectedIds) || selectedIds.some((id) => typeof id !== "string" || id.length > 200)))) {
     return response.status(400).json({ error: "Enter news text or a valid expense date range and marketer selection." });

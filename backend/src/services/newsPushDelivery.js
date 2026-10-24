@@ -14,8 +14,10 @@ export async function sendNewsPush(db, recipients, news) {
   const ids = new Set(recipients.map((item) => item.id));
   const subscriptions = await db.collection("pushSubscriptions").get();
   const targets = subscriptions.docs.filter((item) => ids.has(item.data().marketerId));
+  const fullMessage = news.message || `Your expense report for ${news.fromDate} to ${news.toDate} is ready.`;
+  const preview = Array.from(fullMessage);
   const payload = JSON.stringify({
-    title: news.title, body: news.message || `Your expense report for ${news.fromDate} to ${news.toDate} is ready.`,
+    title: news.title, body: preview.length > 180 ? `${preview.slice(0, 180).join("")}…` : fullMessage,
     newsId: news.id
   });
   let delivered = 0;
