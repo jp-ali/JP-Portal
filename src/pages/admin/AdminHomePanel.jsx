@@ -83,7 +83,8 @@ export default function AdminHomePanel() {
   sections.push({ title: "News", icon: "📰", description: "Send updates and expense reports", items: [
     { title: "Add News", description: "Write and send an update", icon: "✉️", tone: "rose", onClick: () => c.setAdminView("news-add") },
     { title: "Expense News", description: "Send expense report PDFs", icon: "📄", tone: "mint", onClick: () => c.setAdminView("news-expense") },
-    { title: "Old News", description: "Review and restore news", icon: "🗂️", tone: "violet", onClick: () => c.setAdminView("news-old") }
+    { title: "Old News", description: "Review sent news", icon: "🗂️", tone: "violet", onClick: () => c.setAdminView("news-old") },
+    { title: "Deleted News", description: "Restore removed news", icon: "♻", tone: "amber", onClick: () => c.setAdminView("news-deleted") }
   ] });
   return <DashboardHome role="admin" accountId={c.user?.id || c.user?.email || "admin"} stats={stats} sections={sections} />;
 }

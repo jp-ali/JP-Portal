@@ -23,6 +23,7 @@ const sectionDetails = {
   "news-add": ["Add News", "Write and send news to marketers.", "reports", "📰"],
   "news-expense": ["Expense News", "Send each marketer their expense report.", "reports", "📰"],
   "news-old": ["Old News", "Review previously sent news.", "reports", "🗂️"],
+  "news-deleted": ["Deleted News", "Restore removed news.", "reports", "♻"],
   catalogues: ["Catalogues", "Browse and manage the book collection.", "school", "📚"],
   "verification-calls": ["Verification Calls", "Review school visits and follow-up calls.", "reports", "📞"],
   "verification-reports": ["Verification Calls", "Review school visits and follow-up calls.", "reports", "📞"],

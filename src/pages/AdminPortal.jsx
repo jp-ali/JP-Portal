@@ -108,7 +108,7 @@ openAdminExpenseReport();
 return;
 }
 if (key === "news") {
-setAdminView("news");
+setAdminView("news-add");
 return;
 }
 if (key === "catalogues") {
@@ -205,7 +205,7 @@ const adminSidebarItems = [
 { key: "visits", icon: "📊", label: "All Visits & Reports", active: adminView === "visits" },
 { key: "sample-details", icon: "📦", label: "Sample Details", active: adminView === "sample-details" },
 { key: "expense-report", icon: "🧾", label: "Expense Report", active: adminView === "expense-report" },
-{ key: "news", icon: "📰", label: "News", active: ["news", "news-add", "news-expense", "news-old"].includes(adminView) },
+{ key: "news", icon: "📰", label: "News", active: ["news", "news-add", "news-expense", "news-old", "news-deleted"].includes(adminView) },
 { key: "marketers-detail", icon: renderMarketerPersonIcon(18, true), label: "Marketer Details", active: adminView === "marketers-detail" },
 { key: "add-marketer", icon: "➕", label: "Add Marketer", active: adminView === "add-marketer" },
 { key: "delete-marketer", icon: "🗑️", label: "Delete Marketer", active: adminView === "delete-marketer" },
@@ -257,7 +257,7 @@ onClick={() => openAdminSidebarSection(item.key)}
         <div className={`app-responsive admin-desktop-content ${adminSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
           {renderResponsiveStyles()}
           <PortalTopBar role="admin" name="Admin" items={adminSidebarItems} onNavigate={openAdminSidebarSection} onMenu={() => setAdminSidebarOpen(true)} onLogout={handleLogout} profilePhoto={context.user?.profilePhoto} onProfilePhotoChange={(photo) => context.setUser((current) => ({ ...current, profilePhoto: photo }))} onExpandProfilePhoto={setFullScreenImage} />
-          {!(["delete-marketer", "old-marketers", "news", "news-add", "news-expense", "news-old"].includes(adminView)) && <DesktopSectionBanner view={adminView} role="admin" accountId={context.user?.id || context.user?.email || "admin"} title={adminView === "media" && mediaView === "deleted" ? "Recently Deleted" : undefined} />}
+          {!(["delete-marketer", "old-marketers", "news", "news-add", "news-expense", "news-old", "news-deleted"].includes(adminView)) && <DesktopSectionBanner view={adminView} role="admin" accountId={context.user?.id || context.user?.email || "admin"} title={adminView === "media" && mediaView === "deleted" ? "Recently Deleted" : undefined} />}
           {portalSkeletonLoading && renderRedSkeleton()}
           {adminView === "home" && (
 <AdminHomePanel />
@@ -299,7 +299,7 @@ onClick={() => openAdminSidebarSection(item.key)}
           {adminView === "expense-report" && (
 <AdminExpenseReportPanel />
 )}
-          {["news", "news-add", "news-expense", "news-old"].includes(adminView) && <AdminNewsPanel mode={adminView === "news-add" ? "add" : adminView === "news-expense" ? "expense" : adminView === "news-old" ? "old" : "home"} />}
+          {["news", "news-add", "news-expense", "news-old", "news-deleted"].includes(adminView) && <AdminNewsPanel mode={adminView === "news-expense" ? "expense" : adminView === "news-old" ? "old" : adminView === "news-deleted" ? "deleted" : "add"} />}
           {adminView === "marketers-detail" && (
 <AdminMarketersDetailPanel />
 )}
