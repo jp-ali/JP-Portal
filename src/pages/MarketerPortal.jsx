@@ -100,7 +100,7 @@ return (
       <div className={`app-responsive marketer-portal-content ${marketerSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
         {renderResponsiveStyles()}
         <PortalTopBar role="marketer" name={user?.name || "Marketer"} items={marketerSidebarItems} onNavigate={openMarketerSidebarSection} onMenu={() => setMarketerSidebarOpen(true)} onLogout={handleLogout} profilePhoto={user?.profilePhoto} onProfilePhotoChange={(photo) => setUser((current) => ({ ...current, profilePhoto: photo }))} onExpandProfilePhoto={(photo) => setFullScreenImage(photo)} onSync={onSync} syncState={syncState} online={online} />
-        {unreadCount > 0 && unreadKey !== dismissedNews && marketerView !== "news" && <aside className="marketer-news-alert" role="status" aria-label="Unread news">
+        {unreadCount > 0 && unreadKey !== dismissedNews && marketerView === "home" && <aside className="marketer-news-alert" role="status" aria-label="Unread news">
           <span className="marketer-news-alert-icon" aria-hidden="true">📰</span>
           <div className="marketer-news-alert-copy"><span className="marketer-news-alert-count">{unreadCount} new</span><strong>New news available</strong><small>{unreadCount === 1 ? "You have an unread update." : `You have ${unreadCount} unread updates.`}</small><button type="button" className="marketer-news-alert-open" onClick={() => setMarketerview("news")}>View News <span aria-hidden="true">→</span></button></div>
           <button type="button" className="marketer-news-alert-close" onClick={() => setDismissedNews(unreadKey)} aria-label="Close news alert" title="Close">×</button>
