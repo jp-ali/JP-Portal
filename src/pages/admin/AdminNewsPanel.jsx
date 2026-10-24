@@ -39,17 +39,17 @@ function NewsMarketerSelect({ marketers, selected, onChange, inputStyle, label =
   return <div className="news-marketer-select"><span className="news-marketer-select-icon" aria-hidden="true">👥</span><MarketerMultiSelect marketers={marketers} selected={selected} onChange={onChange} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" label={label} /></div>;
 }
 
-function ReportActions({ expanded, onExpand, onExcel, onPdf, onRefresh, busy }) {
-  return <div className="news-report-actions">
+function ReportActions({ reportKey, renderReportExpandButton, onExcel, onPdf, onRefresh, busy }) {
+  return <div className="news-report-actions report-normal-actions">
     <button type="button" className="news-soft-button" onClick={onRefresh}>↻ Refresh</button>
-    <button type="button" className="news-soft-button" onClick={onExpand}>{expanded ? "⤡ Close" : "⛶ Expand"}</button>
-    <button type="button" className="news-soft-button" onClick={onExcel} disabled={busy}>Excel</button>
-    <button type="button" className="news-primary" onClick={onPdf} disabled={busy}>PDF</button>
+    <button type="button" className="news-export-excel" onClick={onExcel} disabled={busy}>Excel</button>
+    <button type="button" className="news-export-pdf" onClick={onPdf} disabled={busy}>PDF</button>
+    {renderReportExpandButton(reportKey, "Expand news report")}
   </div>;
 }
 
 export default function AdminNewsPanel({ mode = "add" }) {
-  const { setAdminView, inputStyle, marketersList = [], fetchMarketers, user, expandedReportKey, setExpandedReportKey } = usePortalContext();
+  const { setAdminView, inputStyle, marketersList = [], fetchMarketers, user, expandedReportKey, setExpandedReportKey, renderReportExpandButton, renderExpandedReportChrome, reportViewClass } = usePortalContext();
   const { hide, isHidden, hideControlsVisible } = useDashboardVisibility("admin", user?.id || user?.email || "admin");
   const [message, setMessage] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -111,6 +111,14 @@ export default function AdminNewsPanel({ mode = "add" }) {
     } catch (failure) { showNotice(failure.message || "Report could not be downloaded."); }
     finally { setExporting(false); }
   };
+  const reportActions = (items, title) => <ReportActions reportKey={expandedKey} renderReportExpandButton={renderReportExpandButton}
+    onExcel={() => void download("excel", items, title)} onPdf={() => void download("pdf", items, title)}
+    onRefresh={() => void reload()} busy={exporting} />;
+  const expandedChrome = (items, title) => renderExpandedReportChrome(expandedKey, {
+    excel: () => void download("excel", items, title),
+    pdf: () => void download("pdf", items, title),
+    refresh: () => void reload()
+  });
   const send = async (event) => {
     event.preventDefault();
     if (mode === "expense" && fromDate > toDate) { showNotice("From Date must be before To Date."); return; }
@@ -159,9 +167,10 @@ export default function AdminNewsPanel({ mode = "add" }) {
           <div className="news-add-controls"><NewsMarketerSelect marketers={marketersList} selected={selectedIds} onChange={setSelectedIds} inputStyle={inputStyle} label="Select Marketer(s) *" /><button className="news-primary" type="submit" disabled={sending}>➤ {sending ? "Sending..." : "Send"}</button></div>
         </div>
       </form>
-      <section className={`news-card news-history ${expanded ? "news-history--expanded" : ""}`}>
+      <section className={`news-card news-history ${reportViewClass(expandedKey)}`}>
+        {expandedChrome(todayNews, "Today's News")}
         <PanelHeading icon="▤" title="Today's News" description="News sent today."
-          action={<ReportActions expanded={expanded} onExpand={() => setExpandedReportKey(expanded ? "" : expandedKey)} onExcel={() => void download("excel", todayNews, "Today's News")} onPdf={() => void download("pdf", todayNews, "Today's News")} onRefresh={() => void reload()} busy={exporting} />} />
+          action={reportActions(todayNews, "Today's News")} />
         {loading && <p>Loading news...</p>}{error && <p role="alert">{error}</p>}
         {!loading && !error && !todayNews.length && <p>No news sent today.</p>}
         <div className="news-list">{todayNews.map((item, index) => <article className={`news-entry news-entry--${index % 4}`} key={item.id}><span className="news-entry-icon">▤</span><div className="news-entry-body"><strong>News</strong><p>{item.message}</p><small>▣ {formatDate(item.createdAt)} &nbsp; | &nbsp; 👥 {marketerLabel(item)}</small></div><button type="button" className="news-entry-action" onClick={() => void changeDeleted(item)}>🗑 Delete</button></article>)}</div>
@@ -178,9 +187,10 @@ export default function AdminNewsPanel({ mode = "add" }) {
         </div>
         <div className="news-form-actions"><button className="news-primary" type="submit" disabled={sending}>➤ {sending ? "Preparing PDFs..." : "Send"}</button></div>
       </form>
-      <section className={`news-card news-history ${expanded ? "news-history--expanded" : ""}`}>
+      <section className={`news-card news-history ${reportViewClass(expandedKey)}`}>
+        {expandedChrome(expenseHistory, "Expense News History")}
         <PanelHeading icon="▤" title="Expense News History" description="Previously sent expense reports."
-          action={<ReportActions expanded={expanded} onExpand={() => setExpandedReportKey(expanded ? "" : expandedKey)} onExcel={() => void download("excel", expenseHistory, "Expense News History")} onPdf={() => void download("pdf", expenseHistory, "Expense News History")} onRefresh={() => void reload()} busy={exporting} />} />
+          action={reportActions(expenseHistory, "Expense News History")} />
         <div className="news-history-filters">
           <NewsMarketerSelect marketers={marketersList} selected={historySelectedIds} onChange={setHistorySelectedIds} inputStyle={inputStyle} />
           <label>From Date<input style={inputStyle} type="date" value={historyFromDraft} onChange={(event) => setHistoryFromDraft(event.target.value)} /></label>
@@ -196,10 +206,11 @@ export default function AdminNewsPanel({ mode = "add" }) {
     </>}
 
     {(mode === "old" || mode === "deleted") && <>
-      <div className="news-filter-bar"><NewsMarketerSelect marketers={marketersList} selected={recordIds} onChange={setRecordIds} inputStyle={inputStyle} /></div>
-      <section className={`news-card news-history ${expanded ? "news-history--expanded" : ""}`}>
+      <section className={`news-card news-history ${reportViewClass(expandedKey)}`}>
+        {expandedChrome(recordNews, current.title)}
         <PanelHeading icon="▤" title={current.title} description={mode === "deleted" ? "Restore deleted messages and expense reports." : "Previously sent messages and expense reports."}
-          action={<ReportActions expanded={expanded} onExpand={() => setExpandedReportKey(expanded ? "" : expandedKey)} onExcel={() => void download("excel", recordNews, current.title)} onPdf={() => void download("pdf", recordNews, current.title)} onRefresh={() => void reload()} busy={exporting} />} />
+          action={reportActions(recordNews, current.title)} />
+        <div className="news-filter-bar"><NewsMarketerSelect marketers={marketersList} selected={recordIds} onChange={setRecordIds} inputStyle={inputStyle} /></div>
         {loading && <p>Loading news...</p>}{error && <p role="alert">{error}</p>}
         {!loading && !error && !recordNews.length && <p>No {mode === "deleted" ? "deleted" : "sent"} news found.</p>}
         <div className="news-list">{recordNews.map((item, index) => <article className={`news-entry news-entry--${index % 4}`} key={item.id}>

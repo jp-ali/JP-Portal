@@ -45,6 +45,10 @@
 .news-admin-page .news-report-actions button{white-space:nowrap}
 .news-admin-page .news-history-filters{grid-template-columns:minmax(210px,1.4fr) repeat(2,minmax(145px,.9fr)) auto}
 .news-admin-page .news-filter-bar>.news-marketer-select{max-width:420px}
-.news-admin-page .news-history--expanded{position:fixed;z-index:1000;inset:16px;overflow:auto;max-height:none;margin:0;background:#fff;box-shadow:0 18px 60px rgba(45,15,27,.28)}
+.news-admin-page .news-export-excel,.news-admin-page .news-export-pdf{min-height:36px;padding:0 12px;border:0;border-radius:8px;color:#fff;font-size:11px;font-weight:800;cursor:pointer}
+.news-admin-page .news-export-excel{background:#15803d}
+.news-admin-page .news-export-pdf{background:linear-gradient(135deg,#6f0b24,#86132f)}
+.news-admin-page .news-export-excel:disabled,.news-admin-page .news-export-pdf:disabled{opacity:.55;cursor:wait}
+.news-admin-page .admin-report-expanded.news-history{border-radius:0!important;box-shadow:none!important}
 @media(max-width:800px){.news-admin-page .news-add-layout{grid-template-columns:1fr}.news-admin-page .news-panel-heading{flex-wrap:wrap}.news-admin-page .news-panel-heading>.news-report-actions{width:100%;margin-left:0;justify-content:flex-start}}
-@media(max-width:500px){.news-admin-page .news-add-controls{align-items:flex-end}.news-admin-page .news-add-controls>.news-primary{padding:0 12px}.news-admin-page .news-history-filters>.news-marketer-select{grid-column:1/-1}.news-admin-page .news-history--expanded{inset:0;border-radius:0}.news-admin-page .news-report-actions{justify-content:space-between;gap:5px}.news-admin-page .news-report-actions button{flex:1;padding:0 7px}}
+@media(max-width:500px){.news-admin-page .news-add-controls{align-items:flex-end}.news-admin-page .news-add-controls>.news-primary{padding:0 12px}.news-admin-page .news-history-filters>.news-marketer-select{grid-column:1/-1}.news-admin-page .news-report-actions{justify-content:space-between;gap:5px}.news-admin-page .news-report-actions button{flex:1;padding:0 7px}}

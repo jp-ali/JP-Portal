@@ -399,7 +399,7 @@ const getFilteredTodayVisitReports = () => {
     return !search || email.includes(search) || String(name).toLowerCase().includes(search);
   });
 };
-const renderExpandedReportChrome = (key) => {
+const renderExpandedReportChrome = (key, customActions = {}) => {
 if (expandedReportKey !== key) return null;
 let excelAction = null;
 let pdfAction = null;
@@ -452,6 +452,9 @@ else if (key === "marketer-visit-history") {
 excelAction = () => downloadExcel(getVisitHistoryFilteredReports(), "Visit_History.xlsx");
 pdfAction = () => downloadPDF(getVisitHistoryFilteredReports());
 }
+if (customActions.excel) excelAction = customActions.excel;
+if (customActions.pdf) pdfAction = customActions.pdf;
+if (customActions.refresh) refreshAction = customActions.refresh;
 return (
 <div className="report-expanded-toolbar">
 <button type="button" className="report-expanded-back" onClick={() => setExpandedReportKey("")} title="Back" aria-label="Back">
