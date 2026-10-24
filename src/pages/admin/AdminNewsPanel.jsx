@@ -39,8 +39,9 @@ function PanelHeading({ icon, title, description, action }) {
   return <div className="news-panel-heading"><span className="news-panel-heading-icon" aria-hidden="true">{icon}</span><div><h2>{title}</h2><p>{description}</p></div>{action}</div>;
 }
 
-function NewsMarketerSelect({ marketers, selected, onChange, inputStyle, label = "Select Marketer(s)" }) {
-  return <MarketerMultiSelect marketers={marketers} selected={selected} onChange={onChange} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" label={label} />;
+function NewsMarketerSelect({ marketers, selected, onChange, inputStyle, label = "Select Marketer(s)", decorated = false }) {
+  const icon = decorated ? <svg viewBox="0 0 24 24" width="25" height="25" fill="currentColor" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M2 19v-2.1c0-3.1 2.9-5.2 7-5.2s7 2.1 7 5.2V19H2Zm15 0v-2.2c0-1.7-.6-3.1-1.7-4.1 3.6-.2 6.7 1.8 6.7 4.9V19h-5Z"/></svg> : null;
+  return <MarketerMultiSelect marketers={marketers} selected={selected} onChange={onChange} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" label={label} leadingIcon={icon} />;
 }
 
 function ReportActions({ reportKey, renderReportExpandButton, onExcel, onPdf, onRefresh, busy }) {
@@ -59,7 +60,7 @@ export default function AdminNewsPanel({ mode = "add" }) {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
-  const [scheduleDate, setScheduleDate] = useState(() => pakistanDateKey(new Date()));
+  const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("06:00");
   const [scheduleRepeat, setScheduleRepeat] = useState("once");
   const [schedules, setSchedules] = useState([]);
@@ -201,20 +202,20 @@ export default function AdminNewsPanel({ mode = "add" }) {
 
     {mode === "add" && <>
       <form className="news-card news-compose news-add-form" onSubmit={send}>
-        <PanelHeading icon="➤" title="Send News" description="Write a message for all or selected marketers." />
+        <PanelHeading icon="➤" title="Send News" description="Select marketer(s), pick a date and time, and write your message." />
         <div className="news-add-layout">
-          <label className="news-message-field">News Message *<textarea style={inputStyle} required maxLength={2000} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Write your news here" rows={5} /></label>
+          <div className="news-add-message"><label className="news-message-field">News Message *<textarea style={inputStyle} required maxLength={200} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Write your news here..." rows={5} /></label><small>{200 - message.length} Characters Left</small></div>
           <div className="news-add-scheduling">
             <div className="news-add-controls">
-              <NewsMarketerSelect marketers={marketersList} selected={selectedIds} onChange={setSelectedIds} inputStyle={inputStyle} label="Select Marketer(s) *" />
+              <NewsMarketerSelect marketers={marketersList} selected={selectedIds} onChange={setSelectedIds} inputStyle={inputStyle} label="Select Marketer(s) *" decorated />
               <div className="news-add-buttons">
-                <button className="news-primary" type="submit" disabled={sending}>➤ {sending ? "Sending..." : "Send"}</button>
-                <button className="news-soft-button" type="button" disabled={scheduleBusy} onClick={() => void setSchedule()}>{scheduleBusy ? "Setting..." : "Set"}</button>
+                <button className="news-primary" type="submit" disabled={sending}><span aria-hidden="true">➤</span> {sending ? "Sending..." : "Send"}</button>
+                <button className="news-soft-button" type="button" disabled={scheduleBusy} onClick={() => void setSchedule()}><span aria-hidden="true">⚙</span> {scheduleBusy ? "Setting..." : "Set"}</button>
               </div>
             </div>
             <div className="news-schedule-fields">
-              <label>Start Date<input style={inputStyle} type="date" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} /></label>
-              <label>Time (Pakistan)<input style={inputStyle} type="time" value={scheduleTime} onChange={(event) => setScheduleTime(event.target.value)} /></label>
+              <label>Start Date<span className="news-schedule-date-input"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 2v6M17 2v6M3 10h18M8 14h3v3H8z"/></svg><input style={inputStyle} type="date" lang="en-US" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} /></span></label>
+              <label>Time (Pakistan)<input style={inputStyle} type="time" lang="en-US" value={scheduleTime} onChange={(event) => setScheduleTime(event.target.value)} /></label>
               <label>Repeat<select style={inputStyle} value={scheduleRepeat} onChange={(event) => setScheduleRepeat(event.target.value)}><option value="once">Send once</option><option value="mon-sat">Daily Mon–Sat</option></select></label>
             </div>
           </div>

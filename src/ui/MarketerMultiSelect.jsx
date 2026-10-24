@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 
-export default function MarketerMultiSelect({ marketers, selected, onChange, inputStyle, valueKey = "email", emptyLabel = "All Marketers", single = false, height = 42, label, itemLabel = "Marketer", pluralLabel = `${itemLabel}(s)` }) {
+export default function MarketerMultiSelect({ marketers, selected, onChange, inputStyle, valueKey = "email", emptyLabel = "All Marketers", single = false, height = 42, label, itemLabel = "Marketer", pluralLabel = `${itemLabel}(s)`, leadingIcon = null }) {
   const [open, setOpen] = useState(false);
   const choices = marketers.slice().sort((a, b) => String(a.name || a.email || "").localeCompare(String(b.name || b.email || "")));
   return (
     <div className="verification-marketer-field" style={{ position: "relative", flex: 1, minWidth: "170px" }}>
       <label style={{ display: "block", fontSize: "11px", color: "#5c484e", fontWeight: 700, marginBottom: "4px" }}>{label || (single ? `Select ${itemLabel}` : `Select ${pluralLabel}`)}</label>
       <button type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)} style={{ ...inputStyle, width: "100%", height, padding: "7px 10px", background: "#fff", color: "#111", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", textAlign: "left" }}>
-        <span>{single ? (choices.find((m) => m[valueKey] === selected[0])?.name || emptyLabel) : (selected.length ? `${selected.length} ${pluralLabel} Selected` : emptyLabel)}</span><span>▾</span>
+        {leadingIcon ? <span className="verification-marketer-button-label">{leadingIcon}<span>{single ? (choices.find((m) => m[valueKey] === selected[0])?.name || emptyLabel) : (selected.length ? `${selected.length} ${pluralLabel} Selected` : emptyLabel)}</span></span>
+          : <span>{single ? (choices.find((m) => m[valueKey] === selected[0])?.name || emptyLabel) : (selected.length ? `${selected.length} ${pluralLabel} Selected` : emptyLabel)}</span>}<span>▾</span>
       </button>
       {open && <div className="verification-marketer-picker">
         <div style={{ display: "flex", justifyContent: "space-between", gap: "6px", marginBottom: "8px" }}>

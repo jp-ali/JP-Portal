@@ -56,3 +56,30 @@
 .news-admin-page .admin-report-expanded.news-history{border-radius:0!important;box-shadow:none!important}
 @media(max-width:800px){.news-admin-page .news-add-layout{grid-template-columns:1fr}.news-admin-page .news-panel-heading{flex-wrap:wrap}.news-admin-page .news-panel-heading>.news-report-actions{width:100%;margin-left:0;justify-content:flex-start}}
 @media(max-width:500px){.news-admin-page .news-add-controls{align-items:flex-start}.news-admin-page .news-add-buttons>button{width:72px;padding:0 7px}.news-admin-page .news-schedule-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.news-admin-page .news-schedule-fields label:last-child{grid-column:1/-1}.news-admin-page .news-history-filters>.verification-marketer-field{grid-column:1/-1}.news-admin-page .news-report-actions{justify-content:space-between;gap:5px}.news-admin-page .news-report-actions button{flex:1;padding:0 7px}}
+.news-admin-page .news-add-form{padding:28px 30px 32px;border:1px solid #f2b9cd;border-radius:18px;background:#fff;box-shadow:0 8px 20px rgba(125,20,51,.07)}
+.news-admin-page .news-add-form .news-panel-heading{gap:20px;margin-bottom:18px}
+.news-admin-page .news-add-form .news-panel-heading-icon{width:72px;height:72px;border-radius:18px;background:linear-gradient(145deg,#fff8fa,#ffe4ed);color:#941038;font-size:43px;box-shadow:0 10px 20px rgba(131,20,55,.10)}
+.news-admin-page .news-add-form .news-panel-heading h2{font-size:21px;font-weight:900}
+.news-admin-page .news-add-form .news-panel-heading p{font-size:14px;color:#65565d}
+.news-admin-page .news-add-form .news-add-layout{grid-template-columns:minmax(0,.85fr) minmax(0,1.35fr);gap:clamp(20px,3vw,54px)}
+.news-admin-page .news-add-form .news-message-field,.news-admin-page .news-add-form .verification-marketer-field>label,.news-admin-page .news-add-form .news-schedule-fields label{color:#625b5e;font-size:15px!important;font-weight:800}
+.news-admin-page .news-add-form .news-message-field textarea{min-height:220px!important;padding:18px 22px!important;border:1px solid #efb7ca!important;border-radius:13px!important;font-size:15px;line-height:1.5;resize:vertical}
+.news-admin-page .news-add-form .news-add-message small{display:block;margin-top:15px;color:#981038;font-size:13px;font-weight:700}
+.news-admin-page .news-add-form .news-add-scheduling{gap:35px}
+.news-admin-page .news-add-form .news-add-controls{align-items:flex-end;gap:16px}
+.news-admin-page .news-add-form .news-add-buttons{display:flex;gap:10px;padding-top:0}
+.news-admin-page .news-add-form .news-add-buttons>button{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:clamp(94px,10vw,168px);height:61px;min-height:61px;padding:0 15px;border-radius:12px;font-size:15px;box-shadow:0 5px 14px rgba(93,24,47,.12)}
+.news-admin-page .news-add-form .news-add-buttons>button span{font-size:22px;line-height:1}
+.news-admin-page .news-add-form .news-add-buttons>.news-soft-button{background:#fff8fa;border:1px solid #efb5c9;color:#810e31}
+.news-admin-page .news-add-form .verification-marketer-field>button{height:61px!important;padding:0 15px!important;border:1px solid #efb7ca!important;border-radius:12px!important;box-shadow:0 4px 11px rgba(116,29,56,.08)!important;color:#191619!important;font-size:15px!important}
+.news-admin-page .news-add-form .verification-marketer-button-label{display:flex;align-items:center;gap:12px;min-width:0}
+.news-admin-page .news-add-form .verification-marketer-button-label>svg{flex:none;color:#860d32}
+.news-admin-page .news-add-form .verification-marketer-button-label>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.news-admin-page .news-add-form .news-schedule-fields{gap:16px}
+.news-admin-page .news-add-form .news-schedule-fields label{gap:11px}
+.news-admin-page .news-add-form .news-schedule-fields input,.news-admin-page .news-add-form .news-schedule-fields select{height:60px!important;padding:0 16px!important;border:1px solid #efb7ca!important;border-radius:12px!important;background:#fff!important;color:#40373b;font-size:15px}
+.news-admin-page .news-add-form .news-schedule-date-input{position:relative;display:block;min-width:0}
+.news-admin-page .news-add-form .news-schedule-date-input>svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);z-index:1;color:#901039;pointer-events:none}
+.news-admin-page .news-add-form .news-schedule-date-input>input{padding-left:50px!important}
+@media(max-width:1150px){.news-admin-page .news-add-form .news-add-layout{grid-template-columns:1fr;gap:24px}.news-admin-page .news-add-form .news-message-field textarea{min-height:170px!important}}
+@media(max-width:650px){.news-admin-page .news-add-form{padding:17px 15px}.news-admin-page .news-add-form .news-panel-heading{gap:12px}.news-admin-page .news-add-form .news-panel-heading-icon{width:50px;height:50px;font-size:29px}.news-admin-page .news-add-form .news-panel-heading h2{font-size:17px}.news-admin-page .news-add-form .news-panel-heading p{font-size:11px}.news-admin-page .news-add-form .news-add-controls{display:grid;gap:10px}.news-admin-page .news-add-form .news-add-buttons{width:100%}.news-admin-page .news-add-form .news-add-buttons>button{flex:1;width:auto;height:46px;min-height:46px;font-size:12px}.news-admin-page .news-add-form .verification-marketer-field>button{height:50px!important}.news-admin-page .news-add-form .news-add-scheduling{gap:17px}.news-admin-page .news-add-form .news-schedule-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.news-admin-page .news-add-form .news-schedule-fields label:last-child{grid-column:1/-1}.news-admin-page .news-add-form .news-schedule-fields input,.news-admin-page .news-add-form .news-schedule-fields select{height:48px!important;font-size:12px}.news-admin-page .news-add-form .news-message-field textarea{min-height:145px!important}.news-admin-page .news-add-form .news-message-field,.news-admin-page .news-add-form .verification-marketer-field>label,.news-admin-page .news-add-form .news-schedule-fields label{font-size:12px!important}}
