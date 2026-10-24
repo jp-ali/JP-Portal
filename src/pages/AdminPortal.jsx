@@ -257,7 +257,7 @@ onClick={() => openAdminSidebarSection(item.key)}
         <div className={`app-responsive admin-desktop-content ${adminSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
           {renderResponsiveStyles()}
           <PortalTopBar role="admin" name="Admin" items={adminSidebarItems} onNavigate={openAdminSidebarSection} onMenu={() => setAdminSidebarOpen(true)} onLogout={handleLogout} profilePhoto={context.user?.profilePhoto} onProfilePhotoChange={(photo) => context.setUser((current) => ({ ...current, profilePhoto: photo }))} onExpandProfilePhoto={setFullScreenImage} />
-          {!(["delete-marketer", "old-marketers"].includes(adminView)) && <DesktopSectionBanner view={adminView} role="admin" accountId={context.user?.id || context.user?.email || "admin"} title={adminView === "media" && mediaView === "deleted" ? "Recently Deleted" : undefined} />}
+          {!(["delete-marketer", "old-marketers", "news", "news-add", "news-expense", "news-old"].includes(adminView)) && <DesktopSectionBanner view={adminView} role="admin" accountId={context.user?.id || context.user?.email || "admin"} title={adminView === "media" && mediaView === "deleted" ? "Recently Deleted" : undefined} />}
           {portalSkeletonLoading && renderRedSkeleton()}
           {adminView === "home" && (
 <AdminHomePanel />
