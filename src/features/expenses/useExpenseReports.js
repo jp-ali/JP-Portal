@@ -46,10 +46,10 @@ return [];
 setExpenseReportLoading(false);
 }
 };
-const openExpenseReport = async () => {
+const openExpenseReport = async (range = {}) => {
 setMarketerview("expense-report");
-setExpenseReportFromDate("");
-setExpenseReportToDate("");
+setExpenseReportFromDate(range?.fromDate || "");
+setExpenseReportToDate(range?.toDate || "");
 await fetchMarketerExpenseReport();
 };
 const getFilteredExpenseReportRows = () => expenseReportRows.filter((row) => {

@@ -96,6 +96,18 @@ test("custom reports require admin authentication and validate input", async () 
   assert.equal(invalid.status, 400);
 });
 
+test("news publishing requires admin and a valid report date range", async () => {
+  const path = `${baseUrl}/api/news`;
+  assert.equal((await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).status, 401);
+  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const invalid = await fetch(path, {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
+    body: JSON.stringify({ title: "Expense report", fromDate: "2026-10-24", toDate: "2026-10-23" })
+  });
+  assert.equal(invalid.status, 400);
+});
+
 test("imported reports require admin authentication and reject invalid rows", async () => {
   const path = `${baseUrl}/api/custom-reports/import`;
   assert.equal((await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).status, 401);

@@ -34,6 +34,12 @@ const [marketerSidebarOpen, setMarketerSidebarOpen] = useState(false);
 const [selectedMarketerForVisits, setSelectedMarketerForVisits] = useState(null);
 const [editingVisit, setEditingVisit] = useState(null);
 const [marketerView, setMarketerview] = useState("home");
+useEffect(() => {
+  if (user?.role !== "marketer") return;
+  const url = new URL(window.location.href);
+  if (!url.searchParams.get("news")) return;
+  setMarketerview("news");
+}, [user?.role]);
 const [expandedReportKey, setExpandedReportKey] = useState("");
 const homeEscapeCountRef = useRef({ count: 0, lastAt: 0 });
 useEffect(() => { homeEscapeCountRef.current = { count: 0, lastAt: 0 }; }, [adminView, marketerView, expandedReportKey]);

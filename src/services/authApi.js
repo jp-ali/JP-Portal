@@ -1,7 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export async function request(path, options = {}) {
-  const service = path.startsWith("/auth/") ? "Login service" : path.startsWith("/cards") || path.startsWith("/card-template") ? "Card service" : "Visit service";
+  const service = path.startsWith("/auth/") ? "Login service" : path.startsWith("/cards") || path.startsWith("/card-template") ? "Card service" : path.startsWith("/news") ? "News service" : "Visit service";
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20000);
   let response;

@@ -21,6 +21,12 @@ services:
         value: school-visits-portal-654e0
       - key: FIREBASE_SERVICE_ACCOUNT_JSON
         sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: mailto:admin@portal.com
       - key: VITE_FIREBASE_API_KEY
         sync: false
       - key: VITE_FIREBASE_AUTH_DOMAIN

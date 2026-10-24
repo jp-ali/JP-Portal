@@ -19,6 +19,7 @@ import AdminMarketersDetailPanel from "./admin/AdminMarketersDetailPanel.jsx";
 import AdminAddMarketerPanel from "./admin/AdminAddMarketerPanel.jsx";
 import AdminDeleteMarketerPanel from "./admin/AdminDeleteMarketerPanel.jsx";
 import AdminOldMarketersPanel from "./admin/AdminOldMarketersPanel.jsx";
+import AdminNewsPanel from "./admin/AdminNewsPanel.jsx";
 import React from "react";
 import { useEffect, useState } from "react";
 import { getAdminProfilePhoto, request } from "../services/authApi.js";
@@ -104,6 +105,10 @@ return;
 }
 if (key === "expense-report") {
 openAdminExpenseReport();
+return;
+}
+if (key === "news") {
+setAdminView("news");
 return;
 }
 if (key === "catalogues") {
@@ -200,6 +205,7 @@ const adminSidebarItems = [
 { key: "visits", icon: "📊", label: "All Visits & Reports", active: adminView === "visits" },
 { key: "sample-details", icon: "📦", label: "Sample Details", active: adminView === "sample-details" },
 { key: "expense-report", icon: "🧾", label: "Expense Report", active: adminView === "expense-report" },
+{ key: "news", icon: "📰", label: "News", active: ["news", "news-add", "news-old"].includes(adminView) },
 { key: "marketers-detail", icon: renderMarketerPersonIcon(18, true), label: "Marketer Details", active: adminView === "marketers-detail" },
 { key: "add-marketer", icon: "➕", label: "Add Marketer", active: adminView === "add-marketer" },
 { key: "delete-marketer", icon: "🗑️", label: "Delete Marketer", active: adminView === "delete-marketer" },
@@ -293,6 +299,7 @@ onClick={() => openAdminSidebarSection(item.key)}
           {adminView === "expense-report" && (
 <AdminExpenseReportPanel />
 )}
+          {["news", "news-add", "news-old"].includes(adminView) && <AdminNewsPanel mode={adminView === "news-add" ? "add" : adminView === "news-old" ? "old" : "home"} />}
           {adminView === "marketers-detail" && (
 <AdminMarketersDetailPanel />
 )}

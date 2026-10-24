@@ -44,6 +44,7 @@ export default function MarketerHomePanel() {
       { title: "Sample History", description: "View your samples", icon: "▣", tone: "violet", onClick: () => { c.setMarketerview("sample-history"); c.fetchMarketerSamples(c.user.email); c.setSampleHistoryFromDate(""); c.setSampleHistoryToDate(""); c.setSampleHistorySearch(""); } }
     ] },
     { title: "Resources & Support", icon: "▰", description: "Helpful materials and support", items: [
+      { title: "News", description: "Expense reports from Admin", icon: "📰", tone: "rose", onClick: () => c.setMarketerview("news") },
       { title: "Catalogues", description: "View and download PDFs", icon: "▥", tone: "mint", onClick: () => { c.setMarketerview("catalogues"); c.setCatalogueSearch(""); c.fetchCatalogues(); } },
       { title: "My Card", description: "View and download your card", icon: "▣", tone: "rose", onClick: () => c.setMarketerview("my-card") },
       { title: "Support", description: "Contact admin for help", icon: "☎", tone: "violet", onClick: () => c.setMarketerview("support") }

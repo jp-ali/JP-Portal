@@ -131,6 +131,12 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    if (session.user?.role === "marketer") {
+      try {
+        const { removeNewsSubscription } = await import("./services/newsPush.js");
+        await Promise.race([removeNewsSubscription(), new Promise((resolve) => setTimeout(resolve, 1500))]);
+      } catch (failure) { console.warn("News notification cleanup failed:", failure); }
+    }
     try { await logout(); } catch (failure) { console.error("Logout failed", failure); }
     setSession({ loading: false, user: null });
     setPassword("");

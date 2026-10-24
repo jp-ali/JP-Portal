@@ -27,6 +27,12 @@ The repository includes `render.yaml` for one Node web service that builds the f
 
 The Free Render plan can spin down after inactivity, so its first request may take longer. Native CDR export requires CorelDRAW on Windows and is unavailable on a Linux web service; PDF and SVG export remain available.
 
+## News and expense report notifications
+
+Admin > News contains Add News and Old News. Add News saves a title, message and expense report date range. Each marketer can open that notice in Marketer > News and view their own existing expense report with the dates already selected. The phone notification carries only the notice and a link; expense values remain behind the marketer login.
+
+Phone push uses Web Push. Set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` on the API server (`backend/.env` locally and environment variables on the hosted service), then restart the API. Generate a matching public/private pair once with `node -e "console.log(require('web-push').generateVAPIDKeys())"` from `backend/`. Keep the private key out of Git and the browser build. The local ignored `backend/.env` already has a generated pair; copy that same pair to the hosted API if you want existing device subscriptions to keep working. Marketers must open News and tap Enable Notifications on each device. iPhone users need to add the PWA to the Home Screen before enabling notifications. News remains available in the portal when a device has not opted into push.
+
 ## Development
 
 On Windows, double-click `start-local.cmd` to build the frontend and start the bundled preview plus API in the background, then open `http://localhost:5173/`. Run it again after code changes or restarting the laptop. It writes startup logs under `%TEMP%\jp-portal-local`. For live Vite development instead, run `powershell -ExecutionPolicy Bypass -File .\start-local.ps1 -Dev`; the script switches port 5173 between preview and development modes.

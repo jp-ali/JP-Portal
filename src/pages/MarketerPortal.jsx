@@ -3,6 +3,7 @@ import MarketerHomePanel from "./marketer/MarketerHomePanel.jsx";
 import MarketerAttendancePanel from "./marketer/MarketerAttendancePanel.jsx";
 import MarketerActionPlanPanel from "./marketer/MarketerActionPlanPanel.jsx";
 import MarketerExpenseReportPanel from "./marketer/MarketerExpenseReportPanel.jsx";
+import MarketerNewsPanel from "./marketer/MarketerNewsPanel.jsx";
 import MarketerCataloguesPanel from "./marketer/MarketerCataloguesPanel.jsx";
 import MarketerSupportPanel from "./marketer/MarketerSupportPanel.jsx";
 import MarketerAddSamplePanel from "./marketer/MarketerAddSamplePanel.jsx";
@@ -30,6 +31,7 @@ if (key === "range-visits") { openVisitHistory(); return; }
 if (key === "add-sample") { setMarketerview("add-sample"); setSampleSchoolName(""); setSamplePrincipalName(""); setSamplePhone(""); setSampleDetailsText(""); setSampleSuccessMsg(""); return; }
 if (key === "sample-history") { setMarketerview("sample-history"); fetchMarketerSamples(user.email); setSampleHistoryFromDate(""); setSampleHistoryToDate(""); setSampleHistorySearch(""); return; }
 if (key === "expense-report") { openExpenseReport(); return; }
+if (key === "news") { setMarketerview("news"); return; }
 if (key === "catalogues") { setMarketerview("catalogues"); setCatalogueSearch(""); fetchCatalogues(); return; }
 if (key === "my-card") { setMarketerview("my-card"); return; }
 if (key === "support") { setMarketerview("support"); return; }
@@ -44,6 +46,7 @@ const marketerSidebarItems = [
 { key: "add-sample", icon: "📦", label: "Add Sample", active: marketerView === "add-sample" },
 { key: "sample-history", icon: "📋", label: "Sample History", active: marketerView === "sample-history" },
 { key: "expense-report", icon: "🧾", label: "Expense Report", active: marketerView === "expense-report" },
+{ key: "news", icon: "📰", label: "News", active: marketerView === "news" },
 { key: "catalogues", icon: "📚", label: "Catalogues", active: marketerView === "catalogues" },
 { key: "my-card", icon: "▣", label: "My Card", active: marketerView === "my-card" },
 { key: "support", icon: "🎧", label: "Support", active: marketerView === "support" },
@@ -88,6 +91,7 @@ return (
         {marketerView === "expense-report" && (
 <MarketerExpenseReportPanel />
 )}
+        {marketerView === "news" && <MarketerNewsPanel />}
         {marketerView === "catalogues" && (
 <MarketerCataloguesPanel />
 )}

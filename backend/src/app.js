@@ -8,6 +8,7 @@ import { visitRoutes } from "./routes/visitRoutes.js";
 import { customReportRoutes } from "./routes/customReportRoutes.js";
 import { cardTemplateRoutes } from "./routes/cardTemplateRoutes.js";
 import { cardRoutes } from "./routes/cardRoutes.js";
+import { newsRoutes } from "./routes/newsRoutes.js";
 
 export const app = express();
 
@@ -43,6 +44,7 @@ app.use("/api/visits", visitRoutes);
 app.use("/api/custom-reports", customReportRoutes);
 app.use("/api/card-template", cardTemplateRoutes);
 app.use("/api/cards", cardRoutes);
+app.use("/api/news", newsRoutes);
 
 const frontendDirectory = fileURLToPath(new URL("../../dist/", import.meta.url));
 const frontendIndex = fileURLToPath(new URL("../../dist/index.html", import.meta.url));

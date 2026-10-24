@@ -61,3 +61,28 @@ self.addEventListener("fetch", (event) => {
     return response;
   })));
 });
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  try { data = event.data?.json() || {}; } catch { data = {}; }
+  const title = String(data.title || "Javed Publishers News").slice(0, 120);
+  const body = String(data.body || "Open your expense report.").slice(0, 300);
+  const newsId = typeof data.newsId === "string" && /^[a-zA-Z0-9_-]{1,100}$/.test(data.newsId) ? data.newsId : "";
+  event.waitUntil(self.registration.showNotification(title, {
+    body,
+    icon: `${BASE}icons/icon-192.png`,
+    badge: `${BASE}icons/icon-192.png`,
+    tag: newsId ? `jp-news-${newsId}` : "jp-news",
+    data: { url: `${BASE}?news=${encodeURIComponent(newsId)}` }
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || BASE, self.location.origin).href;
+  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(async (clients) => {
+    const existing = clients.find((client) => new URL(client.url).origin === self.location.origin);
+    if (existing) { await existing.navigate(url); return existing.focus(); }
+    return self.clients.openWindow(url);
+  }));
+});
