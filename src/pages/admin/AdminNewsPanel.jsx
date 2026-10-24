@@ -204,7 +204,7 @@ export default function AdminNewsPanel({ mode = "add" }) {
       <form className="news-card news-compose news-add-form" onSubmit={send}>
         <PanelHeading icon="➤" title="Send News" description="Select marketer(s), pick a date and time, and write your message." />
         <div className="news-add-layout">
-          <div className="news-add-message"><label className="news-message-field">News Message *<textarea style={inputStyle} required maxLength={200} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Write your news here..." rows={5} /></label><small>{200 - message.length} Characters Left</small></div>
+          <div className="news-add-message"><label className="news-message-field">News Message *<textarea style={inputStyle} required value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Write your news here..." rows={5} /></label></div>
           <div className="news-add-scheduling">
             <div className="news-add-controls">
               <NewsMarketerSelect marketers={marketersList} selected={selectedIds} onChange={setSelectedIds} inputStyle={inputStyle} label="Select Marketer(s) *" decorated />
