@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { usePortalContext } from "../../context/PortalContext.jsx";
-import { deleteNews, listNews, publishNews, restoreNews } from "../../services/newsApi.js";
+import { cancelNewsSchedule, createNewsSchedule, deleteNews, listNews, listNewsSchedules, publishNews, restoreNews } from "../../services/newsApi.js";
 import { exportNewsExcel, exportNewsPDF } from "../../services/newsExports.js";
 import { confirmAction, showNotice } from "../../ui/confirmDialog.js";
 import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
@@ -20,6 +20,9 @@ const formatDate = (value) => {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString("en-GB");
 };
+const formatScheduledAt = (value) => value ? new Date(value).toLocaleString("en-GB", {
+  timeZone: "Asia/Karachi", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true
+}) : "";
 const pakistanDateKey = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
@@ -56,6 +59,12 @@ export default function AdminNewsPanel({ mode = "add" }) {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
+  const [scheduleDate, setScheduleDate] = useState(() => pakistanDateKey(new Date()));
+  const [scheduleTime, setScheduleTime] = useState("06:00");
+  const [scheduleRepeat, setScheduleRepeat] = useState("once");
+  const [schedules, setSchedules] = useState([]);
+  const [scheduleError, setScheduleError] = useState("");
+  const [scheduleBusy, setScheduleBusy] = useState(false);
   const [recordIds, setRecordIds] = useState([]);
   const [recordFromDate, setRecordFromDate] = useState("");
   const [recordToDate, setRecordToDate] = useState("");
@@ -79,7 +88,13 @@ export default function AdminNewsPanel({ mode = "add" }) {
     catch (failure) { setError(failure.message); }
     finally { setLoading(false); }
   };
-  useEffect(() => { fetchMarketers().catch(() => {}); void reload(); }, [mode]);
+  const reloadSchedules = async () => {
+    try { const result = await listNewsSchedules(); setSchedules(result.schedules || []); setScheduleError(""); }
+    catch (failure) { setScheduleError(failure.message || "Scheduled news could not load."); }
+  };
+  useEffect(() => { fetchMarketers().catch(() => {}); void reload(); if (mode === "add") void reloadSchedules(); }, [mode]);
+
+  const pendingSchedules = schedules.filter((item) => ["pending", "active", "sending"].includes(item.status) && item.nextRunAt);
 
   const recordNews = useMemo(() => news.filter((item) => Boolean(item.deletedAt) === (mode === "deleted"))
     .filter((item) => isForSelection(item, recordIds))
@@ -143,6 +158,24 @@ export default function AdminNewsPanel({ mode = "add" }) {
     } catch (failure) { showNotice(failure.message || "News could not be sent."); }
     finally { setSending(false); }
   };
+  const setSchedule = async () => {
+    if (!message.trim()) { showNotice("Write a news message first."); return; }
+    if (!scheduleDate || !scheduleTime) { showNotice("Select a date and time."); return; }
+    setScheduleBusy(true);
+    try {
+      await createNewsSchedule({ kind: "general", message: message.trim(), recipientIds: selectedIds,
+        date: scheduleDate, time: scheduleTime, repeat: scheduleRepeat });
+      setMessage("");
+      await reloadSchedules();
+      showNotice(scheduleRepeat === "mon-sat" ? "Monday to Saturday news schedule is set." : "News is scheduled.");
+    } catch (failure) { showNotice(failure.message || "News could not be scheduled."); }
+    finally { setScheduleBusy(false); }
+  };
+  const cancelSchedule = async (item) => {
+    if (!await confirmAction("Cancel this scheduled news?")) return;
+    try { await cancelNewsSchedule(item.id); await reloadSchedules(); showNotice("Scheduled news cancelled."); }
+    catch (failure) { showNotice(failure.message || "Scheduled news could not be cancelled."); }
+  };
   const changeDeleted = async (item) => {
     if (!await confirmAction(item.deletedAt ? "Restore this news?" : "Move this news to Deleted News?")) return;
     try {
@@ -171,9 +204,32 @@ export default function AdminNewsPanel({ mode = "add" }) {
         <PanelHeading icon="➤" title="Send News" description="Write a message for all or selected marketers." />
         <div className="news-add-layout">
           <label className="news-message-field">News Message *<textarea style={inputStyle} required maxLength={2000} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Write your news here" rows={5} /></label>
-          <div className="news-add-controls"><NewsMarketerSelect marketers={marketersList} selected={selectedIds} onChange={setSelectedIds} inputStyle={inputStyle} label="Select Marketer(s) *" /><button className="news-primary" type="submit" disabled={sending}>➤ {sending ? "Sending..." : "Send"}</button></div>
+          <div className="news-add-scheduling">
+            <div className="news-add-controls">
+              <NewsMarketerSelect marketers={marketersList} selected={selectedIds} onChange={setSelectedIds} inputStyle={inputStyle} label="Select Marketer(s) *" />
+              <div className="news-add-buttons">
+                <button className="news-primary" type="submit" disabled={sending}>➤ {sending ? "Sending..." : "Send"}</button>
+                <button className="news-soft-button" type="button" disabled={scheduleBusy} onClick={() => void setSchedule()}>{scheduleBusy ? "Setting..." : "Set"}</button>
+              </div>
+            </div>
+            <div className="news-schedule-fields">
+              <label>Start Date<input style={inputStyle} type="date" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} /></label>
+              <label>Time (Pakistan)<input style={inputStyle} type="time" value={scheduleTime} onChange={(event) => setScheduleTime(event.target.value)} /></label>
+              <label>Repeat<select style={inputStyle} value={scheduleRepeat} onChange={(event) => setScheduleRepeat(event.target.value)}><option value="once">Send once</option><option value="mon-sat">Daily Mon–Sat</option></select></label>
+            </div>
+          </div>
         </div>
       </form>
+      <section className="news-card news-history news-pending">
+        <PanelHeading icon="◷" title="Pending News" description="Messages waiting for their scheduled time." action={<button type="button" className="news-soft-button" onClick={() => void reloadSchedules()}>↻ Refresh</button>} />
+        {scheduleError && <p role="alert">{scheduleError}</p>}
+        {!scheduleError && !pendingSchedules.length && <p>No pending news.</p>}
+        <div className="news-list">{pendingSchedules.map((item, index) => <article className={`news-entry news-entry--${index % 4}`} key={item.id}>
+          <span className="news-entry-icon">◷</span>
+          <div className="news-entry-body"><strong>{item.repeat === "mon-sat" ? "Daily Mon–Sat" : "Scheduled once"}</strong><p>{item.message}</p><small>Next send: {formatScheduledAt(item.nextRunAt)} &nbsp; | &nbsp; {item.recipientIds?.length ? `${item.recipientIds.length} marketer(s)` : "All Marketers"}{item.status === "sending" ? " · Sending" : ""}</small>{item.lastError && <small role="alert">Retry pending: {item.lastError}</small>}</div>
+          <button type="button" className="news-entry-action" disabled={item.status === "sending"} onClick={() => void cancelSchedule(item)}>Cancel</button>
+        </article>)}</div>
+      </section>
       <section className={`news-card news-history ${reportViewClass(expandedKey)}`}>
         {expandedChrome(todayNews, "Today's News")}
         <PanelHeading icon="▤" title="Today's News" description="News sent today."

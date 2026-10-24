@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
 import { Router } from "express";
 import { FieldValue } from "firebase-admin/firestore";
-import webPush from "web-push";
 import { firestore } from "../config/firebase.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { createExpenseNewsPdf, expenseNewsRows } from "../services/expenseNewsPdf.js";
+import { pushReady, sendNewsPush } from "../services/newsPushDelivery.js";
+import { initialScheduleRun } from "../services/newsScheduler.js";
 
 export const newsRoutes = Router();
 newsRoutes.use(requireAuth);
@@ -12,44 +13,12 @@ newsRoutes.use(requireAuth);
 const validDate = (value) => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
   && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
   && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
-const pushReady = () => Boolean(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
 const subscriptionId = (endpoint) => createHash("sha256").update(endpoint).digest("hex");
-
-function configurePush() {
-  if (!pushReady()) return false;
-  webPush.setVapidDetails(process.env.VAPID_SUBJECT || `mailto:${process.env.ADMIN_EMAIL || "admin@portal.com"}`,
-    process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
-  return true;
-}
 
 function visibleTo(news, user) {
   if (user.role === "admin") return true;
   return !news.deletedAt && news.status !== "preparing"
     && (!Array.isArray(news.recipientIds) || news.recipientIds.includes(user.marketerId));
-}
-
-async function sendPush(db, recipients, news) {
-  if (!configurePush()) return { configured: false, delivered: 0, subscribed: 0 };
-  const ids = new Set(recipients.map((item) => item.id));
-  const subscriptions = await db.collection("pushSubscriptions").get();
-  const targets = subscriptions.docs.filter((item) => ids.has(item.data().marketerId));
-  const payload = JSON.stringify({
-    title: news.title, body: news.message || `Your expense report for ${news.fromDate} to ${news.toDate} is ready.`,
-    newsId: news.id
-  });
-  let delivered = 0;
-  for (let start = 0; start < targets.length; start += 25) {
-    const batch = targets.slice(start, start + 25);
-    const results = await Promise.allSettled(batch.map((item) => webPush.sendNotification({
-      endpoint: item.data().endpoint, keys: item.data().keys
-    }, payload, { TTL: 86400 })));
-    await Promise.all(results.map(async (result, index) => {
-      if (result.status === "fulfilled") { delivered++; return; }
-      if ([404, 410].includes(result.reason?.statusCode)) await batch[index].ref.delete().catch(() => {});
-      else console.error("News push failed:", result.reason?.message || result.reason);
-    }));
-  }
-  return { configured: true, delivered, subscribed: targets.length };
 }
 
 newsRoutes.get("/", async (request, response, next) => {
@@ -123,6 +92,64 @@ newsRoutes.delete("/subscription", async (request, response, next) => {
   } catch (error) { next(error); }
 });
 
+newsRoutes.get("/schedules", requireAdmin, async (_request, response, next) => {
+  try {
+    const snapshot = await firestore().collection("newsSchedules").orderBy("createdAt", "desc").limit(200).get();
+    response.json({ schedules: snapshot.docs.map((item) => ({ id: item.id, ...item.data() })) });
+  } catch (error) { next(error); }
+});
+
+newsRoutes.post("/schedules", requireAdmin, async (request, response, next) => {
+  const message = String(request.body?.message || "").trim();
+  const repeat = request.body?.repeat;
+  const date = request.body?.date;
+  const time = request.body?.time;
+  const selectedIds = request.body?.recipientIds;
+  if (!message || message.length > 2000 || !Array.isArray(selectedIds)
+    || selectedIds.some((id) => typeof id !== "string" || id.length > 200)) {
+    return response.status(400).json({ error: "Enter news text and a valid marketer selection." });
+  }
+  let nextRunAt;
+  try { nextRunAt = initialScheduleRun({ repeat, date, time }); }
+  catch (error) { return response.status(400).json({ error: error.message }); }
+  try {
+    const db = firestore();
+    const marketers = await db.collection("marketers").get();
+    const all = marketers.docs.map((item) => ({ id: item.id }));
+    const ids = [...new Set(selectedIds)];
+    if (ids.some((id) => !all.some((item) => item.id === id))) {
+      return response.status(400).json({ error: "A selected marketer is no longer active. Refresh and select again." });
+    }
+    if (!(ids.length || all.length)) return response.status(400).json({ error: "No active marketers are available." });
+    const ref = db.collection("newsSchedules").doc();
+    const schedule = {
+      message, recipientIds: ids, repeat, startDate: date, time,
+      nextRunAt, status: repeat === "once" ? "pending" : "active",
+      createdAt: new Date().toISOString(), createdBy: request.user.email,
+      sentCount: 0, lastSentAt: null, lastNewsId: null, leaseUntil: null, retryAfter: null, lastError: null
+    };
+    await ref.set(schedule);
+    response.status(201).json({ schedule: { id: ref.id, ...schedule } });
+  } catch (error) { next(error); }
+});
+
+newsRoutes.delete("/schedules/:id", requireAdmin, async (request, response, next) => {
+  try {
+    const ref = firestore().collection("newsSchedules").doc(request.params.id);
+    const result = await firestore().runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(ref);
+      if (!snapshot.exists) return "missing";
+      if (snapshot.data().status === "sending") return "sending";
+      if (!["pending", "active"].includes(snapshot.data().status)) return "finished";
+      transaction.update(ref, { status: "cancelled", nextRunAt: FieldValue.delete(), cancelledAt: new Date().toISOString() });
+      return "cancelled";
+    });
+    if (result === "missing") return response.status(404).json({ error: "Scheduled news not found." });
+    if (result !== "cancelled") return response.status(409).json({ error: result === "sending" ? "This news is already being sent." : "This schedule has finished." });
+    response.json({ cancelled: true });
+  } catch (error) { next(error); }
+});
+
 newsRoutes.post("/", requireAdmin, async (request, response, next) => {
   const kind = ["general", "expense"].includes(request.body?.kind) ? request.body.kind : "";
   const message = String(request.body?.message || "").trim();
@@ -175,7 +202,7 @@ newsRoutes.post("/", requireAdmin, async (request, response, next) => {
     }
     const news = { id: ref.id, ...record, status: "ready" };
     let push;
-    try { push = await sendPush(db, recipients, news); }
+    try { push = await sendNewsPush(db, recipients, news); }
     catch (error) {
       console.error("News saved but push delivery failed:", error);
       push = { configured: false, delivered: 0, subscribed: 0, error: "Push delivery failed" };

@@ -108,6 +108,18 @@ test("news publishing requires admin and a valid report date range", async () =>
   assert.equal(invalid.status, 400);
 });
 
+test("scheduled news requires admin and rejects an invalid time before database access", async () => {
+  const path = `${baseUrl}/api/news/schedules`;
+  assert.equal((await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).status, 401);
+  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const invalid = await fetch(path, {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
+    body: JSON.stringify({ message: "Daily update", recipientIds: [], repeat: "once", date: "2026-10-24", time: "25:00" })
+  });
+  assert.equal(invalid.status, 400);
+});
+
 test("only marketers can mark news as read", async () => {
   const path = `${baseUrl}/api/news/read`;
   assert.equal((await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).status, 401);
