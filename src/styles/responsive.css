@@ -480,6 +480,10 @@
       .app-responsive > div:not(.app-branding-strip) {
         animation:jpViewIn .28s ease-out both;
       }
+      body.report-fullscreen-active .app-responsive > div:not(.app-branding-strip) {
+        animation: none !important;
+        transform: none !important;
+      }
       .mobile-brand-menu-toggle { display:none; }
       
       @media (max-width: 600px) {
