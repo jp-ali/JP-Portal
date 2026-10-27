@@ -3,7 +3,7 @@ import { firestore } from "../config/firebase.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { validateCardTemplate } from "./cardTemplateRoutes.js";
 import { convertCardsToCdr } from "../services/cardCdrExport.js";
-import { alignLegacyCardFields, correctCardAddress, defaultAdminCard, getOrCreateMarketerCard, lockMarketerCard } from "../services/marketerCardService.js";
+import { alignLegacyCardFields, correctCardAddress, defaultAdminCard, getOrCreateMarketerCard, lockMarketerCard, PUBLISHER_CARD_EMAIL } from "../services/marketerCardService.js";
 
 export const cardRoutes = Router();
 cardRoutes.get("/me", requireAuth, async (request, response, next) => {
@@ -34,7 +34,7 @@ cardRoutes.use(requireAuth, requireAdmin);
 const cards = () => firestore().collection("savedCards");
 const summary = (snapshot) => {
   const { image, ...data } = snapshot.data();
-  return { id: snapshot.id, ...data, values: { ...data.values, address: correctCardAddress(data.values?.address) } };
+  return { id: snapshot.id, ...data, values: { ...data.values, email: data.marketerId ? PUBLISHER_CARD_EMAIL : data.values?.email, address: correctCardAddress(data.values?.address) } };
 };
 
 export function validateCard(body) {
@@ -45,7 +45,7 @@ export function validateCard(body) {
   for (const field of template.fields) {
     const value = values[field.id] ?? "";
     if (typeof value !== "string" || value.length > 500) throw new Error(`Invalid ${field.label} text.`);
-    cleaned[field.id] = field.id === "address" ? correctCardAddress(value) : value;
+    cleaned[field.id] = field.id === "address" ? correctCardAddress(value) : field.id === "email" && body?.template?.marketerId ? PUBLISHER_CARD_EMAIL : value;
   }
   const title = String(values.depotName || values.name || "Untitled card").trim().slice(0, 100);
   return { ...template, values: cleaned, title };

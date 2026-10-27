@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { firestore } from "../config/firebase.js";
 
 const image = `data:image/jpeg;base64,${readFileSync(new URL("../../assets/card-blank-template.jpg", import.meta.url)).toString("base64")}`;
+export const PUBLISHER_CARD_EMAIL = "info@javedpublishers.com";
 export const correctCardAddress = (address) => String(address || "").replace(/\bsanint\b/gi, "Sanat");
 const fields = [
   { id: "depotName", label: "Book depot name", x: 50, y: 14, fontSize: 100, color: "#242424", align: "center", bold: true },
@@ -54,7 +55,7 @@ export function defaultMarketerCard(marketerId, marketer, now = new Date().toISO
       designation: marketer.designation || "Marketing Coordinator",
       assignedCity: marketer.assignedCity || "",
       phone: marketer.phone || "",
-      email: marketer.email || "",
+      email: PUBLISHER_CARD_EMAIL,
       website: "javedpublishers.com",
       address: "Main Outfall Road, Sanat Nagar, Lahore, Punjab"
     },
@@ -72,7 +73,7 @@ export function syncMarketerCard(card, marketer, now = new Date().toISOString())
       ...card.values,
       name: marketer.name || card.values?.name || "Marketer",
       phone: marketer.phone || card.values?.phone || "",
-      email: marketer.email || card.values?.email || "",
+      email: PUBLISHER_CARD_EMAIL,
       designation: marketer.designation || card.values?.designation || "Marketing Coordinator",
       assignedCity: card.manualCardCity || marketer.assignedCity || ""
     },
@@ -112,7 +113,7 @@ export async function getOrCreateMarketerCard(marketerId) {
   const updatedFields = alignMarketerHeaderFields(alignLegacyCardFields((result.fields || []).map((field) => field.id === "assignedArea" ? { ...field, id: "assignedCity", label: "City" } : field)));
   if (!updatedFields.some((field) => field.id === "assignedCity")) updatedFields.push({ ...fields.find((field) => field.id === "assignedCity") });
   if (JSON.stringify(updatedFields) !== JSON.stringify(result.fields)) additions.fields = updatedFields;
-  const updatedValues = { ...result.values, depotName: "JAVED PUBLISHERS", assignedCity: result.manualCardCity || city, address: correctCardAddress(result.values?.address) };
+  const updatedValues = { ...result.values, depotName: "JAVED PUBLISHERS", assignedCity: result.manualCardCity || city, email: PUBLISHER_CARD_EMAIL, address: correctCardAddress(result.values?.address) };
   delete updatedValues.assignedArea;
   if (JSON.stringify(updatedValues) !== JSON.stringify(result.values)) additions.values = updatedValues;
   if (!cityIdsUnchanged) additions.syncedAssignedCityIds = cityIds;
@@ -128,7 +129,7 @@ export function defaultAdminCard(now = new Date().toISOString()) {
     name: "Muhammad Ali Ashfaq",
     designation: "Marketing Coordinator",
     phone: "+92-3068482000",
-    email: "info@javedpublishers.com"
+    email: PUBLISHER_CARD_EMAIL
   }, now);
   const adminHeader = { depotName: { x: 8.5, y: 24, fontSize: 68, align: "left", bold: false }, name: { x: 8.5, y: 33, fontSize: 58, align: "left", bold: false }, designation: { x: 8.5, y: 41 }, assignedCity: { x: 8.5, y: 47 } };
   return { ...card, title: "Admin Card", fields: card.fields.map((field) => ({ ...field, ...adminHeader[field.id] })), values: { ...card.values, depotName: "Muhammad Ali Ashfaq", name: "", assignedCity: "" } };
@@ -145,7 +146,7 @@ export function lockMarketerCard(original, incoming) {
       const moved = incoming.fields.find((item) => item.id === field.id);
       return moved ? { ...field, x: moved.x, y: moved.y } : field;
     }),
-    values: { ...original.values, assignedCity: String(incoming.values?.assignedCity ?? original.values?.assignedCity ?? "") },
+    values: { ...original.values, email: PUBLISHER_CARD_EMAIL, assignedCity: String(incoming.values?.assignedCity ?? original.values?.assignedCity ?? "") },
     manualCardCity: String(incoming.values?.assignedCity ?? original.values?.assignedCity ?? "") !== String(original.values?.assignedCity ?? "")
       ? String(incoming.values.assignedCity).trim()
       : original.manualCardCity || "",

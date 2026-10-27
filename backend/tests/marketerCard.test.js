@@ -8,6 +8,7 @@ test("new marketer card uses the default artwork and marketer contact details", 
   assert.equal(card.marketerId, "marketer123");
   assert.equal(card.values.name, "Ali");
   assert.equal(card.values.phone, "+923001234567");
+  assert.equal(card.values.email, "info@javedpublishers.com");
   assert.deepEqual(card.fields.filter((field) => ["depotName", "name", "designation", "assignedCity"].includes(field.id)).map(({ x, y }) => [x, y]), [[50, 14], [8.5, 24], [8.5, 33], [8.5, 41]]);
   const designation = card.fields.find((field) => field.id === "designation");
   const city = card.fields.find((field) => field.id === "assignedCity");
@@ -25,6 +26,7 @@ test("marketer city syncs with the card while other details remain", () => {
   const change = syncMarketerCard(card, { name: "Ali", assignedCity: "Karachi" });
   assert.equal(change.values.assignedCity, "Karachi");
   assert.equal(change.values.website, card.values.website);
+  assert.equal(change.values.email, "info@javedpublishers.com");
   const admin = defaultAdminCard();
   assert.equal(admin.values.name, "");
   assert.equal(admin.values.phone, "+92-3068482000");
@@ -38,6 +40,7 @@ test("marketer card changes can move text without replacing its design or accoun
   const locked = lockMarketerCard(original, incoming);
   assert.equal(locked.image, original.image);
   assert.equal(locked.values.name, "Ali");
+  assert.equal(locked.values.email, "info@javedpublishers.com");
   assert.equal(locked.fields.find((field) => field.id === "name").x, 9);
   assert.equal(locked.fields.find((field) => field.id === "name").color, original.fields.find((field) => field.id === "name").color);
 });
@@ -77,4 +80,12 @@ test("marketer contact edits retain customized card artwork and fields", () => {
   assert.equal(change.title, "Ali Khan Card");
   assert.equal(change.values.phone, "2");
   assert.equal(change.values.address, "Custom address");
+  assert.equal(change.values.email, "info@javedpublishers.com");
+});
+
+test("old marketer cards keep the publisher email in saved downloads", () => {
+  const card = defaultMarketerCard("marketer123", { name: "Ali", email: "ali@example.com" });
+  card.values.email = "ali@example.com";
+  const exportCard = validateCard({ template: card, values: card.values });
+  assert.equal(exportCard.values.email, "info@javedpublishers.com");
 });
