@@ -11,8 +11,7 @@
 .marketer-archive-hero-art span{display:grid;place-items:center;width:32px;height:25px;border:1px solid #e39eb7;border-radius:5px;background:#fff0f5;font-size:18px}
 .marketer-archive-controls{display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px;margin:0 0 15px;padding:12px;border:1px solid #eadde1;border-radius:13px;background:#fff;box-shadow:0 5px 15px rgba(67,27,39,.045)}
 .marketer-archive-controls > .verification-marketer-field{flex:1 1 155px !important;min-width:155px !important}
-.marketer-archive-controls > .verification-marketer-field > label{font-size:12px !important;font-weight:700 !important;color:#5c484e !important}
-.marketer-archive-controls > .verification-marketer-field > button{height:42px !important;border:1px solid #d7c7cb !important;border-radius:9px !important;box-shadow:none;color:#382a31 !important;font-size:13px !important;font-weight:600 !important}
+.marketer-archive-controls > .verification-marketer-field > label{font-size:11px !important;font-weight:700 !important;color:#5c484e !important}
 .marketer-archive-controls input,.marketer-archive-controls select,.marketer-archive-controls button{font-family:inherit;font-size:13px}
 .marketer-archive-search{display:flex;align-items:center;gap:9px;flex:2 1 260px;height:42px;padding:0 12px;border:1px solid #d7c7cb;border-radius:9px;background:#fff;color:#7a0f2b}
 .marketer-archive-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#332735;font-size:13px}.marketer-archive-search input::placeholder{color:#8a7d82}

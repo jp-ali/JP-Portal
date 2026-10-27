@@ -39,9 +39,8 @@ function PanelHeading({ icon, title, description, action }) {
   return <div className="news-panel-heading"><span className="news-panel-heading-icon" aria-hidden="true">{icon}</span><div><h2>{title}</h2><p>{description}</p></div>{action}</div>;
 }
 
-function NewsMarketerSelect({ marketers, selected, onChange, inputStyle, label = "Select Marketer(s)", decorated = false }) {
-  const icon = decorated ? <svg viewBox="0 0 24 24" width="25" height="25" fill="currentColor" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M2 19v-2.1c0-3.1 2.9-5.2 7-5.2s7 2.1 7 5.2V19H2Zm15 0v-2.2c0-1.7-.6-3.1-1.7-4.1 3.6-.2 6.7 1.8 6.7 4.9V19h-5Z"/></svg> : null;
-  return <MarketerMultiSelect marketers={marketers} selected={selected} onChange={onChange} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" label={label} leadingIcon={icon} />;
+function NewsMarketerSelect({ marketers, selected, onChange, inputStyle, label = "Select Marketer(s)" }) {
+  return <MarketerMultiSelect marketers={marketers} selected={selected} onChange={onChange} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" label={label} />;
 }
 
 function ReportActions({ reportKey, renderReportExpandButton, onExcel, onPdf, onRefresh, busy }) {
@@ -207,7 +206,7 @@ export default function AdminNewsPanel({ mode = "add" }) {
           <div className="news-add-message"><label className="news-message-field">News Message *<textarea style={inputStyle} required value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Write your news here..." rows={5} /></label></div>
           <div className="news-add-scheduling">
             <div className="news-add-controls">
-              <NewsMarketerSelect marketers={marketersList} selected={selectedIds} onChange={setSelectedIds} inputStyle={inputStyle} label="Select Marketer(s) *" decorated />
+              <NewsMarketerSelect marketers={marketersList} selected={selectedIds} onChange={setSelectedIds} inputStyle={inputStyle} label="Select Marketer(s) *" />
               <div className="news-add-buttons">
                 <button className="news-primary" type="submit" disabled={sending}><span aria-hidden="true">➤</span> {sending ? "Sending..." : "Send"}</button>
                 <button className="news-soft-button" type="button" disabled={scheduleBusy} onClick={() => void setSchedule()}><span aria-hidden="true">⚙</span> {scheduleBusy ? "Setting..." : "Set"}</button>

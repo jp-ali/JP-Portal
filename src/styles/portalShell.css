@@ -104,7 +104,6 @@
 .marketer-detail-search span { font-size:25px; line-height:1; }
 .marketer-detail-search input { width:100%; min-width:0; height:38px; padding:0; border:0; outline:0; background:transparent; color:#382a31; font:inherit; font-size:13px; }
 .marketer-detail-filters > .verification-marketer-field { flex:1 1 170px !important; min-width:165px !important; }
-.marketer-detail-filters > .verification-marketer-field > button { border:1px solid #d7c7cb !important; border-radius:9px !important; font-size:13px !important; }
 .marketer-detail-refresh { width:44px; height:42px; padding:0; border:1px solid #ddcbd0; border-radius:9px; background:#fff; color:#7a0f2b; font-size:22px; font-weight:800; cursor:pointer; }
 .marketer-detail-refresh:hover { background:#fff3f6; }
 .marketer-detail-refresh:disabled { opacity:.55; cursor:wait; }

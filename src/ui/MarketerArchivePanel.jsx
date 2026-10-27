@@ -125,8 +125,8 @@ export default function MarketerArchivePanel({ mode }) {
 
     <div className="marketer-archive-controls">
       <label className="marketer-archive-search"><Icon name="search" size={18} /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search marketer by name or email..." aria-label="Search marketers" /></label>
-      <MarketerMultiSelect marketers={rows} selected={marketerIds} onChange={setMarketerIds} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" height={38} />
-      <MarketerMultiSelect marketers={cityOptions.map(([id, name]) => ({ id, name }))} selected={cityKeys} onChange={setCityKeys} inputStyle={inputStyle} valueKey="id" emptyLabel="All Cities" itemLabel="City" pluralLabel="Cities" height={38} />
+      <MarketerMultiSelect marketers={rows} selected={marketerIds} onChange={setMarketerIds} inputStyle={inputStyle} valueKey="id" emptyLabel="All Marketers" />
+      <MarketerMultiSelect marketers={cityOptions.map(([id, name]) => ({ id, name }))} selected={cityKeys} onChange={setCityKeys} inputStyle={inputStyle} valueKey="id" emptyLabel="All Cities" itemLabel="City" pluralLabel="Cities" />
       <button className="marketer-archive-select-all" type="button" onClick={toggleAll} disabled={!filtered.length || busy}><span className="marketer-archive-small-check">{allFilteredSelected ? "✓" : ""}</span>{allFilteredSelected ? "Deselect All" : "Select All"}</button>
       {isOld ? <div className="marketer-archive-bulk-actions">
         <button className="marketer-archive-bulk-restore" type="button" onClick={() => runBulk("restore")} disabled={!selectedRows.length || busy}>Restore Selected ({selectedRows.length})</button>
