@@ -3,7 +3,7 @@ import { firestore } from "../config/firebase.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { validateCardTemplate } from "./cardTemplateRoutes.js";
 import { convertCardsToCdr } from "../services/cardCdrExport.js";
-import { alignLegacyCardFields, defaultAdminCard, getOrCreateMarketerCard, lockMarketerCard } from "../services/marketerCardService.js";
+import { alignLegacyCardFields, correctCardAddress, defaultAdminCard, getOrCreateMarketerCard, lockMarketerCard } from "../services/marketerCardService.js";
 
 export const cardRoutes = Router();
 cardRoutes.get("/me", requireAuth, async (request, response, next) => {
@@ -18,8 +18,12 @@ cardRoutes.get("/admin-card", requireAuth, async (_request, response, next) => {
     if (snapshot.exists && !snapshot.data().deletedAt) {
       const card = snapshot.data();
       const fields = alignLegacyCardFields(card.fields || []);
-      if (JSON.stringify(fields) !== JSON.stringify(card.fields)) await ref.update({ fields });
-      return response.json({ card: { id: ref.id, ...card, fields } });
+      const values = { ...card.values, address: correctCardAddress(card.values?.address) };
+      const updates = {};
+      if (JSON.stringify(fields) !== JSON.stringify(card.fields)) updates.fields = fields;
+      if (values.address !== card.values?.address) updates.values = values;
+      if (Object.keys(updates).length) await ref.update(updates);
+      return response.json({ card: { id: ref.id, ...card, fields, values } });
     }
     const card = defaultAdminCard();
     await ref.set(card);
@@ -30,7 +34,7 @@ cardRoutes.use(requireAuth, requireAdmin);
 const cards = () => firestore().collection("savedCards");
 const summary = (snapshot) => {
   const { image, ...data } = snapshot.data();
-  return { id: snapshot.id, ...data };
+  return { id: snapshot.id, ...data, values: { ...data.values, address: correctCardAddress(data.values?.address) } };
 };
 
 export function validateCard(body) {
@@ -41,7 +45,7 @@ export function validateCard(body) {
   for (const field of template.fields) {
     const value = values[field.id] ?? "";
     if (typeof value !== "string" || value.length > 500) throw new Error(`Invalid ${field.label} text.`);
-    cleaned[field.id] = value;
+    cleaned[field.id] = field.id === "address" ? correctCardAddress(value) : value;
   }
   const title = String(values.depotName || values.name || "Untitled card").trim().slice(0, 100);
   return { ...template, values: cleaned, title };
@@ -97,7 +101,8 @@ cardRoutes.get("/:id", async (request, response, next) => {
       const card = await getOrCreateMarketerCard(snapshot.data().marketerId);
       return card ? response.json({ card }) : response.status(404).json({ error: "Card not found" });
     }
-    response.json({ card: { id: snapshot.id, ...snapshot.data() } });
+    const card = snapshot.data();
+    response.json({ card: { id: snapshot.id, ...card, values: { ...card.values, address: correctCardAddress(card.values?.address) } } });
   } catch (error) { next(error); }
 });
 

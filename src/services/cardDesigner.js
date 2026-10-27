@@ -20,7 +20,7 @@ export const defaultCardValues = {
   phone2: "",
   email: "info@javedpublishers.com",
   website: "javedpublishers.com",
-  address: "Main outfall road, sanint nagar, Lahore, Punjab"
+  address: "Main Outfall Road, Sanat Nagar, Lahore, Punjab"
 };
 
 function cardDisplayCase(value) {
@@ -33,6 +33,7 @@ function cardDisplayCase(value) {
 export function cardRenderEntries(template, values) {
   return template.fields.map((field) => {
     let value = String(values[field.id] || "");
+    if (field.id === "address") value = value.replace(/\bsanint\b/gi, "Sanat");
     if (template.marketerId && ["name", "designation", "assignedCity"].includes(field.id)) {
       value = cardDisplayCase(value);
     }

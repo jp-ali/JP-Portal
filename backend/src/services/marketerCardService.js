@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { firestore } from "../config/firebase.js";
 
 const image = `data:image/jpeg;base64,${readFileSync(new URL("../../assets/card-blank-template.jpg", import.meta.url)).toString("base64")}`;
+export const correctCardAddress = (address) => String(address || "").replace(/\bsanint\b/gi, "Sanat");
 const fields = [
   { id: "depotName", label: "Book depot name", x: 50, y: 14, fontSize: 100, color: "#242424", align: "center", bold: true },
   { id: "name", label: "Name", x: 8.5, y: 24, fontSize: 68, color: "#242424", align: "left", bold: false },
@@ -55,7 +56,7 @@ export function defaultMarketerCard(marketerId, marketer, now = new Date().toISO
       phone: marketer.phone || "",
       email: marketer.email || "",
       website: "javedpublishers.com",
-      address: "Main outfall road, sanint nagar, Lahore, Punjab"
+      address: "Main Outfall Road, Sanat Nagar, Lahore, Punjab"
     },
     title: `${marketer.name || "Marketer"} Card`,
     createdAt: now,
@@ -111,7 +112,7 @@ export async function getOrCreateMarketerCard(marketerId) {
   const updatedFields = alignMarketerHeaderFields(alignLegacyCardFields((result.fields || []).map((field) => field.id === "assignedArea" ? { ...field, id: "assignedCity", label: "City" } : field)));
   if (!updatedFields.some((field) => field.id === "assignedCity")) updatedFields.push({ ...fields.find((field) => field.id === "assignedCity") });
   if (JSON.stringify(updatedFields) !== JSON.stringify(result.fields)) additions.fields = updatedFields;
-  const updatedValues = { ...result.values, depotName: "JAVED PUBLISHERS", assignedCity: result.manualCardCity || city };
+  const updatedValues = { ...result.values, depotName: "JAVED PUBLISHERS", assignedCity: result.manualCardCity || city, address: correctCardAddress(result.values?.address) };
   delete updatedValues.assignedArea;
   if (JSON.stringify(updatedValues) !== JSON.stringify(result.values)) additions.values = updatedValues;
   if (!cityIdsUnchanged) additions.syncedAssignedCityIds = cityIds;
