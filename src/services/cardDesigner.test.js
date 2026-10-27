@@ -10,6 +10,13 @@ test("Corel SVG embeds the art and keeps entered text as escaped vector text", (
   assert.doesNotMatch(svg, /<JP>/);
 });
 
+test("publisher heading is absent from saved card previews and SVG exports", () => {
+  const template = { image: "data:image/jpeg;base64,AAAA", imageWidth: 1200, imageHeight: 750, widthMm: 85.6, fields: [defaultCardFields[0], defaultCardFields[1]] };
+  const values = { depotName: "JAVED PUBLISHERS", name: "Ali" };
+  assert.deepEqual(cardRenderEntries(template, values).map(({ value }) => value), ["Ali"]);
+  assert.doesNotMatch(cardSvg(template, values), /JAVED PUBLISHERS/);
+});
+
 test("second phone shares the first phone line and empty name lifts the role", () => {
   const fields = [...defaultCardFields];
   fields.splice(fields.findIndex((field) => field.id === "phone") + 1, 0, { ...fields.find((field) => field.id === "phone"), id: "phone2", label: "Second phone" });

@@ -34,6 +34,7 @@ function cardDisplayCase(value) {
 export function cardRenderEntries(template, values) {
   return template.fields.map((field) => {
     let value = String(values[field.id] || "");
+    if (field.id === "depotName" && value.trim().toUpperCase() === "JAVED PUBLISHERS") value = "";
     if (template.marketerId && field.id === "email") value = marketerCardEmail;
     if (field.id === "address") value = value.replace(/\bsanint\b/gi, "Sanat");
     if (template.marketerId && ["name", "designation", "assignedCity"].includes(field.id)) {

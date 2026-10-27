@@ -14,6 +14,7 @@ function cardObjects(card) {
   const { image, imageWidth: width, imageHeight: height, fields, values } = card;
   const labels = fields.flatMap((field) => {
     let value = String(values[field.id] || "");
+    if (field.id === "depotName" && value.trim().toUpperCase() === "JAVED PUBLISHERS") return [];
     let { x, y } = field;
     if (field.id === "phone2") {
       const first = fields.find((item) => item.id === "phone");

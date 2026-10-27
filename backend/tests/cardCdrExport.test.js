@@ -24,3 +24,9 @@ test("CDR sheet source includes every selected card", () => {
   assert.match(svg, /id="card-2"/);
   assert.match(svg, /JP Books<\/text>/);
 });
+
+test("CDR export omits the publisher heading on saved cards", () => {
+  const svg = cardCdrSource([{ ...card, fields: [{ ...card.fields[0], id: "depotName" }, card.fields[0]], values: { depotName: "JAVED PUBLISHERS", name: "Ali" } }]);
+  assert.doesNotMatch(svg, /JAVED PUBLISHERS/);
+  assert.match(svg, />Ali<\/text>/);
+});
