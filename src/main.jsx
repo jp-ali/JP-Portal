@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import ConfirmDialogHost from './ui/ConfirmDialogHost.jsx'
+import { installIosPullToRefresh } from './services/pwaRefresh.js'
 
 // GitHub Pages serves static files only. Sign-in needs the API behind the live
 // portal, so open that origin before rendering the login form.
@@ -12,6 +13,7 @@ if (isStaticPagesHost && navigator.onLine) {
   destination.search = window.location.search
   window.location.replace(destination.href)
 } else {
+  installIosPullToRefresh()
   ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
       <App />
