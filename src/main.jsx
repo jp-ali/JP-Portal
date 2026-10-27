@@ -3,12 +3,22 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import ConfirmDialogHost from './ui/ConfirmDialogHost.jsx'
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-    <ConfirmDialogHost />
-  </React.StrictMode>,
-)
+// GitHub Pages serves static files only. Sign-in needs the API behind the live
+// portal, so open that origin before rendering the login form.
+const livePortalUrl = import.meta.env.VITE_LIVE_PORTAL_URL || 'https://9tn88jsw-5173.inc1.devtunnels.ms/'
+const isStaticPagesHost = window.location.hostname === 'jp-ali.github.io'
+if (isStaticPagesHost && navigator.onLine) {
+  const destination = new URL(livePortalUrl)
+  destination.search = window.location.search
+  window.location.replace(destination.href)
+} else {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <App />
+      <ConfirmDialogHost />
+    </React.StrictMode>,
+  )
+}
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
