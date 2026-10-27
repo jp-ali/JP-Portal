@@ -68,10 +68,10 @@ export default function AdminHomePanel() {
       { title: "Delete Marketer", description: "Remove active marketer", icon: "▣", tone: "rose", onClick: () => { c.setAdminView("delete-marketer"); c.fetchMarketers(); } },
       { title: "Old Marketers", description: "Restore deleted marketers", icon: "▤", tone: "pink", onClick: () => { c.setAdminView("old-marketers"); c.fetchDeletedMarketers(); } }
     ] },
-    { title: "Resources & Communication", icon: "▰", description: "Catalogues, media and verification", items: [
+    { title: "Resources & Communication", icon: "▰", description: "Catalogues, verification and media", items: [
       { title: "Catalogues", description: "Manage catalogue links", icon: "▥", tone: "mint", onClick: () => { c.setAdminView("catalogues"); c.setCatalogueSearch(""); c.fetchCatalogues(); } },
-      { title: "Media", description: "Manage visit pictures", icon: "▧", tone: "violet", onClick: () => { c.setAdminView("media"); c.fetchAllReports(); c.fetchDeletedMedia(); c.setMediaMarketer(null); c.setSelectedMediaIds([]); c.setSelectedDeletedMediaIds([]); c.setMediaView("active"); } },
       { title: "Verification Calls", description: "Verify school visits", icon: "☎", tone: "violet", onClick: () => c.setAdminView("verification-reports") },
+      { title: "Media", description: "Manage visit pictures", icon: "▧", tone: "violet", onClick: () => { c.setAdminView("media"); c.fetchAllReports(); c.fetchDeletedMedia(); c.setMediaMarketer(null); c.setSelectedMediaIds([]); c.setSelectedDeletedMediaIds([]); c.setMediaView("active"); } },
       { title: "Recently Deleted", description: "Restore removed media", icon: "♻", tone: "mint", onClick: () => { c.setAdminView("media"); c.fetchAllReports(); c.fetchDeletedMedia(); c.setMediaMarketer(null); c.setSelectedMediaIds([]); c.setSelectedDeletedMediaIds([]); c.setMediaView("deleted"); } }
     ] }
   ];
