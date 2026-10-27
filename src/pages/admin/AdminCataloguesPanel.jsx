@@ -23,7 +23,7 @@ export default function AdminCataloguesPanel() {
                   </div>
                   <button type="submit" disabled={catalogueUploading} style={{ height:"42px", padding:"0 16px", border:"none", borderRadius:"9px", background:catalogueUploading?"#8d7d81":"linear-gradient(135deg,#6f0b24,#86132f)", color:"#fff", fontWeight:900, fontSize:"11px", cursor:catalogueUploading?"wait":"pointer", whiteSpace:"nowrap" }}>{catalogueUploading ? "Saving..." : "➕ Add Link"}</button>
                 </form>
-                <div className="catalogue-search-row catalogue-admin-search-row" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:"8px" }}>
+                <div className="catalogue-search-row catalogue-admin-search-row" style={{ display:"flex", justifyContent:"flex-start", alignItems:"center", gap:"8px" }}>
                   <input type="text" value={catalogueSearch} onChange={(e)=>setCatalogueSearch(e.target.value)} placeholder="🔍 Search catalogues..." style={{ ...inputStyle, maxWidth:"360px", height:"40px", background:"#fff" }} />
                   <button type="button" aria-label="Refresh catalogues" onClick={fetchCatalogues} disabled={catalogueLoading} style={{ width:"42px", height:"40px", border:"1px solid #ddcbd0", borderRadius:"9px", background:"#fff", color:"#7a0f2b", fontWeight:900, fontSize:"18px", cursor:catalogueLoading?"wait":"pointer" }}>↻</button>
                 </div>

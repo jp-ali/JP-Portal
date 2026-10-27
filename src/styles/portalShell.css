@@ -146,6 +146,7 @@
   .portal-shell .portal-topbar { min-height:54px; gap:8px; padding:6px 10px; }
   .portal-topbar-greeting strong { font-size:12px; }.portal-topbar-greeting small,.portal-topbar-date,.portal-topbar-user > span:nth-child(2) { display:none; }
   .portal-topbar-search { width:105px; height:30px; padding:0 6px; }
+  .portal-topbar-refresh { display:none; }
   .portal-topbar-search > span { margin-right:3px; }
   .portal-topbar-search input { font-size:8px; }
   .portal-topbar-search-results { width:min(70vw,250px); left:auto; }
