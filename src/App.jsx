@@ -121,10 +121,15 @@ export default function App() {
   const handleLogin = async (event) => {
     event.preventDefault();
     if (loginPending) return;
+    // Password managers may fill the DOM without firing React's onChange.
+    // Read the submitted form before changing state or awaiting the request.
+    const form = new FormData(event.currentTarget);
+    const submittedIdentifier = String(form.get("identifier") || "");
+    const submittedPassword = String(form.get("password") || "");
     setError("");
     setLoginPending(true);
     try {
-      const user = await login(identifier, password);
+      const user = await login(submittedIdentifier, submittedPassword);
       setPassword("");
       skipSessionRestore.current = false;
       setSession({ loading: false, user });
