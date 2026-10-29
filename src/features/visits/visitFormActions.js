@@ -1,6 +1,6 @@
 import { showNotice as alert } from "../../ui/confirmDialog.js";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "../../services/firebase";
+import { addDoc, collection, serverTimestamp } from "../../services/dataGateway.js";
+import { db } from "../../services/dataGateway.js";
 import { getSession } from "../../services/authApi";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
 import { formatAddressForStamp } from "../../services/visitPhotos.js";

@@ -1,7 +1,7 @@
 import { confirmAction, showNotice as alert } from "../../ui/confirmDialog.js";
 import { useRef, useState } from "react";
-import { collection, deleteDoc, doc, getDocs, query, Timestamp, where } from "firebase/firestore";
-import { db } from "../../services/firebase";
+import { collection, deleteDoc, doc, getDocs, query, Timestamp, where } from "../../services/dataGateway.js";
+import { db } from "../../services/dataGateway.js";
 
 export function useVisitData({ user, getAccessibleVisitMarketers, fetchMarketersByIds, isDateInRange, setMarketerview, setSelectedAdminMarketerBox }) {
 const [selectedMarketerVisitIds, setSelectedMarketerVisitIds] = useState([]);

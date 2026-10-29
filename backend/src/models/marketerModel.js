@@ -1,7 +1,6 @@
-import { FieldValue } from "firebase-admin/firestore";
-import { firestore } from "../config/firebase.js";
+import { portalStore } from "../config/portalStore.js";
 
-const collection = () => firestore().collection("marketers");
+const collection = () => portalStore().collection("marketers");
 
 export async function findMarketerByIdentifier(identifier) {
   const field = identifier.includes("@") ? "email" : "phone";
@@ -14,10 +13,6 @@ export async function findMarketerByIdentifier(identifier) {
 export async function findMarketerById(id) {
   const doc = await collection().doc(id).get();
   return doc.exists ? { id: doc.id, ...doc.data() } : null;
-}
-
-export async function migrateLegacyPassword(id, hash) {
-  await collection().doc(id).update({ passwordHash: hash, password: FieldValue.delete() });
 }
 
 export function publicMarketer(marketer) {

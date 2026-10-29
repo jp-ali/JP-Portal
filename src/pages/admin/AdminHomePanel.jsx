@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getCountFromServer, getDocs, query, Timestamp, where } from "firebase/firestore";
+import { collection, getCountFromServer, getDocs, query, Timestamp, where } from "../../services/dataGateway.js";
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import DashboardHome from "../../ui/DashboardHome.jsx";
 
@@ -21,22 +21,25 @@ export default function AdminHomePanel() {
       if (!active) return;
       setTodayCounts((current) => ({ ...current, visits: snapshot.data().count }));
       setStatsReady((current) => ({ ...current, reports: true }));
-    }).catch(() => c.fetchAllReports().then((rows) => {
-      if (!active) return;
-      setTodayCounts((current) => ({ ...current, visits: rows.filter((item) => c.getDateKey(item.createdAt) === today).length }));
-      setStatsReady((current) => ({ ...current, reports: true }));
-    }));
+    }).catch((error) => {
+      console.error("Dashboard visit count error:", error);
+      return c.fetchAllReports().then((rows) => {
+        if (!active) return;
+        setTodayCounts((current) => ({ ...current, visits: rows.filter((item) => c.getDateKey(item.createdAt) === today).length }));
+        setStatsReady((current) => ({ ...current, reports: true }));
+      });
+    });
     c.fetchMarketers().then(() => { if (active) setStatsReady((current) => ({ ...current, marketers: true })); }).catch(() => {});
     getDocs(query(collection(c.db, "attendance"), where("date", "==", today))).then((snapshot) => {
       if (!active) return;
       setTodayCounts((current) => ({ ...current, attendance: countPeople(snapshot, (row) => row.startMarked || row.endMarked) }));
       setStatsReady((current) => ({ ...current, attendance: true }));
-    }).catch(() => {});
+    }).catch((error) => { console.error("Dashboard attendance count error:", error); });
     getDocs(query(collection(c.db, "action_plans"), where("date", "==", today))).then((snapshot) => {
       if (!active) return;
       setTodayCounts((current) => ({ ...current, plans: countPeople(snapshot) }));
       setStatsReady((current) => ({ ...current, plans: true }));
-    }).catch(() => {});
+    }).catch((error) => { console.error("Dashboard action plan count error:", error); });
     return () => { active = false; };
   }, []);
   const openAttendance = () => { const day = c.getTodayInputDate(); c.setAdminAttendanceFromDate(day); c.setAdminAttendanceToDate(day); c.setAdminAttendanceSearch(""); c.setAdminView("attendance"); c.fetchAttendanceRecords(); };
@@ -64,7 +67,7 @@ export default function AdminHomePanel() {
     ] },
     { title: "Team Management", icon: "♟", description: "Manage your marketers", items: [
       { title: "Marketers Details", description: "View active marketers", icon: "♟", tone: "rose", onClick: openMarketers },
-      { title: "Add Marketer", description: "Create a new account", icon: "+", tone: "violet", onClick: () => { c.setEditingId(null); c.setEditingReturnToMarketerDetails(false); c.setMarketerName(""); c.setMarketerPhone(""); c.setMarketerEmail(""); c.setMarketerPass(""); c.setMarketerDesignation(""); c.setMarketerAssignedKms(""); c.setSubordinateMarketerIds([]); c.setSubordinatePickerOpen(false); c.setSubordinateSearch(""); c.setMarketerWhatsappGroupName(""); c.setMarketerWhatsappGroupLink(""); c.resetMarketerAssignmentForm(); c.setAdminView("add-marketer"); c.fetchLocationCatalog().catch(() => {}); } },
+      { title: "Add Marketer", description: "Create a new account", icon: "+", tone: "violet", onClick: () => { c.setEditingId(null); c.setEditingReturnToMarketerDetails(false); c.setMarketerName(""); c.setMarketerPhone(""); c.setMarketerEmail(""); c.setMarketerCnic(""); c.setMarketerPass(""); c.setMarketerDesignation(""); c.setMarketerAssignedKms(""); c.setCardCity(""); c.setShowCardCity(false); c.setSubordinateMarketerIds([]); c.setSubordinatePickerOpen(false); c.setSubordinateSearch(""); c.setMarketerWhatsappGroupName(""); c.setMarketerWhatsappGroupLink(""); c.resetMarketerAssignmentForm(); c.setAdminView("add-marketer"); c.fetchLocationCatalog().catch(() => {}); } },
       { title: "Delete Marketer", description: "Remove active marketer", icon: "▣", tone: "rose", onClick: () => { c.setAdminView("delete-marketer"); c.fetchMarketers(); } },
       { title: "Old Marketers", description: "Restore deleted marketers", icon: "▤", tone: "pink", onClick: () => { c.setAdminView("old-marketers"); c.fetchDeletedMarketers(); } }
     ] },

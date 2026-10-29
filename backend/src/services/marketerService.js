@@ -1,10 +1,10 @@
 import bcrypt from "bcryptjs";
-import { FieldValue } from "firebase-admin/firestore";
-import { firestore } from "../config/firebase.js";
+import { FieldValue } from "../config/portalStore.js";
+import { portalStore } from "../config/portalStore.js";
 import { publicMarketer } from "../models/marketerModel.js";
-import { assignedCityText, defaultMarketerCard, syncMarketerCard } from "./marketerCardService.js";
+import { defaultMarketerCard, syncMarketerCard } from "./marketerCardService.js";
 
-const fields = ["name", "phone", "email", "designation", "assignedKms", "whatsappGroupName", "whatsappGroupLink", "assignedCityIds", "assignedAreaIds", "assignedSchoolIds", "subordinateMarketerIds"];
+const fields = ["name", "phone", "email", "cnic", "designation", "assignedKms", "cardCity", "showCardCity", "whatsappGroupName", "whatsappGroupLink", "assignedCityIds", "assignedAreaIds", "assignedSchoolIds", "subordinateMarketerIds"];
 const arrayFields = new Set(["assignedCityIds", "assignedAreaIds", "assignedSchoolIds", "subordinateMarketerIds"]);
 
 function validate(input, creating) {
@@ -15,17 +15,22 @@ function validate(input, creating) {
     if (arrayFields.has(field)) {
       if (!Array.isArray(input[field]) || input[field].some((item) => typeof item !== "string" || item.length > 200)) throw new Error(`Invalid ${field}`);
       data[field] = [...new Set(input[field])];
+    } else if (field === "showCardCity") {
+      if (typeof input[field] !== "boolean") throw new Error("Invalid showCardCity");
+      data[field] = input[field];
     } else if (field === "assignedKms") {
       const value = Number(input[field]);
       if (!Number.isFinite(value) || value < 0 || value > 100000) throw new Error("Invalid assignedKms");
       data[field] = value;
     } else {
-      if (typeof input[field] !== "string" || input[field].length > 500) throw new Error(`Invalid ${field}`);
+      if (typeof input[field] !== "string" || input[field].length > (field === "cardCity" ? 160 : 500)) throw new Error(`Invalid ${field}`);
       data[field] = input[field].trim();
     }
   }
   if (creating && (!data.name || !data.email || !data.phone || !input.password)) throw new Error("Name, email, phone and password are required");
   if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) throw new Error("Invalid email");
+  if (data.cnic && !/^\d{5}-?\d{7}-?\d$/.test(data.cnic)) throw new Error("CNIC must contain 13 digits");
+  if (creating && data.showCardCity && !data.cardCity) throw new Error("Invalid cardCity: enter a city to show on the card");
   if ("password" in input && input.password !== "") {
     if (typeof input.password !== "string" || input.password.length < 8 || input.password.length > 1024) throw new Error("Password must be 8 to 1024 characters");
     data.passwordHash = bcrypt.hashSync(input.password, 12);
@@ -36,45 +41,52 @@ function validate(input, creating) {
 
 export async function listMarketers(deleted = false) {
   const name = deleted ? "deleted_marketers" : "marketers";
-  const snap = await firestore().collection(name).get();
+  const snap = await portalStore().collection(name).get();
   return snap.docs.map((doc) => publicMarketer({ id: doc.id, ...doc.data() }));
 }
 
 export async function accessibleMarketers(profile) {
   if (profile.role !== "marketer") return [];
   const ids = [...new Set([profile.marketerId, ...(profile.subordinateMarketerIds || [])].filter(Boolean))];
-  const docs = await Promise.all(ids.map((id) => firestore().collection("marketers").doc(id).get()));
-  return docs.filter((doc) => doc.exists).map((doc) => publicMarketer({ id: doc.id, ...doc.data() }));
+  const docs = await Promise.all(ids.map((id) => portalStore().collection("marketers").doc(id).get()));
+  return docs.filter((doc) => doc.exists).map((doc) => {
+    const { cnic: _cnic, ...marketer } = publicMarketer({ id: doc.id, ...doc.data() });
+    return marketer;
+  });
 }
 
 export async function createMarketer(input) {
   const data = validate(input, true);
+  data.showCardCity = data.showCardCity === true;
+  data.cardCity = data.cardCity || "";
   delete data.password;
   data.createdAt = FieldValue.serverTimestamp();
   const now = new Date().toISOString();
   data.cardProvisionedAt = now;
-  const db = firestore();
+  const db = portalStore();
   const ref = db.collection("marketers").doc();
   const batch = db.batch();
   batch.set(ref, data);
-  batch.set(db.collection("savedCards").doc(ref.id), defaultMarketerCard(ref.id, { ...data, assignedCity: await assignedCityText(data.assignedCityIds) }, now));
+  batch.set(db.collection("savedCards").doc(ref.id), defaultMarketerCard(ref.id, data, now));
   await batch.commit();
   return publicMarketer({ id: ref.id, ...data });
 }
 
 export async function updateMarketer(id, input) {
-  const db = firestore();
+  const db = portalStore();
   const ref = db.collection("marketers").doc(id);
   const current = await ref.get();
   if (!current.exists) return null;
   const data = validate(input, false);
   if (!Object.keys(data).length) throw new Error("No changes supplied");
+  const updated = { ...current.data(), ...data };
+  if (updated.showCardCity && !updated.cardCity) throw new Error("Invalid cardCity: enter a city to show on the card");
   const batch = db.batch();
   batch.update(ref, data);
-  if (["name", "phone", "email", "designation", "assignedCityIds"].some((field) => field in data)) {
+  if (["name", "phone", "email", "designation", "cardCity", "showCardCity"].some((field) => field in data)) {
     const cardRef = db.collection("savedCards").doc(id);
     const card = await cardRef.get();
-    if (card.exists && !card.data().deletedAt) batch.update(cardRef, syncMarketerCard(card.data(), { ...current.data(), ...data, assignedCity: await assignedCityText(data.assignedCityIds || current.data().assignedCityIds) }));
+    if (card.exists && !card.data().deletedAt) batch.update(cardRef, syncMarketerCard(card.data(), updated));
   }
   await batch.commit();
   return publicMarketer({ id, ...(await ref.get()).data() });
@@ -86,14 +98,14 @@ export async function updateOwnProfilePhoto(id, photo) {
     error.status = 400;
     throw error;
   }
-  const ref = firestore().collection("marketers").doc(id);
+  const ref = portalStore().collection("marketers").doc(id);
   if (!(await ref.get()).exists) return null;
   await ref.update({ profilePhoto: photo ?? FieldValue.delete() });
   return publicMarketer({ id, ...(await ref.get()).data() });
 }
 
 export async function archiveMarketer(id) {
-  const db = firestore();
+  const db = portalStore();
   const ref = db.collection("marketers").doc(id);
   const snap = await ref.get();
   if (!snap.exists) return false;
@@ -108,7 +120,7 @@ export async function archiveMarketer(id) {
 }
 
 export async function restoreMarketer(id) {
-  const db = firestore();
+  const db = portalStore();
   const oldRef = db.collection("deleted_marketers").doc(id);
   const snap = await oldRef.get();
   if (!snap.exists) return null;
@@ -125,7 +137,7 @@ export async function restoreMarketer(id) {
 }
 
 export async function deleteArchivedMarketer(id) {
-  const ref = firestore().collection("deleted_marketers").doc(id);
+  const ref = portalStore().collection("deleted_marketers").doc(id);
   if (!(await ref.get()).exists) return false;
   await ref.delete();
   return true;

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { Router } from "express";
-import { FieldValue } from "firebase-admin/firestore";
-import { firestore } from "../config/firebase.js";
+import { FieldValue } from "../config/portalStore.js";
+import { portalStore } from "../config/portalStore.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { createExpenseNewsPdf, expenseNewsRows } from "../services/expenseNewsPdf.js";
 import { pushReady, sendNewsPush } from "../services/newsPushDelivery.js";
@@ -23,11 +23,11 @@ function visibleTo(news, user) {
 
 newsRoutes.get("/", async (request, response, next) => {
   try {
-    const snapshot = await firestore().collection("news").orderBy("createdAt", "desc").limit(200).get();
+    const snapshot = await portalStore().collection("news").orderBy("createdAt", "desc").limit(200).get();
     const news = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))
       .filter((item) => visibleTo(item, request.user));
     if (request.user.role === "marketer") {
-      const reads = await firestore().collection("marketerNewsReads").doc(request.user.marketerId).collection("items").get();
+      const reads = await portalStore().collection("marketerNewsReads").doc(request.user.marketerId).collection("items").get();
       const readIds = new Set(reads.docs.map((item) => item.id));
       response.json({ news: news.map((item) => ({ ...item, read: readIds.has(item.id) })) });
     } else response.json({ news });
@@ -41,7 +41,7 @@ newsRoutes.post("/read", async (request, response, next) => {
     return response.status(400).json({ error: "Invalid news selection" });
   }
   try {
-    const db = firestore();
+    const db = portalStore();
     const uniqueIds = [...new Set(ids)];
     const documents = await Promise.all(uniqueIds.map((id) => db.collection("news").doc(id).get()));
     const batch = db.batch();
@@ -73,7 +73,7 @@ newsRoutes.post("/subscription", async (request, response, next) => {
     return response.status(400).json({ error: "Invalid push subscription" });
   }
   try {
-    await firestore().collection("pushSubscriptions").doc(subscriptionId(endpoint)).set({
+    await portalStore().collection("pushSubscriptions").doc(subscriptionId(endpoint)).set({
       marketerId: request.user.marketerId, endpoint, keys: { p256dh, auth }, updatedAt: FieldValue.serverTimestamp()
     });
     response.json({ saved: true });
@@ -85,7 +85,7 @@ newsRoutes.delete("/subscription", async (request, response, next) => {
   const endpoint = request.body?.endpoint;
   if (typeof endpoint !== "string" || !endpoint.startsWith("https://")) return response.status(400).json({ error: "Invalid subscription" });
   try {
-    const ref = firestore().collection("pushSubscriptions").doc(subscriptionId(endpoint));
+    const ref = portalStore().collection("pushSubscriptions").doc(subscriptionId(endpoint));
     const snapshot = await ref.get();
     if (snapshot.exists && snapshot.data().marketerId === request.user.marketerId) await ref.delete();
     response.json({ removed: true });
@@ -94,7 +94,7 @@ newsRoutes.delete("/subscription", async (request, response, next) => {
 
 newsRoutes.get("/schedules", requireAdmin, async (_request, response, next) => {
   try {
-    const snapshot = await firestore().collection("newsSchedules").orderBy("createdAt", "desc").limit(200).get();
+    const snapshot = await portalStore().collection("newsSchedules").orderBy("createdAt", "desc").limit(200).get();
     response.json({ schedules: snapshot.docs.map((item) => ({ id: item.id, ...item.data() })) });
   } catch (error) { next(error); }
 });
@@ -113,7 +113,7 @@ newsRoutes.post("/schedules", requireAdmin, async (request, response, next) => {
   try { nextRunAt = initialScheduleRun({ repeat, date, time }); }
   catch (error) { return response.status(400).json({ error: error.message }); }
   try {
-    const db = firestore();
+    const db = portalStore();
     const marketers = await db.collection("marketers").get();
     const all = marketers.docs.map((item) => ({ id: item.id }));
     const ids = [...new Set(selectedIds)];
@@ -135,8 +135,8 @@ newsRoutes.post("/schedules", requireAdmin, async (request, response, next) => {
 
 newsRoutes.delete("/schedules/:id", requireAdmin, async (request, response, next) => {
   try {
-    const ref = firestore().collection("newsSchedules").doc(request.params.id);
-    const result = await firestore().runTransaction(async (transaction) => {
+    const ref = portalStore().collection("newsSchedules").doc(request.params.id);
+    const result = await portalStore().runTransaction(async (transaction) => {
       const snapshot = await transaction.get(ref);
       if (!snapshot.exists) return "missing";
       if (snapshot.data().status === "sending") return "sending";
@@ -162,7 +162,7 @@ newsRoutes.post("/", requireAdmin, async (request, response, next) => {
     return response.status(400).json({ error: "Enter news text or a valid expense date range and marketer selection." });
   }
   try {
-    const db = firestore();
+    const db = portalStore();
     const marketers = await db.collection("marketers").get();
     const all = marketers.docs.map((item) => ({ id: item.id, ...item.data() }));
     const ids = [...new Set(selectedIds || [])];
@@ -213,7 +213,7 @@ newsRoutes.post("/", requireAdmin, async (request, response, next) => {
 
 newsRoutes.get("/:id/report", async (request, response, next) => {
   try {
-    const ref = firestore().collection("news").doc(request.params.id);
+    const ref = portalStore().collection("news").doc(request.params.id);
     const snapshot = await ref.get();
     if (!snapshot.exists || !visibleTo(snapshot.data(), request.user) || snapshot.data().kind !== "expense" || snapshot.data().status !== "ready") {
       return response.status(404).json({ error: "Expense report not found" });
@@ -229,7 +229,7 @@ newsRoutes.get("/:id/report", async (request, response, next) => {
       chunks.push(Buffer.from(part.data().data, "base64"));
     }
     if (request.user.role === "marketer") {
-      await firestore().collection("marketerNewsReads").doc(marketerId).collection("items").doc(request.params.id)
+      await portalStore().collection("marketerNewsReads").doc(marketerId).collection("items").doc(request.params.id)
         .set({ readAt: new Date().toISOString() });
     }
     response.set("Content-Type", "application/pdf");
@@ -240,7 +240,7 @@ newsRoutes.get("/:id/report", async (request, response, next) => {
 
 newsRoutes.patch("/:id/delete", requireAdmin, async (request, response, next) => {
   try {
-    const ref = firestore().collection("news").doc(request.params.id);
+    const ref = portalStore().collection("news").doc(request.params.id);
     if (!(await ref.get()).exists) return response.status(404).json({ error: "News not found" });
     await ref.update({ deletedAt: new Date().toISOString() });
     response.json({ deleted: true });
@@ -249,7 +249,7 @@ newsRoutes.patch("/:id/delete", requireAdmin, async (request, response, next) =>
 
 newsRoutes.patch("/:id/restore", requireAdmin, async (request, response, next) => {
   try {
-    const ref = firestore().collection("news").doc(request.params.id);
+    const ref = portalStore().collection("news").doc(request.params.id);
     if (!(await ref.get()).exists) return response.status(404).json({ error: "News not found" });
     await ref.update({ deletedAt: null });
     response.json({ restored: true });

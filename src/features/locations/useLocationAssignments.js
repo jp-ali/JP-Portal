@@ -1,7 +1,7 @@
 import { confirmAction, showNotice as alert } from "../../ui/confirmDialog.js";
 import { useState } from "react";
-import { deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { db } from "../../services/firebase";
+import { deleteDoc, doc, serverTimestamp, setDoc } from "../../services/dataGateway.js";
+import { db } from "../../services/dataGateway.js";
 import { getSession } from "../../services/authApi";
 import { normalizeEntityName, makeCityId, makeAreaId, makeSchoolId } from "../../domain/catalog.js";
 
@@ -191,7 +191,7 @@ const city = citiesList.find(c => c.id === cityId);
 if (city) {
 readCachedAreasForCity(city.id);
 fetchAreasForCity(city.id).then((rows) => {
-if (!rows.length || Number(city.areaCatalogVersion || 0) < 8) {
+if (!rows.length) {
 syncAreasForCityFromOpenStreetMap(city, false);
 }
 }).catch(() => {});

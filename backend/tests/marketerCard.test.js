@@ -34,6 +34,14 @@ test("marketer city syncs with the card while other details remain", () => {
   assert.doesNotThrow(() => validateCard({ template: admin, values: admin.values }));
 });
 
+test("explicit card city appears only when selected", () => {
+  const marketer = { name: "Ali", cardCity: "Faisalabad", showCardCity: false };
+  const card = defaultMarketerCard("marketer123", marketer);
+  assert.equal(card.values.assignedCity, "");
+  assert.equal(syncMarketerCard(card, { ...marketer, showCardCity: true }).values.assignedCity, "Faisalabad");
+  assert.equal(syncMarketerCard(card, { ...marketer, showCardCity: false }).values.assignedCity, "");
+});
+
 test("marketer card changes can move text without replacing its design or account data", () => {
   const original = defaultMarketerCard("marketer123", { name: "Ali", phone: "123" });
   const incoming = { ...original, image: "replaced", fields: original.fields.map((field) => field.id === "name" ? { ...field, x: 9, color: "#ff0000" } : field), values: { name: "Wrong" } };

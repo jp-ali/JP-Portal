@@ -1,7 +1,7 @@
 import { confirmAction, showNotice as alert } from "../../ui/confirmDialog.js";
 import { useRef, useState } from "react";
-import { addDoc, collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc } from "firebase/firestore";
-import { db } from "../../services/firebase";
+import { addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, updateDoc, where, writeBatch } from "../../services/dataGateway.js";
+import { db } from "../../services/dataGateway.js";
 import { getSession } from "../../services/authApi";
 import { formatActionPlanDate } from "../../domain/dates.js";
 import { mergedReportSheet } from "../../services/mergedReportSheet.js";
@@ -161,7 +161,7 @@ const flat=[];[...person.dates.entries()].forEach(([dateKey,entries])=>entries.f
 let offset=0;
 while(offset<flat.length){let available=BOTTOM-page.y;if(available<8){page=newPage();pages.push(page);available=BOTTOM-page.y;}const chunk=[];let used=0;for(let i=offset;i<flat.length;i++){const e=flat[i],p=e.item,vals=[formatTime12(p.createdAt?.toDate?p.createdAt.toDate():null),p.areaName||"N/A",p.purpose||"N/A",p.designation||"Regional Manager"],widths=[20,55,87,45],sizes=[5.4,5.5,5.5,5.4],h=Math.min(22,Math.max(8,2.8+Math.max(...vals.map((v,k)=>wrap(v,widths[k]*MM-4*MM,sizes[k]).length))*3.05));if(chunk.length&&used+h>available)break;if(!chunk.length&&h>available)break;chunk.push({...e,h});used+=h;}if(!chunk.length){page=newPage();pages.push(page);continue;}drawCell(L,page.y,8,used,personIndex+1,true,5.5,[.985,.985,.985]);drawCell(L+8,page.y,34,used,person.name,true,5.6,[.985,.985,.985]);let yy=page.y,cursor=0;while(cursor<chunk.length){const dateKey=chunk[cursor].dateKey;let end=cursor,dateH=0;while(end<chunk.length&&chunk[end].dateKey===dateKey){dateH+=chunk[end].h;end++;}drawCell(L+42,yy,26,dateH,formatActionPlanDate(dateKey),true,5.3,[.985,.985,.985]);for(let i=cursor;i<end;i++){const e=chunk[i],p=e.item,fill=(i-cursor)%2?[.995,.995,.995]:null;let x=L+68;drawCell(x,yy,8,e.h,e.serial,false,5.3,fill);x+=8;drawCell(x,yy,20,e.h,formatTime12(p.createdAt?.toDate?p.createdAt.toDate():null),false,5.3,fill);x+=20;drawCell(x,yy,55,e.h,p.areaName||"N/A",false,5.5,fill);x+=55;drawCell(x,yy,87,e.h,p.purpose||"N/A",false,5.5,fill);x+=87;drawCell(x,yy,45,e.h,p.designation||"Regional Manager",false,5.4,fill);yy+=e.h;}cursor=end;}page.y+=used;offset+=chunk.length;}
 });
-pages.forEach((pg,i)=>{pg.content.push(rect(L,197,R-L,10,.45,PDF_FOOTER),text(148.5,203,"Created by Ali Ashfaq",7.5,"center",true),text(10,203,"Daily Action Plan Report",6.3),text(287,203,`Page ${i+1} of ${pages.length}`,6.3,"right"));});
+pages.forEach((pg,i)=>{pg.content.push(rect(L,197,R-L,10,.45,PDF_FOOTER),text(148.5,203,"Developed by Ali Ashfaq",7.5,"center",true),text(10,203,"Daily Action Plan Report",6.3),text(287,203,`Page ${i+1} of ${pages.length}`,6.3,"right"));});
 const objs=[],add=(b)=>{objs.push(b);return objs.length;},f1=add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"),f2=add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"),cids=[],pids=[];pages.forEach(pg=>{const st=pg.content.join("\n")+"\n";cids.push(add(`<< /Length ${st.length} >>\nstream\n${st}\nendstream`));pids.push(0);});const pagesId=add("");pages.forEach((pg,i)=>{pids[i]=add(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${PW.toFixed(2)} ${PH.toFixed(2)}] /Resources << /Font << /F1 ${f1} 0 R /F2 ${f2} 0 R >> >> /Contents ${cids[i]} 0 R >>`);});objs[pagesId-1]=`<< /Type /Pages /Kids [${pids.map(id=>`${id} 0 R`).join(" ")}] /Count ${pages.length} >>`;const root=add(`<< /Type /Catalog /Pages ${pagesId} 0 R >>`);let pdf="%PDF-1.4\n%\xE2\xE3\xCF\xD3\n",offs=[0];objs.forEach((o,i)=>{offs[i+1]=pdf.length;pdf+=`${i+1} 0 obj\n${o}\nendobj\n`;});const xr=pdf.length;pdf+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`;for(let i=1;i<=objs.length;i++)pdf+=`${String(offs[i]).padStart(10,"0")} 00000 n \n`;pdf+=`trailer\n<< /Size ${objs.length+1} /Root ${root} 0 R >>\nstartxref\n${xr}\n%%EOF`;const bytes=new Uint8Array(pdf.length);for(let i=0;i<pdf.length;i++)bytes[i]=pdf.charCodeAt(i)&255;const blob=new Blob([bytes],{type:"application/pdf"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`Daily_Action_Plan_Report_${new Date().toISOString().slice(0,10)}.pdf`;a.style.display="none";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
 } catch(err){console.error("Action plan PDF error:",err);alert("Action Plan PDF could not be downloaded. Please try again.");}
 };
@@ -228,7 +228,7 @@ purposeValue: typedPurpose,
 marketerNameValue: user?.name || user?.email || "Marketer",
 designationValue: profile.designation
 });
-const actionPlanDoc = await addDoc(collection(db, "action_plans"), {
+const planData = {
 marketerId: user?.marketerId || "",
 marketerEmail: user?.email || "",
 marketerName: user?.name || user?.email || "Marketer",
@@ -243,16 +243,36 @@ whatsappGroupName: profile.whatsappGroupName,
 whatsappGroupLink: profile.whatsappGroupLink,
 message,
 createdAt: serverTimestamp()
-});
+};
 if (actionPlanDate === getTodayInputDate()) {
 const attendanceId = getAttendanceDocId(user?.marketerId, user?.email, getTodayInputDate());
-await setDoc(doc(db, "attendance", attendanceId), {
+const attendanceRef = doc(db, "attendance", attendanceId);
+const existingPlans = await getDocs(query(collection(db, "action_plans"), where("date", "==", actionPlanDate)));
+const previousAttempt = existingPlans.docs
+  .filter((snapshot) => {
+    const row = snapshot.data();
+    const sameMarketer = row.marketerId === user?.marketerId || String(row.marketerEmail || "").toLowerCase() === String(user?.email || "").toLowerCase();
+    return sameMarketer && row.areaName === typedArea && row.purpose === typedPurpose && row.message === message;
+  })
+  .sort((left, right) => (right.data().createdAt?.toMillis?.() || 0) - (left.data().createdAt?.toMillis?.() || 0))[0];
+const actionPlanDoc = previousAttempt || doc(collection(db, "action_plans"));
+const attendanceUpdate = {
 actionPlanSent: true,
 actionPlanId: actionPlanDoc.id,
 actionPlanSentAt: serverTimestamp(),
 updatedAt: serverTimestamp()
-}, { merge: true });
+};
+if (previousAttempt) {
+await updateDoc(attendanceRef, attendanceUpdate);
+} else {
+const batch = writeBatch(db);
+batch.set(actionPlanDoc, planData);
+batch.update(attendanceRef, attendanceUpdate);
+await batch.commit();
+}
 await fetchTodayAttendance(true);
+} else {
+await addDoc(collection(db, "action_plans"), planData);
 }
 try { await copyTextToClipboard(message); } catch (_) {}
 setActionPlanShareMessage(message);

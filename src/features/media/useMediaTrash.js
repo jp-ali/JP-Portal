@@ -1,7 +1,7 @@
 import { confirmAction, showNotice as alert } from "../../ui/confirmDialog.js";
 import { useState } from "react";
-import { addDoc, collection, deleteDoc, doc, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
-import { db } from "../../services/firebase";
+import { addDoc, collection, deleteDoc, doc, getDocs, serverTimestamp, updateDoc } from "../../services/dataGateway.js";
+import { db } from "../../services/dataGateway.js";
 
 export function useMediaTrash({ user, reports, fetchAllReports, fetchMarketerReports, fetchAttendanceRecords, fetchDeletedMedia, getMarketerName }) {
 const [fullScreenImage, setFullScreenImage] = useState(null);

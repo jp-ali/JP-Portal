@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { firestore } from "../config/firebase.js";
+import { portalStore } from "../config/portalStore.js";
+import { PAKISTAN_CITY_CATALOG, makeCityId } from "../../../src/domain/catalog.js";
 
 const image = `data:image/jpeg;base64,${readFileSync(new URL("../../assets/card-blank-template.jpg", import.meta.url)).toString("base64")}`;
 export const PUBLISHER_CARD_EMAIL = "info@javedpublishers.com";
@@ -18,8 +19,9 @@ const fields = [
 export async function assignedCityText(cityIds = []) {
   const ids = [...new Set(cityIds.filter(Boolean))];
   if (ids.length !== 1) return "";
-  const snapshot = await firestore().collection("cities").doc(ids[0]).get();
-  return String(snapshot.exists ? snapshot.data().name || ids[0] : ids[0]).slice(0, 500);
+  const snapshot = await portalStore().collection("cities").doc(ids[0]).get();
+  const builtInName = PAKISTAN_CITY_CATALOG.find((name) => makeCityId(name) === ids[0]);
+  return String(snapshot.exists ? snapshot.data().name || "" : builtInName || "").slice(0, 500);
 }
 
 export function alignLegacyCardFields(cardFields = []) {
@@ -53,7 +55,7 @@ export function defaultMarketerCard(marketerId, marketer, now = new Date().toISO
       depotName: "JAVED PUBLISHERS",
       name: marketer.name || "Marketer",
       designation: marketer.designation || "Marketing Coordinator",
-      assignedCity: marketer.assignedCity || "",
+      assignedCity: marketer.showCardCity === true ? marketer.cardCity || "" : marketer.showCardCity === false ? "" : marketer.assignedCity || "",
       phone: marketer.phone || "",
       email: PUBLISHER_CARD_EMAIL,
       website: "javedpublishers.com",
@@ -75,14 +77,14 @@ export function syncMarketerCard(card, marketer, now = new Date().toISOString())
       phone: marketer.phone || card.values?.phone || "",
       email: PUBLISHER_CARD_EMAIL,
       designation: marketer.designation || card.values?.designation || "Marketing Coordinator",
-      assignedCity: card.manualCardCity || marketer.assignedCity || ""
+      assignedCity: marketer.showCardCity === true ? marketer.cardCity || "" : marketer.showCardCity === false ? "" : card.manualCardCity || marketer.assignedCity || ""
     },
     updatedAt: now
   };
 }
 
 export async function getOrCreateMarketerCard(marketerId) {
-  const db = firestore();
+  const db = portalStore();
   const marketerRef = db.collection("marketers").doc(marketerId);
   const cardRef = db.collection("savedCards").doc(marketerId);
   const [marketerSnapshot, cardSnapshot] = await Promise.all([marketerRef.get(), cardRef.get()]);
@@ -106,14 +108,18 @@ export async function getOrCreateMarketerCard(marketerId) {
   if (!result) return null;
   const cityIds = [...new Set((marketerSnapshot.data().assignedCityIds || []).filter(Boolean))];
   const cityIdsUnchanged = JSON.stringify(cityIds) === JSON.stringify(result.syncedAssignedCityIds);
-  const city = (result.manualCardCity || cityIdsUnchanged)
-    ? result.values?.assignedCity || ""
-    : await assignedCityText(cityIds);
+  const explicitCityChoice = typeof marketerSnapshot.data().showCardCity === "boolean";
+  const savedCityLooksLikeId = cityIds.includes(result.values?.assignedCity);
+  const city = explicitCityChoice
+    ? (marketerSnapshot.data().showCardCity ? marketerSnapshot.data().cardCity || "" : "")
+    : (result.manualCardCity || (cityIdsUnchanged && !savedCityLooksLikeId))
+      ? result.values?.assignedCity || ""
+      : await assignedCityText(cityIds);
   const additions = {};
   const updatedFields = alignMarketerHeaderFields(alignLegacyCardFields((result.fields || []).map((field) => field.id === "assignedArea" ? { ...field, id: "assignedCity", label: "City" } : field)));
   if (!updatedFields.some((field) => field.id === "assignedCity")) updatedFields.push({ ...fields.find((field) => field.id === "assignedCity") });
   if (JSON.stringify(updatedFields) !== JSON.stringify(result.fields)) additions.fields = updatedFields;
-  const updatedValues = { ...result.values, depotName: "JAVED PUBLISHERS", assignedCity: result.manualCardCity || city, email: PUBLISHER_CARD_EMAIL, address: correctCardAddress(result.values?.address) };
+  const updatedValues = { ...result.values, depotName: "JAVED PUBLISHERS", assignedCity: explicitCityChoice ? city : result.manualCardCity || city, email: PUBLISHER_CARD_EMAIL, address: correctCardAddress(result.values?.address) };
   delete updatedValues.assignedArea;
   if (JSON.stringify(updatedValues) !== JSON.stringify(result.values)) additions.values = updatedValues;
   if (!cityIdsUnchanged) additions.syncedAssignedCityIds = cityIds;

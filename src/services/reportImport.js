@@ -1,4 +1,5 @@
 import { columnsFromHeadings, reportColumns, rowValue } from "../domain/customReportSchema.js";
+import { schoolWiseVisitPdfMatrix } from "./schoolWiseVisitPdf.js";
 
 const text = (value) => String(value ?? "").trim();
 const headingWords = /\b(date|name|city|area|phone|number|mobile|institute|school|company|remarks|marketer|contact|address|time|session|purpose|strength|branches)\b/i;
@@ -112,25 +113,90 @@ export function pdfPagesToImportPreview(pages, filename = "") {
   return matrixToImportPreview(matrix, filename);
 }
 
-async function readPdf(file) {
+async function readPdf(file, canvasFactory) {
   const [pdfjs, worker] = await Promise.all([import("pdfjs-dist/legacy/build/pdf.mjs"), import("pdfjs-dist/legacy/build/pdf.worker.min.mjs?url")]);
-  pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
-  const document = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-  if (document.numPages > 30) throw new Error("Import PDFs of up to 30 pages. Split larger files first.");
+  if (typeof worker.default === "string") pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+  const loadingTask = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  const document = await loadingTask.promise;
+  if (document.numPages > 100) {
+    await loadingTask.destroy();
+    throw new Error("Import PDFs of up to 100 pages. Split larger files first.");
+  }
   const pages = [];
+  let scannedPage = false;
   for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
     const page = await document.getPage(pageNumber);
-    pages.push(pdfLines((await page.getTextContent()).items));
+    const items = (await page.getTextContent()).items;
+    if (items.filter((item) => text(item.str)).length < 4) scannedPage = true;
+    pages.push(pdfLines(items));
   }
-  return pdfPagesToImportPreview(pages, file.name);
+  const schoolWiseMatrix = schoolWiseVisitPdfMatrix(pages);
+  if (schoolWiseMatrix) {
+    const preview = matrixToImportPreview(schoolWiseMatrix, file.name);
+    await loadingTask.destroy();
+    return preview;
+  }
+  if (!scannedPage) {
+    try {
+      const preview = pdfPagesToImportPreview(pages, file.name);
+      await loadingTask.destroy();
+      return preview;
+    }
+    catch { /* Some PDFs contain a text layer without usable table cells. Read their rendered pages instead. */ }
+  }
+  const [{ createWorker }, { imageTsvToMatrix, ocrMatrixToPreview }] = await Promise.all([import("tesseract.js"), import("./imageReportOcr.js")]);
+  const ocrWorker = await createWorker("eng");
+  const matrices = [];
+  let reference = null;
+  try {
+    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
+      const page = await document.getPage(pageNumber);
+      const baseViewport = page.getViewport({ scale: 1 });
+      const viewport = page.getViewport({ scale: Math.min(2, 2200 / Math.max(baseViewport.width, baseViewport.height)) });
+      const canvas = canvasFactory ? canvasFactory() : globalThis.document.createElement("canvas");
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+      const ocrInput = typeof canvas.toBuffer === "function" ? canvas.toBuffer("image/png") : canvas;
+      const { data } = await ocrWorker.recognize(ocrInput, {}, { tsv: true });
+      canvas.width = 0;
+      canvas.height = 0;
+      try {
+        const matrix = imageTsvToMatrix(data.tsv, reference);
+        if (!reference && matrix[0].length > 1 && matrix.columnBoundaries?.length) reference = { headings: matrix[0], boundaries: matrix.columnBoundaries };
+        matrices.push(matrix);
+      } catch (error) {
+        if (!/No readable text/.test(error.message)) throw error;
+      }
+    }
+  } finally {
+    await ocrWorker.terminate();
+    await loadingTask.destroy();
+  }
+  if (!matrices.length) throw new Error("No readable text was found in this PDF. Try a clearer scan.");
+  const primary = matrices.find((matrix) => matrix[0].length > 1) || matrices[0];
+  const headings = primary[0];
+  const combined = [headings];
+  for (const matrix of matrices) {
+    const sameHeadings = matrix[0].length === headings.length && matrix[0].every((label, index) => label.toLowerCase() === headings[index].toLowerCase());
+    const rows = matrix.slice(1);
+    if (sameHeadings || matrix[0].length === headings.length) combined.push(...rows);
+    else if (headings.length === 1) combined.push(...rows.map((row) => [row.join(" ")]));
+    else combined.push(...rows.map((row) => [row.join(" "), ...Array(headings.length - 1).fill("")]));
+  }
+  return ocrMatrixToPreview(combined, file.name);
 }
 
-export async function readImportFile(file) {
-  if (!file) throw new Error("Choose a PDF or Excel file.");
-  if (file.size > 12 * 1024 * 1024) throw new Error("Choose a file under 12 MB.");
-  if (/\.pdf$/i.test(file.name)) return readPdf(file);
+export async function readImportFile(file, { canvasFactory } = {}) {
+  if (!file) throw new Error("Choose a PDF, spreadsheet or picture.");
+  if (file.size > 25 * 1024 * 1024) throw new Error("Choose a file under 25 MB.");
+  if (/\.pdf$/i.test(file.name)) return readPdf(file, canvasFactory);
   if (/\.(xlsx|xls|xlsm|csv|tsv|ods)$/i.test(file.name)) return readExcel(file);
-  throw new Error("Choose a PDF, Excel, CSV, TSV or ODS file.");
+  if (/\.(png|jpe?g|webp|bmp|gif|pbm|tiff?|heic|heif|avif)$/i.test(file.name) || /^image\//i.test(file.type)) {
+    const { readImageReport } = await import("./imageReportOcr.js");
+    return readImageReport(file);
+  }
+  throw new Error("Choose a PDF, spreadsheet or picture file.");
 }
 
 export function buildImportPayload(preview, selectedIndices, title, reportDate) {

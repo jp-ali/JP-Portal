@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { firestore } from "../config/firebase.js";
+import { portalStore } from "../config/portalStore.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 
 export const cardTemplateRoutes = Router();
 cardTemplateRoutes.use(requireAuth, requireAdmin);
 
-const template = () => firestore().collection("cardTemplates").doc("admin-default");
+const template = () => portalStore().collection("cardTemplates").doc("admin-default");
 const validColor = (value) => /^#[0-9a-fA-F]{6}$/.test(value);
 
 export function validateCardTemplate(body) {

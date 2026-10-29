@@ -9,12 +9,13 @@ import { customReportRoutes } from "./routes/customReportRoutes.js";
 import { cardTemplateRoutes } from "./routes/cardTemplateRoutes.js";
 import { cardRoutes } from "./routes/cardRoutes.js";
 import { newsRoutes } from "./routes/newsRoutes.js";
+import { dataRoutes } from "./routes/dataRoutes.js";
 
 export const app = express();
 
 app.disable("x-powered-by");
 app.set("trust proxy", "loopback");
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "15mb" }));
 app.use((request, response, next) => {
   if (!["GET", "HEAD", "OPTIONS"].includes(request.method)) {
     const origin = request.get("origin");
@@ -45,6 +46,7 @@ app.use("/api/custom-reports", customReportRoutes);
 app.use("/api/card-template", cardTemplateRoutes);
 app.use("/api/cards", cardRoutes);
 app.use("/api/news", newsRoutes);
+app.use("/api/data", dataRoutes);
 
 const frontendDirectory = fileURLToPath(new URL("../../dist/", import.meta.url));
 const frontendIndex = fileURLToPath(new URL("../../dist/index.html", import.meta.url));
@@ -61,6 +63,8 @@ app.use((error, _request, response, _next) => {
     return response.status(400).json({ error: "Invalid JSON request body" });
   }
   if (error.status === 400) return response.status(400).json({ error: error.message });
+  if (error.status === 413) return response.status(413).json({ error: "File or image is too large for one request" });
+  if (error.status === 404) return response.status(404).json({ error: error.message });
   if (error.status === 503) return response.status(503).json({ error: error.message });
   console.error("Unhandled API error", error);
   return response.status(500).json({ error: "Internal server error" });

@@ -43,6 +43,7 @@
 .other-report-import-sample table { width:100%; border-collapse:collapse; font-size:11px; }
 .other-report-import-sample th { position:sticky; top:0; padding:9px; background:#7a0f2b; color:#fff; text-align:left; white-space:nowrap; }
 .other-report-import-sample td { padding:8px 9px; border-top:1px solid #efdee3; max-width:280px; overflow-wrap:anywhere; }
+.other-report-import-sample td input { width:100%; min-width:90px; box-sizing:border-box; padding:6px 8px; border:1px solid #decbd0; border-radius:6px; background:#fff; color:#3b2329; font:inherit; }
 .other-report-import > button[type=submit] { justify-self:start; }
 .other-reports-add input, .other-report-filters input, .other-report-filters select, .other-report-date input, .other-report-quick textarea { min-height:39px; padding:8px 10px; border:1px solid #decbd0; border-radius:9px; background:#fff; font:inherit; color:#3b2329; }
 .other-reports-add input { flex:1; min-width:0; }

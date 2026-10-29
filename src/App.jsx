@@ -38,6 +38,7 @@ export default function App() {
   const [loginPending, setLoginPending] = useState(false);
   const [online, setOnline] = useState(() => navigator.onLine);
   const [offlineMode, setOfflineMode] = useState(false);
+  const [offlineDismissed, setOfflineDismissed] = useState(false);
   const [offlineProfile, setOfflineProfile] = useState(cachedMarketer);
   const [syncState, setSyncState] = useState({ pending: 0, busy: false, message: "" });
   const syncing = useRef(null);
@@ -107,7 +108,13 @@ export default function App() {
     }, 3500);
     getSession()
       .then((user) => { window.clearTimeout(slowSession); if (active && !skipSessionRestore.current) setSession((current) => current.user ? current : { loading: false, user }); })
-      .catch(() => { window.clearTimeout(slowSession); if (active && !skipSessionRestore.current) setSession((current) => current.user ? current : { loading: false, user: null }); });
+      .catch(() => {
+        window.clearTimeout(slowSession);
+        if (active && !skipSessionRestore.current) {
+          setSession((current) => current.user ? current : { loading: false, user: null });
+          if (cachedMarketer()) setOfflineMode(true);
+        }
+      });
     return () => { active = false; window.clearTimeout(slowSession); };
   }, [online]);
 
@@ -122,6 +129,7 @@ export default function App() {
       skipSessionRestore.current = false;
       setSession({ loading: false, user });
       setOfflineMode(false);
+      setOfflineDismissed(false);
       preloadPortal().catch(() => {});
     } catch (failure) {
       setError(failure.message || "Login failed");
@@ -148,10 +156,11 @@ export default function App() {
   const backFromOffline = () => {
     skipSessionRestore.current = true;
     setOfflineMode(false);
+    setOfflineDismissed(true);
     setSession({ loading: false, user: null });
     if (online && session.user) logout().catch((failure) => console.warn("Offline exit sign out failed:", failure));
   };
-  const offlineActive = (!online && session.user?.role === "marketer") || offlineMode;
+  const offlineActive = offlineMode || (!online && !offlineDismissed && (session.user?.role === "marketer" || offlineProfile));
   useEffect(() => {
     if (!offlineActive) return;
     if (!window.history.state?.jpOfflineVisitGuard) window.history.pushState({ ...window.history.state, jpOfflineVisitGuard: true }, "", window.location.href);
@@ -179,6 +188,6 @@ export default function App() {
     handleLogin, identifier, inputStyle, loginPending, password, preloadPortal,
     renderBackgroundStationary, renderResponsiveStyles,
     setIdentifier, setPassword, setShowPassword, showPassword,
-    onWorkOffline: () => setOfflineMode(true), online
+    onWorkOffline: () => { setOfflineDismissed(false); setOfflineMode(true); }, online
   }} />;
 }

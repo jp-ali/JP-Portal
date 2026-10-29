@@ -24,7 +24,7 @@ function readPhoto(file) {
         const scale = Math.min(1, 1600 / Math.max(picture.naturalWidth, picture.naturalHeight));
         canvas.width = Math.max(1, Math.round(picture.naturalWidth * scale));
         canvas.height = Math.max(1, Math.round(picture.naturalHeight * scale));
-        canvas.getContext("2d").drawImage(picture, 0, 0);
+        canvas.getContext("2d").drawImage(picture, 0, 0, canvas.width, canvas.height);
         resolve(compressCanvasToTargetDataUrl(canvas, 140 * 1024, 1100, 0.7));
       } catch (error) { reject(error); }
       finally { URL.revokeObjectURL(url); }

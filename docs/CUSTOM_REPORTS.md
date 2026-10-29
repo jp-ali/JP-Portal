@@ -4,7 +4,7 @@
 
 1. In the project root, run `npm install` and then `npm run dev`.
 2. In a second terminal, run `cd backend`, `npm install`, and `npm run dev`.
-3. Keep the existing `backend/.env` values for `SESSION_SECRET`, admin credentials, and Firebase server credentials. No new environment variables or Firestore indexes are required.
+3. Keep the existing `backend/.env` values for `DATABASE_URL`, `SESSION_SECRET`, and admin credentials. Run PostgreSQL migrations before starting the API.
 4. Sign in as an admin. The dashboard now has **Other Reports**. Choose **Add Report**, enter a name, and create it. Its date defaults to today and can be edited.
 5. Choose **Add Row** for manual entry or **Quick Add** to paste labeled contact details. Edit any cell directly; changes save when the field loses focus. Use Search, City, and Remarks filters, then Expand, Excel, or PDF as needed.
 6. Open **Verification Calls** from the dashboard or sidebar. **School Visits** is first and opens the existing verification table. Every custom report created in Other Reports also appears here.

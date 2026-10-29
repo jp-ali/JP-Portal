@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { firestore } from "../config/firebase.js";
+import { portalStore } from "../config/portalStore.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { validateCardTemplate } from "./cardTemplateRoutes.js";
 import { convertCardsToCdr } from "../services/cardCdrExport.js";
@@ -13,7 +13,7 @@ cardRoutes.get("/me", requireAuth, async (request, response, next) => {
 });
 cardRoutes.get("/admin-card", requireAuth, async (_request, response, next) => {
   try {
-    const ref = firestore().collection("savedCards").doc("admincard");
+    const ref = portalStore().collection("savedCards").doc("admincard");
     const snapshot = await ref.get();
     if (snapshot.exists && !snapshot.data().deletedAt) {
       const card = snapshot.data();
@@ -31,7 +31,7 @@ cardRoutes.get("/admin-card", requireAuth, async (_request, response, next) => {
   } catch (error) { next(error); }
 });
 cardRoutes.use(requireAuth, requireAdmin);
-const cards = () => firestore().collection("savedCards");
+const cards = () => portalStore().collection("savedCards");
 const summary = (snapshot) => {
   const { image, ...data } = snapshot.data();
   return { id: snapshot.id, ...data, values: { ...data.values, email: data.marketerId ? PUBLISHER_CARD_EMAIL : data.values?.email, address: correctCardAddress(data.values?.address) } };

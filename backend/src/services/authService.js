@@ -1,8 +1,8 @@
-import bcrypt from "bcryptjs";
-import { findMarketerById, findMarketerByIdentifier, migrateLegacyPassword } from "../models/marketerModel.js";
-import { firestore } from "../config/firebase.js";
+import { findMarketerById, findMarketerByIdentifier } from "../models/marketerModel.js";
+import { portalStore } from "../config/portalStore.js";
+import { verifyPassword } from "./passwordVerifier.js";
 
-const adminPhotoRef = () => firestore().collection("admin_profiles").doc("primary");
+const adminPhotoRef = () => portalStore().collection("admin_profiles").doc("primary");
 
 export async function getAdminProfilePhoto() {
   const snapshot = await adminPhotoRef().get();
@@ -37,23 +37,17 @@ export function marketerProfile(record) {
   };
 }
 
-export async function authenticate(identifier, password, repository = { findMarketerByIdentifier, migrateLegacyPassword }) {
+export async function authenticate(identifier, password, repository = { findMarketerByIdentifier }) {
   const email = process.env.ADMIN_EMAIL || "admin@portal.com";
   if (identifier === email) {
     const hash = process.env.ADMIN_PASSWORD_HASH;
     if (!hash) throw new Error("ADMIN_PASSWORD_HASH is not configured");
-    if (!(await bcrypt.compare(password, hash))) return null;
+    if (!(await verifyPassword(password, hash))) return null;
     return { claims: { sub: "admin", role: "admin" }, profile: { email, name: process.env.ADMIN_NAME || "Muhammad Ali Ashfaq", role: "admin" } };
   }
   const marketer = await repository.findMarketerByIdentifier(identifier);
   if (!marketer) return null;
-  let valid = false;
-  if (marketer.passwordHash) valid = await bcrypt.compare(password, marketer.passwordHash);
-  else if (typeof marketer.password === "string") valid = marketer.password === password;
-  if (!valid) return null;
-  if (!marketer.passwordHash && process.env.ENABLE_LEGACY_PASSWORD_MIGRATION === "true") {
-    await repository.migrateLegacyPassword(marketer.id, await bcrypt.hash(password, 12));
-  }
+  if (!marketer.passwordHash || !(await verifyPassword(password, marketer.passwordHash))) return null;
   return { claims: { sub: marketer.id, role: "marketer" }, profile: marketerProfile(marketer) };
 }
 

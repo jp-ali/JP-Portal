@@ -10,7 +10,8 @@ function offlinePrecache() {
     async closeBundle() {
       const dist = join(process.cwd(), 'dist')
       const assets = await readdir(join(dist, 'assets'))
-      const entry = assets.find((file) => /^index-[\w-]+\.js$/.test(file))
+      const html = await readFile(join(dist, 'index.html'), 'utf8')
+      const entry = html.match(/<script\b[^>]*\bsrc="[^"]*\/assets\/(index-[\w-]+\.js)"/)?.[1]
       if (!entry) throw new Error('Missing PWA entry bundle')
       // Offline Add Visit lives in the entry bundle. Keep installation small;
       // other portal chunks are cached when opened online.

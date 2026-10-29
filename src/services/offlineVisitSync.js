@@ -1,5 +1,5 @@
-import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from "firebase/firestore";
-import { db } from "./firebase.js";
+import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from "./dataGateway.js";
+import { db } from "./dataGateway.js";
 import { makeAreaId, makeCityId, makeSchoolId, normalizeEntityName } from "../domain/catalog.js";
 import { listOfflineVisits, removeOfflineVisit } from "./offlineVisitStore.js";
 

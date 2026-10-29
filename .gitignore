@@ -3,4 +3,5 @@ backend/node_modules/
 dist/
 .env
 backend/.env
+backend/backups/
 *.log

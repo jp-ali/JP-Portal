@@ -35,7 +35,7 @@ throw new Error("Unable to reach map service quickly. The saved catalog will sti
 
 export const resolvePakistanCityFromNominatim = async (cityName) => {
 const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=pk&addressdetails=1&namedetails=1&limit=8&q=${encodeURIComponent(`${cityName}, Pakistan`)}`;
-const response = await fetch(url, { headers: { "Accept-Language": "en" } });
+const response = await fetch(url, { headers: { "Accept-Language": "en" }, signal: AbortSignal.timeout(12000) });
 if (!response.ok) throw new Error(`Location lookup returned ${response.status}`);
 const results = await response.json();
 if (!Array.isArray(results) || !results.length) throw new Error(`Could not locate ${cityName} in Pakistan.`);
@@ -76,7 +76,7 @@ return [...unique.values()].sort((a, b) => a.name.localeCompare(b.name));
 
 export const resolvePakistanAreaFromNominatim = async (area, city) => {
 const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=pk&addressdetails=1&namedetails=1&limit=8&q=${encodeURIComponent(`${area.name}, ${city.name}, Pakistan`)}`;
-const response = await fetch(url, { headers: { "Accept-Language": "en" } });
+const response = await fetch(url, { headers: { "Accept-Language": "en" }, signal: AbortSignal.timeout(12000) });
 if (!response.ok) throw new Error(`Area lookup returned ${response.status}`);
 const results = await response.json();
 if (!Array.isArray(results) || !results.length) throw new Error(`Could not locate ${area.name}, ${city.name}.`);

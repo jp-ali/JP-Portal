@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, where, writeBatch } from "firebase/firestore";
-import { db } from "../../services/firebase";
+import { collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, where, writeBatch } from "../../services/dataGateway.js";
+import { db } from "../../services/dataGateway.js";
 import { PAKISTAN_CITY_CATALOG, PAKISTAN_CITY_DATA_URL, normalizeEntityName, makeCityId, makeAreaId, makeSchoolId } from "../../domain/catalog.js";
 import { fetchOverpassJson, resolvePakistanCityFromNominatim, extractAreaRecords, resolvePakistanAreaFromNominatim, extractSchoolRecords, buildSchoolQuery } from "../../services/openStreetMap.js";
 
@@ -145,11 +145,11 @@ const baseRows = getLightBaseCities().filter((c) => ids.includes(c.id));
 if (baseRows.length) mergeCitiesIntoState(baseRows);
 try {
 const snaps = await Promise.all(ids.map((id) => getDoc(doc(db, "cities", id))));
-const firestoreRows = snaps
+const storedRows = snaps
 .filter((snap) => snap.exists())
 .map((snap) => ({ id: snap.id, ...snap.data() }));
 const map = new Map(baseRows.map((c) => [c.id, c]));
-firestoreRows.forEach((c) => map.set(c.id, { ...map.get(c.id), ...c }));
+storedRows.forEach((c) => map.set(c.id, { ...map.get(c.id), ...c }));
 const rows = [...map.values()];
 mergeCitiesIntoState(rows);
 return rows;
@@ -424,7 +424,10 @@ catch (err) { console.warn("City bounding-box area lookup failed.", err); }
 }
 }
 const discovered = extractAreaRecords(allElements, city);
-if (!discovered.length) return existingForCity;
+if (!discovered.length) {
+setAreaSyncMessage("No mapped areas found. Add the missing area below.");
+return existingForCity;
+}
 await writeDocsInChunks("areas", discovered.map((area) => ({
 area,
 data: {
@@ -455,13 +458,15 @@ resolvedLon: Number(resolved?.lon ?? city.resolvedLon ?? city.lon) || null
 };
 await setDoc(doc(db, "cities", city.id), cityPatch, { merge: true });
 setCitiesList((prev) => prev.map((c) => c.id === city.id ? { ...c, ...cityPatch, areaCatalogVersion: 8 } : c));
-return await fetchAreasForCity(city.id);
+const loaded = await fetchAreasForCity(city.id);
+setAreaSyncMessage(`${loaded.length} areas ready for ${city.name}.`);
+return loaded;
 } catch (err) {
 console.error("Area map sync error:", err);
+setAreaSyncMessage("Map lookup failed. Add the missing area below.");
 return existingForCity;
 } finally {
 setAreaSyncingCityId((current) => current === city.id ? "" : current);
-setAreaSyncMessage("");
 }
 })();
 areaSyncPromiseRef.current.set(city.id, task);

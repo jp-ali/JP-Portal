@@ -1,5 +1,5 @@
 import { authenticate, getAdminProfilePhoto, updateAdminProfilePhoto } from "../services/authService.js";
-import { clearSessionCookie, createSession, setSessionCookie } from "../services/session.js";
+import { createJwtSession, revokeJwtSession, setSessionCookie, clearSessionCookie, readSessionCookie } from "../services/jwtSession.js";
 
 export async function login(request, response, next) {
   try {
@@ -9,7 +9,7 @@ export async function login(request, response, next) {
     }
     const result = await authenticate(identifier.trim(), password);
     if (!result) return response.status(401).json({ error: "Invalid email/phone or password" });
-    setSessionCookie(response, createSession(result.claims, process.env.SESSION_SECRET), result.claims.role);
+    setSessionCookie(response, await createJwtSession(result.claims));
     return response.json({ user: result.profile });
   } catch (error) {
     next(error);
@@ -20,8 +20,11 @@ export function me(request, response) {
   response.json({ user: request.user });
 }
 
-export function logout(_request, response) {
-  clearSessionCookie(response);
+export async function logout(request, response, next) {
+  try {
+    await revokeJwtSession(readSessionCookie(request));
+    clearSessionCookie(response);
+  } catch (error) { return next(error); }
   response.status(204).end();
 }
 

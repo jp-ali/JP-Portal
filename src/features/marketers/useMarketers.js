@@ -6,9 +6,12 @@ export function useMarketers({ user, fetchCitiesByIds, fetchAreasForCities, fetc
 const [marketerName, setMarketerName] = useState("");
 const [marketerPhone, setMarketerPhone] = useState("");
 const [marketerEmail, setMarketerEmail] = useState("");
+const [marketerCnic, setMarketerCnic] = useState("");
 const [marketerPass, setMarketerPass] = useState("");
 const [marketerDesignation, setMarketerDesignation] = useState("");
 const [marketerAssignedKms, setMarketerAssignedKms] = useState("");
+const [cardCity, setCardCity] = useState("");
+const [showCardCity, setShowCardCity] = useState(false);
 const [subordinateMarketerIds, setSubordinateMarketerIds] = useState([]);
 const [subordinatePickerOpen, setSubordinatePickerOpen] = useState(false);
 const [subordinateSearch, setSubordinateSearch] = useState("");
@@ -98,6 +101,10 @@ return [];
 const handleSaveMarketer = async (e) => {
 e.preventDefault();
 try {
+if (showCardCity && !cardCity.trim()) {
+alert("Enter the city to show on the card, or untick the box.");
+return;
+}
 const { safeCityIds, safeAreaIds } = getValidMarketerAssignments();
 if (!safeCityIds.length) {
 alert("Please assign at least one city to this marketer.");
@@ -118,9 +125,12 @@ const marketerPayload = {
 name: marketerName,
 phone: marketerPhone,
 email: marketerEmail,
+cnic: marketerCnic.trim(),
 password: marketerPass,
 designation: marketerDesignation.trim(),
 assignedKms: assignedKmsValue,
+cardCity: cardCity.trim(),
+showCardCity,
 whatsappGroupName: marketerWhatsappGroupName,
 whatsappGroupLink: marketerWhatsappGroupLink,
 ...assignmentPayload
@@ -140,9 +150,12 @@ alert("New marketer account created with assignments successfully!");
 setMarketerName("");
 setMarketerPhone("");
 setMarketerEmail("");
+setMarketerCnic("");
 setMarketerPass("");
 setMarketerDesignation("");
 setMarketerAssignedKms("");
+setCardCity("");
+setShowCardCity(false);
 setSubordinateMarketerIds([]);
 setSubordinatePickerOpen(false);
 setSubordinateSearch("");
@@ -166,9 +179,12 @@ setEditingId(m.id);
 setMarketerName(m.name || "");
 setMarketerPhone(m.phone || "");
 setMarketerEmail(m.email || "");
+setMarketerCnic(m.cnic || "");
 setMarketerPass("");
 setMarketerDesignation(m.designation || "");
 setMarketerAssignedKms(m.assignedKms ? String(m.assignedKms) : "");
+setCardCity(m.cardCity || "");
+setShowCardCity(m.showCardCity === true);
 setSubordinateMarketerIds(Array.isArray(m.subordinateMarketerIds) ? m.subordinateMarketerIds.filter((id) => id !== m.id) : []);
 setSubordinatePickerOpen(false);
 setSubordinateSearch("");
@@ -248,5 +264,5 @@ alert(`${succeeded} marketer(s) ${action === "archive" ? "moved to Old Marketers
 }
 return succeeded === unique.length;
 };
-return { marketerName, setMarketerName, marketerPhone, setMarketerPhone, marketerEmail, setMarketerEmail, marketerPass, setMarketerPass, marketerDesignation, setMarketerDesignation, marketerAssignedKms, setMarketerAssignedKms, subordinateMarketerIds, setSubordinateMarketerIds, subordinatePickerOpen, setSubordinatePickerOpen, subordinateSearch, setSubordinateSearch, marketerWhatsappGroupName, setMarketerWhatsappGroupName, marketerWhatsappGroupLink, setMarketerWhatsappGroupLink, marketersList, setMarketersList, deletedMarketersList, setDeletedMarketersList, editingId, setEditingId, editingReturnToMarketerDetails, setEditingReturnToMarketerDetails, fetchMarketers, fetchMarketersByIds, getAccessibleVisitMarketers, fetchDeletedMarketers, handleSaveMarketer, handleEditMarketer, handleDeleteMarketer, handlePermanentDeleteMarketer, handleRestoreMarketer, handleBulkMarketerAction };
+return { marketerName, setMarketerName, marketerPhone, setMarketerPhone, marketerEmail, setMarketerEmail, marketerCnic, setMarketerCnic, marketerPass, setMarketerPass, marketerDesignation, setMarketerDesignation, marketerAssignedKms, setMarketerAssignedKms, cardCity, setCardCity, showCardCity, setShowCardCity, subordinateMarketerIds, setSubordinateMarketerIds, subordinatePickerOpen, setSubordinatePickerOpen, subordinateSearch, setSubordinateSearch, marketerWhatsappGroupName, setMarketerWhatsappGroupName, marketerWhatsappGroupLink, setMarketerWhatsappGroupLink, marketersList, setMarketersList, deletedMarketersList, setDeletedMarketersList, editingId, setEditingId, editingReturnToMarketerDetails, setEditingReturnToMarketerDetails, fetchMarketers, fetchMarketersByIds, getAccessibleVisitMarketers, fetchDeletedMarketers, handleSaveMarketer, handleEditMarketer, handleDeleteMarketer, handlePermanentDeleteMarketer, handleRestoreMarketer, handleBulkMarketerAction };
 }

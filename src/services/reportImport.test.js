@@ -4,8 +4,10 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import XLSX from "xlsx-js-style";
+import { createCanvas } from "@napi-rs/canvas";
 import { buildImportPayload, matrixToImportPreview, pdfLines, pdfPagesToImportPreview, readImportFile, savedReportToImportPreview } from "./reportImport.js";
 import { buildCustomReportPdf } from "./customReportExports.js";
+import { schoolWiseVisitPdfMatrix } from "./schoolWiseVisitPdf.js";
 
 test("Excel export title and download line are skipped before importing selected columns", () => {
   const preview = matrixToImportPreview([
@@ -55,6 +57,58 @@ test("selectable PDF table text becomes importable columns and rows", async () =
   const preview = pdfPagesToImportPreview([pdfLines((await page.getTextContent()).items)], "contacts.pdf");
   assert.deepEqual(preview.headings.map((item) => item.label), ["Name", "City", "Number"]);
   assert.deepEqual(preview.rows[0].slice(0, 3), ["Ali", "Lahore", "03001234567"]);
+});
+
+test("PDF reports longer than 30 pages can be imported", async () => {
+  const pdf = new jsPDF();
+  for (let pageNumber = 1; pageNumber <= 31; pageNumber++) {
+    if (pageNumber > 1) pdf.addPage();
+    pdf.text("Name", 20, 20);
+    pdf.text("City", 90, 20);
+    pdf.text(`Person ${pageNumber}`, 20, 30);
+    pdf.text("Lahore", 90, 30);
+  }
+  const preview = await readImportFile(new File([pdf.output("arraybuffer")], "long-report.pdf", { type: "application/pdf" }));
+  assert.equal(preview.rows.length, 31);
+  assert.equal(preview.rows[30][0], "Person 31");
+});
+
+test("school-wise PDF carries school and area into each dated visit", () => {
+  const line = (...parts) => parts.map(([position, str]) => ({ str, transform: [1, 0, 0, 1, position, 100] }));
+  const pages = [[
+    line([46, "Date"], [88, "Sub#"], [115, "Visit Type"], [228, "Contact Person"], [308, "Phone No."], [365, "Strength"]),
+    line([29, "1"], [272, "Example School"]),
+    line([295, "Model Town"]),
+    line([37, "2/3/2025"], [96, "1"], [116, "FollowUp"], [176, "Online"], [225, "Principal"], [301, "923001234567"], [380, "500"], [410, "Discussed books"])
+  ], [
+    line([37, "3/4/2025"], [96, "2"], [116, "FollowUp"], [176, "Offline"], [225, "Principal"], [301, "923001234567"], [380, "500"])
+  ]];
+  const matrix = schoolWiseVisitPdfMatrix(pages);
+  assert.equal(matrix.length, 3);
+  assert.deepEqual(matrix[1].slice(0, 3), ["2025-02-03", "Example School", "Model Town"]);
+  assert.deepEqual(matrix[2].slice(0, 3), ["2025-03-04", "Example School", "Model Town"]);
+  assert.equal(matrix[1][4], "923001234567");
+});
+
+test("scanned PDF pages become one report, including a continuation page without headings", async () => {
+  const picture = (rows) => {
+    const canvas = createCanvas(1000, 360);
+    const context = canvas.getContext("2d");
+    context.fillStyle = "white";
+    context.fillRect(0, 0, 1000, 360);
+    context.fillStyle = "black";
+    context.font = "30px Arial";
+    rows.forEach((row, rowIndex) => row.forEach((value, columnIndex) => context.fillText(value, 30 + columnIndex * 310, 65 + rowIndex * 90)));
+    return canvas.toBuffer("image/png");
+  };
+  const pdf = new jsPDF();
+  pdf.addImage(picture([["Name", "City", "Phone"], ["Ali", "Lahore", "03001234567"]]), "PNG", 10, 20, 190, 69);
+  pdf.addPage();
+  pdf.addImage(picture([["Sara", "Karachi", "03007654321"]]), "PNG", 10, 20, 190, 69);
+  const preview = await readImportFile(new File([pdf.output("arraybuffer")], "scanned.pdf", { type: "application/pdf" }), { canvasFactory: () => createCanvas(1, 1) });
+  assert.equal(preview.sourceKind, "image");
+  assert.deepEqual(preview.headings.map(({ label }) => label), ["Name", "City", "Phone"]);
+  assert.deepEqual(preview.rows.map((row) => row[1]), ["Lahore", "Karachi"]);
 });
 
 test("an XLSX workbook is read from a selected file", async () => {

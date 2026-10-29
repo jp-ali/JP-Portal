@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { FieldValue } from "firebase-admin/firestore";
-import { firestore } from "../config/firebase.js";
+import { FieldValue } from "../config/portalStore.js";
+import { portalStore } from "../config/portalStore.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 
 export const customReportRoutes = Router();
 customReportRoutes.use(requireAuth, requireAdmin);
 
-const collection = () => firestore().collection("customReports");
+const collection = () => portalStore().collection("customReports");
 const defaultColumns = [
   { key: "date", label: "Date", type: "date" },
   { key: "name", label: "Name", type: "text" },
@@ -161,7 +161,7 @@ customReportRoutes.patch("/:id", async (request, response, next) => {
 customReportRoutes.post("/:id/rows", async (request, response, next) => {
   try {
     const ref = collection().doc(request.params.id);
-    const result = await firestore().runTransaction(async (transaction) => {
+    const result = await portalStore().runTransaction(async (transaction) => {
       const snapshot = await transaction.get(ref);
       if (!snapshot.exists) return { missing: true };
       const row = { id: collection().doc().id, verificationNumber: "", verificationRemark: "", verificationCustomRemark: "" };
@@ -187,7 +187,7 @@ customReportRoutes.post("/:id/rows", async (request, response, next) => {
 customReportRoutes.patch("/:id/rows/:rowId", async (request, response, next) => {
   try {
     const ref = collection().doc(request.params.id);
-    const result = await firestore().runTransaction(async (transaction) => {
+    const result = await portalStore().runTransaction(async (transaction) => {
       const snapshot = await transaction.get(ref);
       if (!snapshot.exists) return "report-missing";
       const changes = {};
@@ -217,7 +217,7 @@ customReportRoutes.patch("/:id/rows/:rowId", async (request, response, next) => 
 customReportRoutes.delete("/:id/rows/:rowId", async (request, response, next) => {
   try {
     const ref = collection().doc(request.params.id);
-    const result = await firestore().runTransaction(async (transaction) => {
+    const result = await portalStore().runTransaction(async (transaction) => {
       const snapshot = await transaction.get(ref);
       if (!snapshot.exists) return false;
       transaction.update(ref, { rows: (snapshot.data().rows || []).filter((row) => row.id !== request.params.rowId), updatedAt: new Date().toISOString() });

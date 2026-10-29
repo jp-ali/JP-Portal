@@ -459,14 +459,14 @@ style={{ width: "100%", maxHeight: "280px", borderRadius: "10px", background: "#
                         <button 
 type="button" 
 onClick={capturePhoto}
-style={{ flex: 1, padding: "10px", background: "#86132f", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
+style={{ flex: 1, padding: "10px", background: "#15803d", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
 >
                           🟢 Capture Snap
                         </button>
                         <button 
 type="button" 
 onClick={stopCamera}
-style={{ flex: 1, padding: "10px", background: "#ef4444", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
+style={{ flex: 1, padding: "10px", background: "#86132f", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
 >
                           ❌ Cancel
                         </button>

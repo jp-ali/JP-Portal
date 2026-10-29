@@ -39,7 +39,7 @@ export default function LoginPage({ context }) {
         </form>
         <button className="login-offline" type="button" onClick={onWorkOffline}>Use offline</button>
       </div>
-      <p className="login-credit">Created by Ali Ashfaq</p>
+      <p className="login-credit">Developed by Ali Ashfaq</p>
     </main>
   </div>;
 }

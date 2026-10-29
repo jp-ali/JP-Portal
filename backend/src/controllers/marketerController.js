@@ -1,7 +1,7 @@
 import { accessibleMarketers, archiveMarketer, createMarketer, deleteArchivedMarketer, listMarketers, restoreMarketer, updateMarketer, updateOwnProfilePhoto } from "../services/marketerService.js";
 
 function handle(error, next) {
-  if (/^(Invalid |Name, email|Password must|No changes)/.test(error.message)) {
+  if (/^(Invalid |Name, email|Password must|CNIC must|No changes)/.test(error.message)) {
     error.status = 400;
   }
   next(error);

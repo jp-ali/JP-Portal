@@ -111,7 +111,7 @@ export async function buildCustomReportPdf(report, rows, marketers = []) {
       const bottom = pdf.internal.pageSize.getHeight();
       pdf.setFillColor(122, 15, 43); pdf.rect(0, bottom - 31, width, 31, "F");
       pdf.setFontSize(8); pdf.setTextColor(255, 255, 255);
-      pdf.text("Created by Ali Ashfaq", width / 2, bottom - 18, { align: "center" });
+      pdf.text("Developed by Ali Ashfaq", width / 2, bottom - 18, { align: "center" });
       pdf.text(`Page ${pageNumber}`, width - 24, bottom - 18, { align: "right" });
     }
   });

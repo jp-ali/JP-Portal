@@ -4,6 +4,7 @@ import { marketerCityNames } from "../../domain/marketerCities.js";
 import MarketerPhotoControl from "../../ui/MarketerPhotoControl.jsx";
 import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
 import defaultAvatar from "../../assets/default-marketer-avatar.svg";
+import MarketerVisitImport from "../../ui/MarketerVisitImport.jsx";
 
 function MarketerDetailListCard({ marketer, citiesList, onView, onEdit, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -19,10 +20,11 @@ function MarketerDetailListCard({ marketer, citiesList, onView, onEdit, onDelete
 }
 
 export default function AdminMarketersDetailPanel() {
-  const { cardStyle, citiesList, downloadMarketersExcel, downloadMarketersPDF, fetchMarketers, handleDeleteMarketer, handleEditMarketer, inputStyle, marketerSearch, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, reportViewClass, selectedMarketerDetailBox, setAdminView, setFullScreenImage, setMarketerSearch, setMarketersList, setSelectedMarketerDetailBox, setSubordinatePickerOpen } = usePortalContext();
+  const { cardStyle, citiesList, downloadMarketersExcel, downloadMarketersPDF, fetchAllReports, fetchMarketers, handleDeleteMarketer, handleEditMarketer, inputStyle, marketerSearch, marketersList, renderExpandedReportChrome, renderMarketerPersonIcon, renderReportExpandButton, reportViewClass, selectedMarketerDetailBox, setAdminView, setFullScreenImage, setMarketerSearch, setMarketersList, setSelectedMarketerDetailBox, setSubordinatePickerOpen } = usePortalContext();
   const [selectedMarketerIds, setSelectedMarketerIds] = useState([]);
   const [selectedCityKeys, setSelectedCityKeys] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [importMarketer, setImportMarketer] = useState(null);
   const cityKeysFor = (marketer) => {
     const ids = Array.isArray(marketer.assignedCityIds) ? marketer.assignedCityIds.filter(Boolean) : [];
     if (ids.length) return ids.map((id) => `id:${String(id)}`);
@@ -125,11 +127,12 @@ return <div className="marketer-profile">
       <h2>{m.name || "Unnamed Marketer"}</h2><p>{m.designation || "Regional Manager"}</p><span className="marketer-profile-status">● Active</span>
     </aside>
     <div className="marketer-profile-content">
-      <div className="marketer-profile-heading"><h3>👤 Personal Information</h3><button type="button" onClick={() => handleEditMarketer(m)}>✎ Edit Details</button></div>
+      <div className="marketer-profile-heading"><h3>👤 Personal Information</h3><div className="marketer-profile-heading-actions"><button type="button" onClick={() => setImportMarketer(m)}>⇧ Import Visits</button><button type="button" onClick={() => handleEditMarketer(m)}>✎ Edit Details</button></div></div>
       <div className="marketer-profile-fields">
         <div className="marketer-profile-field"><span>👤</span><div><small>Name</small><strong>{m.name || "N/A"}</strong></div></div>
         <div className="marketer-profile-field"><span>📞</span><div><small>Phone</small><strong>{m.phone || "N/A"}</strong></div></div>
         <div className="marketer-profile-field"><span>✉️</span><div><small>Email</small><strong>{m.email || "N/A"}</strong></div></div>
+        <div className="marketer-profile-field"><span>▣</span><div><small>CNIC</small><strong>{m.cnic || "N/A"}</strong></div></div>
         <div className="marketer-profile-field"><span>📍</span><div><small>City</small><strong>{marketerCityNames(m, citiesList)}</strong></div></div>
         <div className="marketer-profile-field"><span>💼</span><div><small>Designation</small><strong>{m.designation || "Regional Manager"}</strong></div></div>
       </div>
@@ -143,5 +146,6 @@ return <div className="marketer-profile">
 })()
 )}
               </div>
+              {importMarketer && <MarketerVisitImport marketer={importMarketer} onClose={() => setImportMarketer(null)} onImported={() => fetchAllReports(true)} />}
             </div>);
 }

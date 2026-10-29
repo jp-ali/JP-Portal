@@ -6,15 +6,25 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "db:migrate": "node src/db/migrate.js",
+    "db:setup-local": "node src/db/setupLocal.js",
+    "db:start-local": "node src/db/localServer.js start",
+    "db:stop-local": "node src/db/localServer.js stop",
+    "db:status-local": "node src/db/localServer.js status",
+    "db:smoke-postgres": "node scripts/smokePostgresRuntime.js",
+    "db:benchmark-local": "node scripts/benchmarkLocal.js",
+    "db:backup": "node src/db/backupPostgres.js",
+    "db:restore": "node src/db/restorePostgres.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "dotenv": "^18.0.8",
     "express": "^5.3.0",
     "express-rate-limit": "^8.7.1",
-    "firebase-admin": "^14.5.0",
+    "jsonwebtoken": "^9.0.3",
     "pdfkit": "^0.17.2",
+    "pg": "^8.23.1",
     "web-push": "^3.6.7"
   }
 }

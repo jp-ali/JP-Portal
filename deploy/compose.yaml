@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: portal
+      POSTGRES_USER: portal
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portal -d portal"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  app:
+    image: ${APP_IMAGE:?set APP_IMAGE}
+    restart: unless-stopped
+    env_file:
+      - path: ./portal.env
+        format: raw
+    environment:
+      NODE_ENV: production
+      PORT: '3001'
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [internal]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN in .env}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    networks: [internal]
+
+networks:
+  internal:
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

@@ -20,10 +20,10 @@ import adminModernCss from "./styles/adminModern.css?raw";
 import portalShellCss from "./styles/portalShell.css?raw";
 import marketerCss from "./styles/marketer.css?raw";
 import React, { lazy, Suspense, useState, useRef, useEffect, useLayoutEffect } from "react";
-import { db } from "./services/firebase";
+import { db } from "./services/dataGateway.js";
 import { request } from "./services/authApi.js";
 import { cacheOfflineVisitCatalog } from "./services/offlineVisitCatalog.js";
-import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs } from "./services/dataGateway.js";
 const AdminPortal = lazy(() => import("./pages/AdminPortal.jsx"));
 const MarketerPortal = lazy(() => import("./pages/MarketerPortal.jsx"));
 export default function PortalApp({ initialUser, onLogout, onSync, syncState, online }) {
@@ -212,7 +212,7 @@ return people;
 
 const { citiesList, setCitiesList, areasList, setAreasList, schoolsList, setSchoolsList, cityCatalogSyncing, setCityCatalogSyncing, cityCatalogSyncMessage, setCityCatalogSyncMessage, areaSyncingCityId, setAreaSyncingCityId, areaSyncMessage, setAreaSyncMessage, schoolSyncingAreaId, setSchoolSyncingAreaId, schoolSyncMessage, setSchoolSyncMessage, mergeSchoolsIntoState, readCachedSchoolsForArea, mergeAreasIntoState, readCachedAreasForCity, fetchAreasForCity, fetchAreasForCities, getLightBaseCities, mergeCitiesIntoState, fetchLocationCatalog, fetchCitiesByIds, isUsableSchoolRecord, fetchSchoolsForArea, prefetchAssignedAreaSchools, ensurePakistanCitiesSeeded, syncPakistanCitiesFromOpenStreetMap, syncAreasForCityFromOpenStreetMap, syncSchoolsForAreaFromOpenStreetMap } = useLocationCatalog({ visitAreaId, visitCityId, assignmentAreaFocusId, setSchoolName, setVisitSchoolIds, setVisitSchoolLoadError, setVisitSchoolSearch, setVisitSchoolsLoading });
 const { assignedCityIds, setAssignedCityIds, assignedAreaIds, setAssignedAreaIds, assignedSchoolIds, setAssignedSchoolIds, assignmentCityFocusId, setAssignmentCityFocusId, adminCitySearch, setAdminCitySearch, adminAreaSearch, setAdminAreaSearch, adminSchoolSearch, setAdminSchoolSearch, newCityName, setNewCityName, newAreaName, setNewAreaName, newSchoolName, setNewSchoolName, adminCityAssignOpen, setAdminCityAssignOpen, adminAreaAssignOpen, setAdminAreaAssignOpen, editingVisitSchoolId, setEditingVisitSchoolId, editingVisitSchoolName, setEditingVisitSchoolName, handleAddVisitSchool, isOwnManualSchool, startEditVisitSchool, cancelEditVisitSchool, saveEditedVisitSchool, removeOwnVisitSchool, resetMarketerAssignmentForm, resetVisitAssignmentForm, getValidMarketerAssignments, toggleCityAssignment, toggleAreaAssignment, toggleSchoolAssignment, handleAddCity, handleAddArea, handleAddSchool, refreshLoggedInMarketerAssignments } = useLocationAssignments({ user, setUser, assignmentAreaFocusId, setAssignmentAreaFocusId, citiesList, areasList, schoolsList, fetchAreasForCity, fetchSchoolsForArea, mergeCitiesIntoState, readCachedAreasForCity, readCachedSchoolsForArea, syncAreasForCityFromOpenStreetMap, setAreaSyncMessage, setSchoolSyncMessage, visitAreaId, visitCityId, visitSchoolIds, setVisitAreaId, setVisitCityId, setVisitSchoolIds, setSchoolName, setVisitAddSchoolOpen, setVisitAreaPickerOpen, setVisitAreaSearch, setVisitCityPickerOpen, setVisitCitySearch, setVisitSchoolLoadError, setVisitSchoolManagerOpen, setVisitSchoolPickerOpen, setVisitSchoolSearch, setVisitSession });
-const { marketerName, setMarketerName, marketerPhone, setMarketerPhone, marketerEmail, setMarketerEmail, marketerPass, setMarketerPass, marketerDesignation, setMarketerDesignation, marketerAssignedKms, setMarketerAssignedKms, subordinateMarketerIds, setSubordinateMarketerIds, subordinatePickerOpen, setSubordinatePickerOpen, subordinateSearch, setSubordinateSearch, marketerWhatsappGroupName, setMarketerWhatsappGroupName, marketerWhatsappGroupLink, setMarketerWhatsappGroupLink, marketersList, setMarketersList, deletedMarketersList, setDeletedMarketersList, editingId, setEditingId, editingReturnToMarketerDetails, setEditingReturnToMarketerDetails, fetchMarketers, fetchMarketersByIds, getAccessibleVisitMarketers, fetchDeletedMarketers, handleSaveMarketer, handleEditMarketer, handleDeleteMarketer, handlePermanentDeleteMarketer, handleRestoreMarketer, handleBulkMarketerAction } = useMarketers({ user, fetchCitiesByIds, fetchAreasForCities, fetchLocationCatalog, getValidMarketerAssignments, resetMarketerAssignmentForm, setAdminView, setAssignedAreaIds, setAssignedCityIds, setAssignedSchoolIds, setAssignmentAreaFocusId, setAssignmentCityFocusId, setAdminAreaAssignOpen, setAdminAreaSearch, setAdminCityAssignOpen, setAdminCitySearch, setAdminSchoolSearch, setNewAreaName, setNewCityName, setNewSchoolName });
+const { marketerName, setMarketerName, marketerPhone, setMarketerPhone, marketerEmail, setMarketerCnic, marketerCnic, setMarketerEmail, marketerPass, setMarketerPass, marketerDesignation, setMarketerDesignation, marketerAssignedKms, setMarketerAssignedKms, cardCity, setCardCity, showCardCity, setShowCardCity, subordinateMarketerIds, setSubordinateMarketerIds, subordinatePickerOpen, setSubordinatePickerOpen, subordinateSearch, setSubordinateSearch, marketerWhatsappGroupName, setMarketerWhatsappGroupName, marketerWhatsappGroupLink, setMarketerWhatsappGroupLink, marketersList, setMarketersList, deletedMarketersList, setDeletedMarketersList, editingId, setEditingId, editingReturnToMarketerDetails, setEditingReturnToMarketerDetails, fetchMarketers, fetchMarketersByIds, getAccessibleVisitMarketers, fetchDeletedMarketers, handleSaveMarketer, handleEditMarketer, handleDeleteMarketer, handlePermanentDeleteMarketer, handleRestoreMarketer, handleBulkMarketerAction } = useMarketers({ user, fetchCitiesByIds, fetchAreasForCities, fetchLocationCatalog, getValidMarketerAssignments, resetMarketerAssignmentForm, setAdminView, setAssignedAreaIds, setAssignedCityIds, setAssignedSchoolIds, setAssignmentAreaFocusId, setAssignmentCityFocusId, setAdminCityAssignOpen, setAdminAreaAssignOpen, setAdminAreaSearch, setAdminCitySearch, setAdminSchoolSearch, setNewAreaName, setNewCityName, setNewSchoolName });
 useEffect(() => { if (user?.role === "admin") fetchMarketers(); }, [user?.role]);
 useEffect(() => { cacheOfflineVisitCatalog(user, citiesList, areasList, schoolsList); }, [user?.email, user?.assignedCityIds, user?.assignedAreaIds, citiesList, areasList, schoolsList]);
 useEffect(() => {
@@ -591,8 +591,11 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     inputStyle,
     isDateInRange,
     marketerAssignedKms,
+    cardCity,
+    showCardCity,
     marketerDesignation,
     marketerEmail,
+    marketerCnic,
     marketerName,
     marketerPass,
     marketerPhone,
@@ -680,8 +683,11 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     setFullScreenImage,
     setFullScreenMediaRecord,
     setMarketerAssignedKms,
+    setCardCity,
+    setShowCardCity,
     setMarketerDesignation,
     setMarketerEmail,
+    setMarketerCnic,
     setMarketerName,
     setMarketerPass,
     setMarketerPhone,

@@ -2,6 +2,7 @@ import { showNotice as alert } from "../ui/confirmDialog.js";
 import { mergedReportSheet } from "./mergedReportSheet.js";
 import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill, pdfTextWidth, pdfCenteredTextTop } from "./pdfTheme.js";
 import { marketerCityNames } from "../domain/marketerCities.js";
+import { visitTimeForDisplay } from "../domain/visitTime.js";
 import { ensureExcelReady } from "./excelLoader.js";
 
 export function createReportExporters({ formatTime12, getMarketerName }) {
@@ -49,7 +50,7 @@ item.areaName || "N/A",
 item.schoolName || "N/A",
 item.principalName || "N/A",
 item.phone || "N/A",
-formatTime12(item.visitTime || (item.createdAt?.toDate ? item.createdAt.toDate() : null)),
+formatTime12(visitTimeForDisplay(item)),
 item.session || "N/A",
 item.branches || "N/A",
 item.strength || "N/A",
@@ -172,7 +173,7 @@ if (align === "right") tx = xMm + wMm - 2;
 return drawText(tx, startTop + i * lineH / MM, line, size, align, bold);
 }).join("\n");
 };
-const formatTime = (item) => formatTime12(item?.visitTime || (item?.createdAt?.toDate ? item.createdAt.toDate() : null));
+const formatTime = (item) => formatTime12(visitTimeForDisplay(item));
 const grouped = groupVisits(rows);
 const rowHeight = (item) => {
 const values = [
@@ -311,7 +312,7 @@ page.content.push(drawText(148.5, page.y + 10, "No records found for the selecte
 }
 pages.forEach((pg, idx) => {
 pg.content.push(rectCmd(LEFT, 197, RIGHT - LEFT, 10, 0.45, PDF_FOOTER));
-pg.content.push(drawText(148.5, 203, "Created by Ali Ashfaq", 7.5, "center", true));
+pg.content.push(drawText(148.5, 203, "Developed by Ali Ashfaq", 7.5, "center", true));
 pg.content.push(drawText(10, 203, isSampleReport ? "School Sample Report" : "School Visit Report", 6.3, "left", false));
 pg.content.push(drawText(287, 203, `Page ${idx + 1} of ${pages.length}`, 6.3, "right", false));
 });
@@ -530,7 +531,7 @@ page.y += h;
 });
 pages.forEach((pg, idx) => {
 pg.content.push(rectCmd(LEFT, 197, RIGHT - LEFT, 10, 0.45, PDF_FOOTER));
-pg.content.push(drawText(148.5, 203, "Created by Ali Ashfaq", 7.5, "center", true));
+pg.content.push(drawText(148.5, 203, "Developed by Ali Ashfaq", 7.5, "center", true));
 pg.content.push(drawText(10, 203, "Marketer Details Report", 6.3, "left", false));
 pg.content.push(drawText(287, 203, `Page ${idx + 1} of ${pages.length}`, 6.3, "right", false));
 });

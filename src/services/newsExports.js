@@ -42,7 +42,7 @@ export async function exportNewsPDF(title, rows) {
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(8);
       pdf.text(`Downloaded: ${downloadDate()}`, width - 24, 60, { align: "right" });
-      pdf.text("Created by Ali Ashfaq", width / 2, height - 18, { align: "center" });
+      pdf.text("Developed by Ali Ashfaq", width / 2, height - 18, { align: "center" });
       pdf.text(`Page ${pageNumber}`, width - 24, height - 18, { align: "right" });
     }
   });

@@ -1,7 +1,7 @@
 import { showNotice as alert } from "../../ui/confirmDialog.js";
 import { useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../../services/firebase";
+import { collection, getDocs, query, where } from "../../services/dataGateway.js";
+import { db } from "../../services/dataGateway.js";
 import { calculatedKms, dailyAssignedKms, dailyPetrolExpense, dailyPetrolRate } from "./expenseCalculations.js";
 import { boldReportTotalRow, mergedReportSheet } from "../../services/mergedReportSheet.js";
 import { ensureExcelReady } from "../../services/excelLoader.js";
@@ -267,7 +267,7 @@ const totalAll = rows.reduce((sum, row) => sum + Number(row.totalOtherExpense ||
 drawRow(["", "TOTAL", "", "", "", `${totalKms.toFixed(1).replace(/\.0$/, "")} KMs`, `Rs. ${totalPetrol.toFixed(2)}`, `Rs. ${totalTransport.toFixed(2)}`, `Rs. ${totalNight.toFixed(2)}`, `Rs. ${totalFood.toFixed(2)}`, `Rs. ${totalOther.toFixed(2)}`, `Rs. ${totalAll.toFixed(2)}`], true);
 pages.forEach((pg, idx) => {
 pg.content.push(rectCmd(LEFT, 197, RIGHT - LEFT, 10, 0.45, PDF_FOOTER));
-pg.content.push(drawText(148.5, 203, "Created by Ali Ashfaq", 7.5, "center", true));
+pg.content.push(drawText(148.5, 203, "Developed by Ali Ashfaq", 7.5, "center", true));
 pg.content.push(drawText(10, 203, "Marketer Expense Report", 6.3, "left", false));
 pg.content.push(drawText(287, 203, `Page ${idx + 1} of ${pages.length}`, 6.3, "right", false));
 });
@@ -551,7 +551,7 @@ page.y+=used;offset+=chunk.length;
 });
 const totalKms=rows.reduce((s,r)=>s+Number(r.kms||0),0), totalPetrol=rows.reduce((s,r)=>s+Number(r.petrolExpense||0),0), totalTransport=rows.reduce((s,r)=>s+Number(r.transport||0),0), totalNight=rows.reduce((s,r)=>s+Number(r.nightStay||0),0), totalFood=rows.reduce((s,r)=>s+Number(r.food||0),0), totalOther=rows.reduce((s,r)=>s+Number(r.other||0),0), totalAll=rows.reduce((s,r)=>s+Number(r.totalOtherExpense||0),0);
 drawRow(["","","TOTAL","","","","",`${totalKms.toFixed(1)} KMs`,"","",`Rs. ${totalPetrol.toFixed(2)}`,`Rs. ${totalTransport.toFixed(2)}`,`Rs. ${totalNight.toFixed(2)}`,`Rs. ${totalFood.toFixed(2)}`,`Rs. ${totalOther.toFixed(2)}`,`Rs. ${totalAll.toFixed(2)}`],true);
-pages.forEach((pg,idx)=>{pg.content.push(rectCmd(LEFT,197,RIGHT-LEFT,10,.45,PDF_FOOTER));pg.content.push(drawText(148.5,203,"Created by Ali Ashfaq",7.5,"center",true));pg.content.push(drawText(10,203,"Admin Expense Report",6.3,"left"));pg.content.push(drawText(287,203,`Page ${idx+1} of ${pages.length}`,6.3,"right"));});
+pages.forEach((pg,idx)=>{pg.content.push(rectCmd(LEFT,197,RIGHT-LEFT,10,.45,PDF_FOOTER));pg.content.push(drawText(148.5,203,"Developed by Ali Ashfaq",7.5,"center",true));pg.content.push(drawText(10,203,"Admin Expense Report",6.3,"left"));pg.content.push(drawText(287,203,`Page ${idx+1} of ${pages.length}`,6.3,"right"));});
 const objects=[]; const addObject=(body)=>{objects.push(body);return objects.length;}; const f1=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"), f2=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"); const contentIds=[],pageIds=[];
 pages.forEach((pg)=>{const stream=pg.content.join("\n")+"\n";contentIds.push(addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`));pageIds.push(0);}); const pagesId=addObject("");
 pages.forEach((pg,i)=>{pageIds[i]=addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${PAGE_W.toFixed(2)} ${PAGE_H.toFixed(2)}] /Resources << /Font << /F1 ${f1} 0 R /F2 ${f2} 0 R >> >> /Contents ${contentIds[i]} 0 R >>`);}); objects[pagesId-1]=`<< /Type /Pages /Kids [${pageIds.map(id=>`${id} 0 R`).join(" ")}] /Count ${pages.length} >>`; const root=addObject(`<< /Type /Catalog /Pages ${pagesId} 0 R >>`);

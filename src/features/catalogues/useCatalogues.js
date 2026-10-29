@@ -1,7 +1,7 @@
 import { confirmAction, showNotice as alert } from "../../ui/confirmDialog.js";
 import { useState } from "react";
-import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc, writeBatch } from "firebase/firestore";
-import { db } from "../../services/firebase";
+import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc, writeBatch } from "../../services/dataGateway.js";
+import { db } from "../../services/dataGateway.js";
 
 export function useCatalogues(user) {
 const [catalogues, setCatalogues] = useState([]);

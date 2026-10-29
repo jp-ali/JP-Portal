@@ -1,4 +1,5 @@
 import { PortalContext } from "../context/PortalContext.jsx";
+import { visitTimeForDisplay } from "../domain/visitTime.js";
 import AdminHomePanel from "./admin/AdminHomePanel.jsx";
 import AdminAttendancePanel from "./admin/AdminAttendancePanel.jsx";
 import AdminCataloguesPanel from "./admin/AdminCataloguesPanel.jsx";
@@ -29,6 +30,7 @@ import PortalTopBar from "../ui/PortalTopBar.jsx";
 import DesktopSectionBanner from "../ui/DesktopSectionBanner.jsx";
 
 function AdminPortalContent({ context }) {
+  const { setMarketerCnic } = context;
   useEffect(() => {
     let active = true;
     getAdminProfilePhoto().then(({ profilePhoto }) => {
@@ -154,6 +156,7 @@ setEditingReturnToMarketerDetails(false);
 setMarketerName("");
 setMarketerPhone("");
 setMarketerEmail("");
+setMarketerCnic("");
 setMarketerPass("");
 setMarketerDesignation("");
 setMarketerAssignedKms("");
@@ -342,7 +345,7 @@ onClick={() => openAdminSidebarSection(item.key)}
                             <td>{item.areaName || 'N/A'}</td>
                             <td>{item.principalName}</td>
                             <td>{item.phone}</td>
-                            <td>{formatTime12(item.visitTime || (item.createdAt && item.createdAt.toDate ? item.createdAt.toDate() : null))}</td>
+                            <td>{formatTime12(visitTimeForDisplay(item))}</td>
                             <td>{item.session || 'N/A'}</td>
                             <td>{item.purpose || item.sampleDetails || 'N/A'}</td>
                             <td style={{ textAlign: 'left' }}>{item.notes || 'N/A'}</td>
@@ -365,7 +368,7 @@ onClick={() => openAdminSidebarSection(item.key)}
         />
         <div className="mobile-footer-area" style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", margin: "0 auto", padding: "18px 0 10px", position: "relative", left: 0, right: 0 }}>
           <button className="mobile-footer-logout" onClick={handleLogout} style={{ display: "flex", width: "104px", height: "36px", margin: "0 auto 8px", padding: "0 11px", alignItems: "center", justifyContent: "center", gap:"7px", alignSelf: "center", position: "static", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "#fff", border: "none", borderRadius: "7px", fontWeight: 800, fontSize: "13px", lineHeight: 1, textAlign: "center", cursor: "pointer", boxShadow: "0 5px 12px rgba(122,15,43,.26)" }}>{renderLogoutArrowIcon(16)} Logout</button>
-          <div style={{ ...footerStyle, width: "100%", textAlign: "center", margin: "0 auto", padding: "0" }}>Created by Ali Ashfaq</div>
+          <div style={{ ...footerStyle, width: "100%", textAlign: "center", margin: "0 auto", padding: "0" }}>Developed by Ali Ashfaq</div>
         </div>
       </div>
 );

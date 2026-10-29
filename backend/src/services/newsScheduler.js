@@ -1,5 +1,5 @@
-import { firestore } from "../config/firebase.js";
-import { FieldValue } from "firebase-admin/firestore";
+import { portalStore } from "../config/portalStore.js";
+import { FieldValue } from "../config/portalStore.js";
 import { sendNewsPush } from "./newsPushDelivery.js";
 
 const ZONE = "Asia/Karachi";
@@ -109,7 +109,7 @@ async function deliverSchedule(db, schedule, pushDelivery) {
   return { newsId, push };
 }
 
-export async function runDueNewsSchedules(db = firestore(), now = new Date(), pushDelivery = sendNewsPush) {
+export async function runDueNewsSchedules(db = portalStore(), now = new Date(), pushDelivery = sendNewsPush) {
   const snapshot = await db.collection("newsSchedules").where("nextRunAt", "<=", now.toISOString()).limit(100).get();
   let delivered = 0;
   for (const document of snapshot.docs) {

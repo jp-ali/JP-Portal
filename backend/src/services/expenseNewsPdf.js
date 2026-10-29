@@ -97,7 +97,7 @@ export function createExpenseNewsPdf({ marketer, rows, fromDate, toDate }) {
     for (let index = 0; index < pages; index++) {
       doc.switchToPage(index);
       doc.rect(left, doc.page.height - 56, width, 22).fill(maroon);
-      doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(8).text("Created by Ali Ashfaq", left, doc.page.height - 49, { width, align: "center" });
+      doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(8).text("Developed by Ali Ashfaq", left, doc.page.height - 49, { width, align: "center" });
     }
     doc.end();
   });

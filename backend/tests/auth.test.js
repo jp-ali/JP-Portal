@@ -1,10 +1,9 @@
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import bcrypt from "bcryptjs";
 import { app } from "../src/app.js";
-import { createSession, verifySession } from "../src/services/session.js";
+import { createJwtSession, revokeJwtSession, verifyJwtSession } from "../src/services/jwtSession.js";
+import { closePostgresPool } from "../src/config/postgres.js";
 
 let server;
 let baseUrl;
@@ -20,6 +19,7 @@ before(async () => {
 
 after(async () => {
   await new Promise((resolve) => server.close(resolve));
+  await closePostgresPool();
 });
 
 test("admin login sets an HTTP-only session and protects admin routes", async () => {
@@ -44,7 +44,7 @@ test("admin login sets an HTTP-only session and protects admin routes", async ()
 });
 
 test("admin cannot change a marketer profile photo", async () => {
-  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
   const response = await fetch(`${baseUrl}/api/marketers/me/photo`, {
     method: "DELETE",
     headers: { cookie: `school_visit_session=${token}` }
@@ -53,7 +53,7 @@ test("admin cannot change a marketer profile photo", async () => {
 });
 
 test("admin photo edit route validates image content", async () => {
-  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
   const response = await fetch(`${baseUrl}/api/marketers/example/photo`, {
     method: "PUT",
     headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
@@ -65,7 +65,7 @@ test("admin photo edit route validates image content", async () => {
 test("admin own profile photo requires login and validates the image", async () => {
   const anonymous = await fetch(`${baseUrl}/api/auth/me/photo`);
   assert.equal(anonymous.status, 401);
-  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
   const response = await fetch(`${baseUrl}/api/auth/me/photo`, {
     method: "PUT",
     headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
@@ -86,7 +86,7 @@ test("invalid admin password is rejected", async () => {
 test("custom reports require admin authentication and validate input", async () => {
   const denied = await fetch(`${baseUrl}/api/custom-reports`);
   assert.equal(denied.status, 401);
-  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
   const cookie = `school_visit_session=${token}`;
   const invalid = await fetch(`${baseUrl}/api/custom-reports`, {
     method: "POST",
@@ -99,7 +99,7 @@ test("custom reports require admin authentication and validate input", async () 
 test("news publishing requires admin and a valid report date range", async () => {
   const path = `${baseUrl}/api/news`;
   assert.equal((await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).status, 401);
-  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
   const invalid = await fetch(path, {
     method: "POST",
     headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
@@ -111,7 +111,7 @@ test("news publishing requires admin and a valid report date range", async () =>
 test("scheduled news requires admin and rejects an invalid time before database access", async () => {
   const path = `${baseUrl}/api/news/schedules`;
   assert.equal((await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).status, 401);
-  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
   const invalid = await fetch(path, {
     method: "POST",
     headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
@@ -123,7 +123,7 @@ test("scheduled news requires admin and rejects an invalid time before database 
 test("only marketers can mark news as read", async () => {
   const path = `${baseUrl}/api/news/read`;
   assert.equal((await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).status, 401);
-  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
   const admin = await fetch(path, {
     method: "POST",
     headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
@@ -135,7 +135,7 @@ test("only marketers can mark news as read", async () => {
 test("imported reports require admin authentication and reject invalid rows", async () => {
   const path = `${baseUrl}/api/custom-reports/import`;
   assert.equal((await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).status, 401);
-  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
   const invalid = await fetch(path, {
     method: "POST",
     headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
@@ -144,9 +144,33 @@ test("imported reports require admin authentication and reject invalid rows", as
   assert.equal(invalid.status, 400);
 });
 
+test("visit import requires an admin and rejects rows without a visit date", async () => {
+  const path = `${baseUrl}/api/visits/import/example-marketer`;
+  const headers = { "content-type": "application/json" };
+  assert.equal((await fetch(path, { method: "POST", headers, body: JSON.stringify({ rows: [] }) })).status, 401);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
+  const invalid = await fetch(path, {
+    method: "POST",
+    headers: { ...headers, cookie: `school_visit_session=${token}` },
+    body: JSON.stringify({ rows: [{ date: "", schoolName: "Example School" }] })
+  });
+  assert.equal(invalid.status, 400);
+});
+
+test("marketer creation rejects an invalid CNIC before saving", async () => {
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
+  const response = await fetch(`${baseUrl}/api/marketers`, {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
+    body: JSON.stringify({ name: "Test", email: "test@example.test", phone: "03000000000", password: "test-password", cnic: "123" })
+  });
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /CNIC/);
+});
+
 test("saved card creation requires admin authentication and a valid card", async () => {
   assert.equal((await fetch(`${baseUrl}/api/cards`)).status, 401);
-  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
   const invalid = await fetch(`${baseUrl}/api/cards`, {
     method: "POST",
     headers: { "content-type": "application/json", cookie: `school_visit_session=${token}` },
@@ -157,7 +181,7 @@ test("saved card creation requires admin authentication and a valid card", async
 
 test("marketer card endpoint is private to marketers", async () => {
   assert.equal((await fetch(`${baseUrl}/api/cards/me`)).status, 401);
-  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
   const response = await fetch(`${baseUrl}/api/cards/me`, { headers: { cookie: `school_visit_session=${token}` } });
   assert.equal(response.status, 403);
 });
@@ -171,37 +195,10 @@ test("forwarded local login requests are accepted", async () => {
   assert.equal(response.status, 200);
 });
 
-test("missing Firestore credentials return a clear error without stopping the API", async () => {
-  const previous = {
-    NODE_ENV: process.env.NODE_ENV,
-    GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
-    CLOUDSDK_CONFIG: process.env.CLOUDSDK_CONFIG
-  };
-  process.env.NODE_ENV = "development";
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
-  process.env.CLOUDSDK_CONFIG = join(tmpdir(), `missing-firebase-credentials-${process.pid}`);
-  try {
-    const response = await fetch(`${baseUrl}/api/auth/login`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ identifier: "marketer@example.test", password: "test-password-123" })
-    });
-    assert.equal(response.status, 503);
-    assert.match((await response.json()).error, /GOOGLE_APPLICATION_CREDENTIALS/);
-    assert.equal((await fetch(`${baseUrl}/api/health`)).status, 200);
-  } finally {
-    for (const [key, value] of Object.entries(previous)) {
-      if (value === undefined) delete process.env[key];
-      else process.env[key] = value;
-    }
-  }
-});
-
-test("signed admin sessions reject changes but do not expire", () => {
-  const token = createSession({ sub: "admin", role: "admin" }, process.env.SESSION_SECRET, 1000);
-  assert.equal(verifySession(token, process.env.SESSION_SECRET, 2000)?.role, "admin");
-  assert.equal(verifySession(`${token}x`, process.env.SESSION_SECRET, 2000), null);
-  assert.equal(verifySession(token, process.env.SESSION_SECRET, 1000 + 10 * 365 * 24 * 60 * 60 * 1000)?.role, "admin");
-  const marketerToken = createSession({ sub: "marketer-1", role: "marketer" }, process.env.SESSION_SECRET, 1000);
-  assert.equal(verifySession(marketerToken, process.env.SESSION_SECRET, 1000 + 8 * 60 * 60 * 1000), null);
+test("JWT rejects tampering and logout revokes it", async () => {
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
+  assert.equal((await verifyJwtSession(token))?.role, "admin");
+  assert.equal(await verifyJwtSession(`${token}x`), null);
+  await revokeJwtSession(token);
+  assert.equal(await verifyJwtSession(token), null);
 });

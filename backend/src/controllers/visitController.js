@@ -1,5 +1,5 @@
-import { FieldValue } from "firebase-admin/firestore";
-import { firestore } from "../config/firebase.js";
+import { FieldValue } from "../config/portalStore.js";
+import { portalStore } from "../config/portalStore.js";
 
 export function dateInPakistan(value) {
   const date = value?.toDate ? value.toDate() : new Date(value);
@@ -28,8 +28,8 @@ export async function marketerVisitSummary(request, response, next) {
   try {
     const email = request.user.email;
     const [visits, samples] = await Promise.all([
-      firestore().collection("visits").where("marketerEmail", "==", email).select("createdAt").get(),
-      firestore().collection("samples").where("marketerEmail", "==", email).count().get()
+      portalStore().collection("visits").where("marketerEmail", "==", email).select("createdAt").get(),
+      portalStore().collection("samples").where("marketerEmail", "==", email).count().get()
     ]);
     const summary = summarizeVisitDates(visits.docs.map((item) => item.data()));
     summary.samples = samples.data().count;
@@ -72,8 +72,8 @@ export async function updateVisit(request, response, next) {
     if (data.branches && (!/^\d+$/.test(data.branches) || Number(data.branches) < 1)) {
       return response.status(400).json({ error: "Branches must be a positive number" });
     }
-    const ref = firestore().collection("visits").doc(id);
-    const result = await firestore().runTransaction(async (transaction) => {
+    const ref = portalStore().collection("visits").doc(id);
+    const result = await portalStore().runTransaction(async (transaction) => {
       const snapshot = await transaction.get(ref);
       if (!snapshot.exists) return "missing";
       if (!canEditVisit(request.user, snapshot.data())) return "forbidden";
