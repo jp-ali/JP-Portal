@@ -7,9 +7,10 @@ import pg from "pg";
 import bcrypt from "bcryptjs";
 
 const originalUrl = new URL(process.env.DATABASE_URL || "");
+const benchmarkPort = process.env.BENCHMARK_PORT || "5433";
 if (!(["127.0.0.1", "localhost"].includes(originalUrl.hostname)
-  && originalUrl.port === "5433" && originalUrl.pathname === "/school_visit_local")) {
-  throw new Error("Benchmark is limited to the local school_visit_local database on port 5433");
+  && originalUrl.port === benchmarkPort && originalUrl.pathname === "/school_visit_local")) {
+  throw new Error(`Benchmark is limited to the local school_visit_local database on port ${benchmarkPort}`);
 }
 const schema = `bench_${randomUUID().replaceAll("-", "").slice(0, 16)}`;
 const administrator = new pg.Client({ connectionString: originalUrl.toString() });
