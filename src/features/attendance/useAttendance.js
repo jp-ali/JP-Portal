@@ -4,6 +4,7 @@ import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, setDo
 import { db } from "../../services/dataGateway.js";
 import { formatActionPlanDate } from "../../domain/dates.js";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
+import { attachCameraPreview } from "../../services/cameraPreview.js";
 import { mergedReportSheet } from "../../services/mergedReportSheet.js";
 import { ensureExcelReady } from "../../services/excelLoader.js";
 import { PDF_BANNER, PDF_TABLE_HEAD, PDF_TABLE_SUBHEAD, PDF_FOOTER, pdfTextFill, pdfTextWidth, pdfCenteredTextTop } from "../../services/pdfTheme.js";
@@ -27,12 +28,6 @@ const [attendanceCameraTarget, setAttendanceCameraTarget] = useState("");
 const [attendanceCameraActive, setAttendanceCameraActive] = useState(false);
 const attendanceVideoRef = useRef(null);
 const attendanceStreamRef = useRef(null);
-useEffect(() => {
-  if (!attendanceCameraActive || !attendanceVideoRef.current || !attendanceStreamRef.current) return;
-  const video = attendanceVideoRef.current;
-  video.srcObject = attendanceStreamRef.current;
-  video.play().catch((error) => console.warn("Attendance camera preview could not start:", error));
-}, [attendanceCameraActive]);
 const [attendanceSubmitting, setAttendanceSubmitting] = useState(false);
 const [todayAttendance, setTodayAttendance] = useState(null);
 const [attendanceRecords, setAttendanceRecords] = useState([]);
@@ -385,16 +380,14 @@ stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exac
 stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
 }
 attendanceStreamRef.current = stream;
-if (attendanceVideoRef.current) {
-  attendanceVideoRef.current.srcObject = stream;
-  await attendanceVideoRef.current.play();
-}
+await attachCameraPreview(attendanceVideoRef, stream);
 } catch (err) {
 stopAttendanceCamera();
 alert("Camera could not start. Please check browser camera permission: " + err.message);
 }
 };
 const stopAttendanceCamera = () => {
+if (attendanceVideoRef.current) attendanceVideoRef.current.srcObject = null;
 if (attendanceStreamRef.current) {
 attendanceStreamRef.current.getTracks().forEach((track) => track.stop());
 attendanceStreamRef.current = null;

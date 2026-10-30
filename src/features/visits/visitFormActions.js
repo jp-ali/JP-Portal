@@ -4,6 +4,7 @@ import { db } from "../../services/dataGateway.js";
 import { getSession } from "../../services/authApi";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
 import { formatAddressForStamp } from "../../services/visitPhotos.js";
+import { attachCameraPreview } from "../../services/cameraPreview.js";
 
 export function createVisitFormActions({ form, user, setUser, setMarketerview, fetchTodayAttendance, areasList, citiesList, schoolsList, isUsableSchoolRecord, resetVisitAssignmentForm, fetchMarketerReports, fetchMarketerSamples, fetchCitiesByIds, fetchAreasForCities, formatTime12, refreshLoggedInMarketerAssignments, setEditingVisitSchoolId, setEditingVisitSchoolName, setNewSchoolName, setSchoolSyncMessage }) {
 const { visitCityId, setVisitCityId, visitAreaId, setVisitAreaId, visitSchoolIds, setVisitSchoolIds, visitCitySearch, setVisitCitySearch, visitAreaSearch, setVisitAreaSearch, visitSchoolSearch, setVisitSchoolSearch, visitSession, setVisitSession, visitBranches, setVisitBranches, visitStrength, setVisitStrength, visitCityPickerOpen, setVisitCityPickerOpen, visitAreaPickerOpen, setVisitAreaPickerOpen, visitSchoolPickerOpen, setVisitSchoolPickerOpen, visitAddSchoolOpen, setVisitAddSchoolOpen, visitSchoolManagerOpen, setVisitSchoolManagerOpen, visitSchoolsLoading, setVisitSchoolsLoading, visitSchoolLoadError, setVisitSchoolLoadError, schoolName, setSchoolName, principalName, setPrincipalName, phone, setPhone, purpose, setPurpose, notes, setNotes, imageFile, setImageFile, loading, setLoading, successMsg, setSuccessMsg, sampleSchoolName, setSampleSchoolName, samplePrincipalName, setSamplePrincipalName, samplePhone, setSamplePhone, sampleDetailsText, setSampleDetailsText, sampleLoading, setSampleLoading, sampleSuccessMsg, setSampleSuccessMsg, isCameraActive, setIsCameraActive, videoRef, streamRef } = form;
@@ -76,16 +77,14 @@ stream = await navigator.mediaDevices.getUserMedia(constraints);
 stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
 }
 streamRef.current = stream;
-if (videoRef.current) {
-videoRef.current.srcObject = stream;
-await videoRef.current.play();
-}
+await attachCameraPreview(videoRef, stream);
 } catch (err) {
 stopCamera();
 alert("Camera could not start. Please check browser camera permission: " + err.message);
 }
 };
 const stopCamera = () => {
+if (videoRef.current) videoRef.current.srcObject = null;
 if (streamRef.current) {
 streamRef.current.getTracks().forEach(track => track.stop());
 streamRef.current = null;
