@@ -112,7 +112,6 @@ export default function App() {
         window.clearTimeout(slowSession);
         if (active && !skipSessionRestore.current) {
           setSession((current) => current.user ? current : { loading: false, user: null });
-          if (cachedMarketer()) setOfflineMode(true);
         }
       });
     return () => { active = false; window.clearTimeout(slowSession); };
