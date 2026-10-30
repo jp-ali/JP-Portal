@@ -78,10 +78,11 @@ stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }
 streamRef.current = stream;
 if (videoRef.current) {
 videoRef.current.srcObject = stream;
+await videoRef.current.play();
 }
 } catch (err) {
-alert("Camera access denied! Please check browser permissions: " + err.message);
-setIsCameraActive(false);
+stopCamera();
+alert("Camera could not start. Please check browser camera permission: " + err.message);
 }
 };
 const stopCamera = () => {
@@ -94,6 +95,10 @@ setIsCameraActive(false);
 const capturePhoto = () => {
 const video = videoRef.current;
 if (!video) return;
+if (video.readyState < 2 || !video.videoWidth) {
+  alert("Camera is still loading. Wait for the preview before taking a photo.");
+  return;
+}
 const canvas = document.createElement("canvas");
 canvas.width = video.videoWidth || 1280;
 canvas.height = video.videoHeight || 720;

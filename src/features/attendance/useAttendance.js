@@ -27,6 +27,12 @@ const [attendanceCameraTarget, setAttendanceCameraTarget] = useState("");
 const [attendanceCameraActive, setAttendanceCameraActive] = useState(false);
 const attendanceVideoRef = useRef(null);
 const attendanceStreamRef = useRef(null);
+useEffect(() => {
+  if (!attendanceCameraActive || !attendanceVideoRef.current || !attendanceStreamRef.current) return;
+  const video = attendanceVideoRef.current;
+  video.srcObject = attendanceStreamRef.current;
+  video.play().catch((error) => console.warn("Attendance camera preview could not start:", error));
+}, [attendanceCameraActive]);
 const [attendanceSubmitting, setAttendanceSubmitting] = useState(false);
 const [todayAttendance, setTodayAttendance] = useState(null);
 const [attendanceRecords, setAttendanceRecords] = useState([]);
@@ -379,13 +385,13 @@ stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exac
 stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
 }
 attendanceStreamRef.current = stream;
-setTimeout(() => {
-if (attendanceVideoRef.current) attendanceVideoRef.current.srcObject = stream;
-}, 0);
+if (attendanceVideoRef.current) {
+  attendanceVideoRef.current.srcObject = stream;
+  await attendanceVideoRef.current.play();
+}
 } catch (err) {
-setAttendanceCameraActive(false);
-setAttendanceCameraTarget("");
-alert("Camera access denied. Please allow camera permission and try again.");
+stopAttendanceCamera();
+alert("Camera could not start. Please check browser camera permission: " + err.message);
 }
 };
 const stopAttendanceCamera = () => {
@@ -407,6 +413,10 @@ else if (target === "night") setAttendanceNightStayExpensePhoto(dataUrl);
 const captureAttendancePhoto = () => {
 const video = attendanceVideoRef.current;
 if (!video || !attendanceCameraTarget) return;
+if (video.readyState < 2 || !video.videoWidth) {
+  alert("Camera is still loading. Wait for the preview before taking a photo.");
+  return;
+}
 const canvas = document.createElement("canvas");
 const rawW = video.videoWidth || 1280;
 const rawH = video.videoHeight || 720;

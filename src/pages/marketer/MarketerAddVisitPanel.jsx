@@ -453,6 +453,7 @@ width: "100%"
 ref={videoRef} 
 autoPlay 
 playsInline 
+muted
 style={{ width: "100%", maxHeight: "280px", borderRadius: "10px", background: "#000", objectFit: "cover" }} 
 />
                       <div style={{ display: "flex", gap: "10px", width: "100%" }}>
