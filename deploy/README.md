@@ -4,6 +4,8 @@ The `main` branch is the release source. Every pull request and push to `main` r
 
 The repository still contains `render.yaml` from the earlier hosting plan. If a Render service is connected to this repository, disable its automatic deploy before enabling the VM pipeline so a push does not release to both hosts.
 
+GitHub Pages is only a static entry point. In repository **Settings → Pages → Build and deployment → Source**, select **GitHub Actions** once; publishing directly from `main` serves raw Vite source and gives a blank app. After the VM has a stable HTTPS URL, set repository variable `VITE_LIVE_PORTAL_URL` to that URL so the Pages entry point redirects there. Until then, Pages shows a server-unavailable message.
+
 ## VM preparation (Ubuntu)
 
 1. Install Docker Engine with the Compose plugin (version 2.30 or newer) from Docker's Ubuntu instructions. Use a dedicated non-root deploy user with permission to run Docker. Docker group membership grants root-equivalent access, so restrict that account and its SSH key.
