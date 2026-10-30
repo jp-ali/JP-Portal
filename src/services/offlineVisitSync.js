@@ -1,6 +1,7 @@
 import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from "./dataGateway.js";
 import { db } from "./dataGateway.js";
-import { makeAreaId, makeCityId, makeSchoolId, normalizeEntityName } from "../domain/catalog.js";
+import { makeAreaId, makeCityId, normalizeEntityName } from "../domain/catalog.js";
+import { makeMarketerSchoolId } from "../domain/schoolOwnership.js";
 import { listOfflineVisits, removeOfflineVisit } from "./offlineVisitStore.js";
 import { makeSchoolVisitDetails } from "../domain/schoolVisitDetails.js";
 
@@ -14,8 +15,8 @@ export async function syncOfflineVisits(user) {
     if (Number.isNaN(capturedAt.getTime())) continue;
     const cityId = draft.cityId || makeCityId(draft.cityName);
     const areaId = draft.areaId || makeAreaId(cityId, draft.areaName);
-    const schoolId = draft.schoolId || makeSchoolId(areaId, draft.schoolName);
-    if (!draft.schoolId && (user.assignedCityIds || []).includes(cityId) && (user.assignedAreaIds || []).includes(areaId)) {
+    const schoolId = draft.schoolId || makeMarketerSchoolId(areaId, draft.schoolName, email);
+    if ((user.assignedCityIds || []).includes(cityId) && (user.assignedAreaIds || []).includes(areaId)) {
       const schoolRef = doc(db, "schools", schoolId);
       if (!(await getDoc(schoolRef)).exists()) await setDoc(schoolRef, {
           name: draft.schoolName, normalizedName: normalizeEntityName(draft.schoolName),

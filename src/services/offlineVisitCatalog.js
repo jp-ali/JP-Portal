@@ -1,3 +1,5 @@
+import { canSeeSchool } from "../domain/schoolOwnership.js";
+
 const keyFor = (email) => `jp-offline-visit-catalog:${String(email || "").trim().toLowerCase()}`;
 
 export function readOfflineVisitCatalog(email) {
@@ -21,6 +23,7 @@ export function cacheOfflineVisitCatalog(user, cities = [], areas = [], schools 
     cities: merge(previous.cities, cities.filter((row) => cityIds.includes(row.id))),
     areas: merge(previous.areas, areas.filter((row) => areaIds.includes(row.id))),
     schools: merge(previous.schools, schools.filter((row) => areaIds.includes(row.areaId)))
+      .filter((school) => areaIds.includes(school.areaId) && canSeeSchool(school, user))
   };
   try { localStorage.setItem(keyFor(user.email), JSON.stringify(catalog)); } catch { /* Storage may be full. */ }
 }

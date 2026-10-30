@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, where, writeBatch } from "../../services/dataGateway.js";
 import { db } from "../../services/dataGateway.js";
 import { PAKISTAN_CITY_CATALOG, PAKISTAN_CITY_DATA_URL, normalizeEntityName, makeCityId, makeAreaId, makeSchoolId } from "../../domain/catalog.js";
+import { canSeeSchool } from "../../domain/schoolOwnership.js";
 import { fetchOverpassJson, resolvePakistanCityFromNominatim, extractAreaRecords, resolvePakistanAreaFromNominatim, extractSchoolRecords, buildSchoolQuery } from "../../services/openStreetMap.js";
 
-export function useLocationCatalog({ visitAreaId, visitCityId, assignmentAreaFocusId, setSchoolName, setVisitSchoolIds, setVisitSchoolLoadError, setVisitSchoolSearch, setVisitSchoolsLoading }) {
+export function useLocationCatalog({ user, visitAreaId, visitCityId, assignmentAreaFocusId, setSchoolName, setVisitSchoolIds, setVisitSchoolLoadError, setVisitSchoolSearch, setVisitSchoolsLoading }) {
 const [citiesList, setCitiesList] = useState([]);
 const [areasList, setAreasList] = useState([]);
-const [schoolsList, setSchoolsList] = useState([]);
+const [rawSchoolsList, setSchoolsList] = useState([]);
+const schoolsList = useMemo(() => rawSchoolsList.filter((school) => canSeeSchool(school, user)), [rawSchoolsList, user?.email, user?.role]);
 const [cityCatalogSyncing, setCityCatalogSyncing] = useState(false);
 const [cityCatalogSyncMessage, setCityCatalogSyncMessage] = useState("");
 const [areaSyncingCityId, setAreaSyncingCityId] = useState("");
@@ -19,7 +21,7 @@ const areaSchoolsMemoryCacheRef = useRef(new Map());
 const areaSyncPromiseRef = useRef(new Map());
 const schoolSyncPromiseRef = useRef(new Map());
 const mergeSchoolsIntoState = (areaId, areaSchools) => {
-const clean = (areaSchools || []).filter(isUsableSchoolRecord)
+const clean = (areaSchools || []).filter((school) => isUsableSchoolRecord(school) && canSeeSchool(school, user))
 .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
 areaSchoolsMemoryCacheRef.current.set(areaId, clean);
 try { localStorage.setItem(`javed_portal_schools_${areaId}`, JSON.stringify(clean)); } catch (_) {}
@@ -32,7 +34,7 @@ return clean;
 };
 const readCachedSchoolsForArea = (areaId) => {
 const memory = areaSchoolsMemoryCacheRef.current.get(areaId);
-if (Array.isArray(memory) && memory.length) return memory;
+if (Array.isArray(memory) && memory.length) return memory.filter((school) => canSeeSchool(school, user));
 try {
 const parsed = JSON.parse(localStorage.getItem(`javed_portal_schools_${areaId}`) || "[]");
 if (Array.isArray(parsed) && parsed.length) return mergeSchoolsIntoState(areaId, parsed);
@@ -547,6 +549,10 @@ school.areaId === area.id && school.source === "manual-marketer"
 );
 const manualNames = new Set(manualExisting.map((school) => normalizeEntityName(school.name || "")));
 const schoolsToWrite = discovered.filter((school) => !manualNames.has(normalizeEntityName(school.name)));
+const existingSharedIds = new Map(schoolsList.filter((school) => school.areaId === area.id && school.source !== "manual-marketer")
+  .map((school) => [normalizeEntityName(school.name), school.id]));
+const importedSchoolId = (school) => existingSharedIds.get(normalizeEntityName(school.name))
+  || `${makeSchoolId(area.id, school.name)}__osm`;
 if (schoolsToWrite.length) {
 await writeDocsInChunks("schools", schoolsToWrite.map((school) => ({
 school,
@@ -567,12 +573,12 @@ schoolType: "school",
 catalogVersion: 8,
 syncedAt: serverTimestamp()
 }
-})), (record) => makeSchoolId(area.id, record.school.name));
+})), (record) => importedSchoolId(record.school));
 }
 const savedById = new Map(schoolsList.filter((school) => school.areaId === area.id).map((school) => [school.id, school]));
 const importedForState = schoolsToWrite.map((school) => ({
-...savedById.get(makeSchoolId(area.id, school.name)),
-id: makeSchoolId(area.id, school.name),
+...savedById.get(importedSchoolId(school)),
+id: importedSchoolId(school),
 name: school.name,
 normalizedName: normalizeEntityName(school.name),
 cityId: city.id,

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { FieldValue, Timestamp } from "../db/documentValues.js";
 import { postgresDocumentStore } from "../db/postgresDocumentStore.js";
+import { canSeeSchool } from "../domain/schoolVisibility.js";
 
 export const dataRoutes = Router();
 dataRoutes.use(requireAuth);
@@ -63,6 +64,9 @@ function ownsDocument(data, identity) {
 }
 async function scopedDocuments(path, filters, user) {
   const query = queryFor(path, filters);
+  if (rootOf(path) === "schools") {
+    return (await query.get()).docs.filter((snapshot) => canSeeSchool(snapshot.data(), user));
+  }
   if (user.role === "admin" || !ownedCollections.has(rootOf(path))) return (await query.get()).docs;
   const identity = await ownedIdentity(user);
   const results = await Promise.all([
@@ -74,6 +78,7 @@ async function scopedDocuments(path, filters, user) {
 }
 async function assertCanRead(path, payload, user) {
   documentAllowed(path, user);
+  if (rootOf(path) === "schools" && payload && !canSeeSchool(payload, user)) throw bad("Record access denied", 403);
   if (user.role === "admin" || !ownedCollections.has(rootOf(path)) || !payload) return;
   if (!ownsDocument(payload, await ownedIdentity(user))) throw bad("Record access denied", 403);
 }
@@ -92,10 +97,13 @@ async function assertCanWrite(ref, operation, data, user, merge = false) {
     if (root === "areas" && !assignedCities.includes(data?.cityId || old.cityId)) throw bad("City is not assigned", 403);
     if (root === "schools" && !assignedAreas.includes(data?.areaId || old.areaId)) throw bad("Area is not assigned", 403);
     if (root === "schools" && existing.exists && old.source === "manual-marketer"
-      && old.addedByMarketerEmail?.toLowerCase() !== user.email?.toLowerCase()
-      && !(operation === "set" && merge && Object.keys(data || {}).every((key) => ["visitDetails", "visitDetailsUpdatedAt"].includes(key)))) {
-      throw bad("School belongs to another marketer", 403);
-    }
+      && String(old.addedByMarketerEmail || "").trim().toLowerCase() !== String(user.email || "").trim().toLowerCase()) throw bad("School belongs to another marketer", 403);
+    if (root === "schools" && !existing.exists && data?.source === "manual-marketer"
+      && String(data.addedByMarketerEmail || "").trim().toLowerCase() !== String(user.email || "").trim().toLowerCase()) throw bad("School owner must be your account", 403);
+    if (root === "schools" && existing.exists && old.source === "manual-marketer" && data?.addedByMarketerEmail
+      && String(data.addedByMarketerEmail).trim().toLowerCase() !== String(user.email || "").trim().toLowerCase()) throw bad("School owner cannot change", 403);
+    if (root === "schools" && existing.exists && old.source === "manual-marketer" && data?.source && data.source !== "manual-marketer") throw bad("Private school cannot become shared", 403);
+    if (root === "schools" && existing.exists && old.source !== "manual-marketer" && data?.source === "manual-marketer") throw bad("Shared school cannot become private", 403);
     if (root === "schools" && existing.exists && old.source !== "manual-marketer" && operation === "delete") throw bad("Only your own schools can be deleted", 403);
     if (data?.cityId && root === "areas" && data.cityId !== old.cityId && existing.exists) throw bad("Area city cannot change", 403);
     if (data?.areaId && root === "schools" && data.areaId !== old.areaId && existing.exists) throw bad("School area cannot change", 403);
@@ -132,7 +140,7 @@ dataRoutes.post("/count", async (request, response, next) => {
     const path = request.body?.collectionPath;
     collectionAllowed(path, request.user);
     const filters = filtersOf(request.body?.filters || []);
-    const count = request.user.role === "admin" || !ownedCollections.has(rootOf(path))
+    const count = request.user.role === "admin" || (!ownedCollections.has(rootOf(path)) && rootOf(path) !== "schools")
       ? await queryFor(path, filters).count().get().then((snapshot) => snapshot.data().count)
       : (await scopedDocuments(path, filters, request.user)).length;
     response.json({ count });

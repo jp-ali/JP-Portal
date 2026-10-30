@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { compressCanvasToTargetDataUrl } from "../services/imageCompression.js";
 import { listOfflineVisits, removeOfflineVisit, saveOfflineVisit } from "../services/offlineVisitStore.js";
 import { readOfflineVisitCatalog } from "../services/offlineVisitCatalog.js";
-import { makeSchoolId } from "../domain/catalog.js";
+import { canSeeSchool, makeMarketerSchoolId } from "../domain/schoolOwnership.js";
 import { getSchoolVisitDetails, makeSchoolVisitDetails } from "../domain/schoolVisitDetails.js";
 import NumberOrCustomField from "../ui/NumberOrCustomField.jsx";
 import offlineCss from "../styles/offlineVisit.css?raw";
@@ -75,7 +75,7 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
   const cachedAreas = form.cityId ? readStoredRows(`javed_portal_areas_${form.cityId}`) : [];
   const areas = [...new Map([...catalog.areas, ...cachedAreas].map((item) => [item.id, item])).values()].filter((item) => item.cityId === form.cityId && assignedAreaIds.includes(item.id));
   const cachedSchools = form.areaId ? readStoredRows(`javed_portal_schools_${form.areaId}`) : [];
-  const schools = [...new Map([...catalog.schools, ...cachedSchools].map((item) => [item.id, item])).values()].filter((item) => item.areaId === form.areaId && (!form.cityId || item.cityId === form.cityId));
+  const schools = [...new Map([...catalog.schools, ...cachedSchools].map((item) => [item.id, item])).values()].filter((item) => item.areaId === form.areaId && (!form.cityId || item.cityId === form.cityId) && canSeeSchool(item, { email: ownerEmail, role: "marketer" }));
   const selectCity = (event) => {
     const city = cities.find((item) => item.id === event.target.value);
     setSchoolCustom(false);
@@ -110,12 +110,12 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
         image: photo, ownerEmail, capturedAt: new Date().toISOString()
       });
       if (form.areaId && form.cityId && form.schoolName.trim()) {
-        const schoolId = form.schoolId || makeSchoolId(form.areaId, form.schoolName);
+        const schoolId = form.schoolId || makeMarketerSchoolId(form.areaId, form.schoolName, ownerEmail);
         const key = `javed_portal_schools_${form.areaId}`;
         const previous = readStoredRows(key);
         const school = previous.find((item) => item.id === schoolId)
           || schools.find((item) => item.id === schoolId)
-          || { id: schoolId, name: form.schoolName.trim(), areaId: form.areaId, cityId: form.cityId, source: "manual-marketer" };
+          || { id: schoolId, name: form.schoolName.trim(), areaId: form.areaId, cityId: form.cityId, source: "manual-marketer", addedByMarketerEmail: ownerEmail };
         const visitDetails = makeSchoolVisitDetails(form);
         try {
           localStorage.setItem(key, JSON.stringify([...previous.filter((item) => item.id !== schoolId), { ...school, visitDetails }]));

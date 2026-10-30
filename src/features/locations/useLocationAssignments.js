@@ -4,6 +4,7 @@ import { deleteDoc, doc, serverTimestamp, setDoc } from "../../services/dataGate
 import { db } from "../../services/dataGateway.js";
 import { getSession } from "../../services/authApi";
 import { normalizeEntityName, makeCityId, makeAreaId, makeSchoolId } from "../../domain/catalog.js";
+import { makeMarketerSchoolId } from "../../domain/schoolOwnership.js";
 
 export function useLocationAssignments({ user, setUser, assignmentAreaFocusId, setAssignmentAreaFocusId, citiesList, areasList, schoolsList, fetchAreasForCity, fetchSchoolsForArea, mergeCitiesIntoState, readCachedAreasForCity, readCachedSchoolsForArea, syncAreasForCityFromOpenStreetMap, setAreaSyncMessage, setSchoolSyncMessage, visitAreaId, visitCityId, visitSchoolIds, setVisitAreaId, setVisitCityId, setVisitSchoolIds, setSchoolName, setVisitAddSchoolOpen, setVisitAreaPickerOpen, setVisitAreaSearch, setVisitCityPickerOpen, setVisitCitySearch, setVisitSchoolLoadError, setVisitSchoolManagerOpen, setVisitSchoolPickerOpen, setVisitSchoolSearch, setVisitSession, applySchoolVisitDetails }) {
 const [assignedCityIds, setAssignedCityIds] = useState([]);
@@ -41,7 +42,7 @@ setVisitSchoolPickerOpen(false);
 return alert("This school already exists in the selected area. It has been selected for you.");
 }
 try {
-const id = makeSchoolId(area.id, name);
+const id = makeMarketerSchoolId(area.id, name, user.email);
 await setDoc(doc(db, "schools", id), {
 name,
 normalizedName: normalizeEntityName(name),
@@ -89,7 +90,7 @@ if (!name) return alert("School name cannot be empty.");
 const duplicate = schoolsList.find((item) => item.id !== school.id && item.areaId === school.areaId && normalizeEntityName(item.name) === normalizeEntityName(name));
 if (duplicate) return alert("A school with this name already exists in the selected area.");
 try {
-const newId = makeSchoolId(school.areaId, name);
+const newId = makeMarketerSchoolId(school.areaId, name, user.email);
 const updatedData = {
 ...school,
 name,
