@@ -4,12 +4,29 @@ $ErrorActionPreference = 'Stop'
 
 $projectRoot = $PSScriptRoot
 $nodeExe = (Get-Command node -ErrorAction Stop).Source
+$npmCmd = (Get-Command npm.cmd -ErrorAction Stop).Source
+$backendDir = Join-Path $projectRoot 'backend'
 $logDir = Join-Path $env:TEMP 'jp-portal-local'
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 
 function Test-LocalPort([int]$port) {
   return [bool](Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1)
 }
+
+Push-Location $backendDir
+try {
+  & $npmCmd run db:status-local *> $null
+  if ($LASTEXITCODE -ne 0) {
+    Write-Output 'Starting local PostgreSQL...'
+    & $npmCmd run db:start-local
+    if ($LASTEXITCODE -ne 0) {
+      throw "PostgreSQL could not start. Check $(Join-Path $env:LOCALAPPDATA 'school-visit-postgres\postgres.log')"
+    }
+  }
+
+  & $npmCmd run db:migrate
+  if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL migrations failed. Check the database connection and backend/.env.' }
+} finally { Pop-Location }
 
 if (Test-LocalPort 3001) {
   $cardsStatus = & curl.exe --max-time 3 -s -o NUL -w '%{http_code}' 'http://localhost:3001/api/cards'
@@ -28,7 +45,7 @@ if (Test-LocalPort 3001) {
 
 if (-not (Test-LocalPort 3001)) {
   Start-Process -FilePath $nodeExe -ArgumentList @('src/server.js') `
-    -WorkingDirectory (Join-Path $projectRoot 'backend') -WindowStyle Hidden `
+    -WorkingDirectory $backendDir -WindowStyle Hidden `
     -RedirectStandardOutput (Join-Path $logDir 'api.out.log') `
     -RedirectStandardError (Join-Path $logDir 'api.err.log') | Out-Null
 }
@@ -36,7 +53,7 @@ if (-not (Test-LocalPort 3001)) {
 if (-not $Dev) {
   Push-Location $projectRoot
   try {
-    & (Get-Command npm.cmd -ErrorAction Stop).Source run build
+    & $npmCmd run build
     if ($LASTEXITCODE -ne 0) { throw 'Frontend build failed.' }
   } finally { Pop-Location }
 }
@@ -44,7 +61,8 @@ if (-not $Dev) {
 if (Test-LocalPort 5173) {
   $frontendListener = Get-NetTCPConnection -LocalPort 5173 -State Listen | Select-Object -First 1
   $frontendProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$($frontendListener.OwningProcess)"
-  $isVite = $frontendProcess.CommandLine -match 'node_modules[\\/]vite[\\/]bin[\\/]vite\.js'
+  $isVite = ($frontendProcess.CommandLine -match 'vite[\\/]bin[\\/]vite\.js') -and
+    ($frontendProcess.CommandLine -like "*$projectRoot*")
   $isPreview = $frontendProcess.CommandLine -match 'vite\.js[" ]+preview(?:[" ]|$)'
   if (-not $isVite) { throw 'Port 5173 is occupied by another application.' }
   if ($isPreview -eq $Dev) {
