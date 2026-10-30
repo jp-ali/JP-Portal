@@ -2,13 +2,15 @@
 
 The `main` branch is the release source. Every pull request and push to `main` runs frontend tests, a production frontend build, and API tests. A successful `main` run builds the frontend and API into one Docker image and publishes it to GHCR under the commit SHA. Once `DEPLOY_ENABLED=true`, the same run deploys that immutable image over SSH. GitHub Pages is no longer used because it cannot host the API.
 
+The GitHub-hosted deploy job needs a reachable SSH address. A private VirtualBox address such as `10.20.10.60` works for local staging but cannot be used as `DEPLOY_HOST` from GitHub Actions. Keep `DEPLOY_ENABLED` unset until the production VPS has a public SSH endpoint, DNS, HTTPS, and a confirmed environment approval process. The local HTTP staging address is only for health checks: production session cookies require HTTPS.
+
 The repository still contains `render.yaml` from the earlier hosting plan. If a Render service is connected to this repository, disable its automatic deploy before enabling the VM pipeline so a push does not release to both hosts.
 
 GitHub Pages is only a static entry point. In repository **Settings → Pages → Build and deployment → Source**, select **GitHub Actions** once; publishing directly from `main` serves raw Vite source and gives a blank app. After the VM has a stable HTTPS URL, set repository variable `VITE_LIVE_PORTAL_URL` to that URL so the Pages entry point redirects there. Until then, Pages shows a server-unavailable message.
 
 ## VM preparation (Ubuntu)
 
-1. Install Docker Engine with the Compose plugin (version 2.30 or newer) from Docker's Ubuntu instructions. Use a dedicated non-root deploy user with permission to run Docker. Docker group membership grants root-equivalent access, so restrict that account and its SSH key.
+1. Install Docker Engine with the Compose plugin (version 2.30 or newer) from Docker's Ubuntu instructions. On Ubuntu 24.04 or 26.04 amd64, `bootstrap-ubuntu.sh` prepares Docker, SSH boot startup, the `deployment` user, and `/opt/jp-portal`; pass it a dedicated Ed25519 public key file and run it with `sudo`. Use a dedicated non-root deploy user with permission to run Docker. Docker group membership grants root-equivalent access, so restrict that account and its SSH key.
 2. Create `/opt/jp-portal`, owned by the deploy user. Copy `env.example` to `/opt/jp-portal/.env` and `portal.env.example` to `/opt/jp-portal/portal.env`; set both modes to `600`. Use a long random password containing URL-safe characters for `POSTGRES_PASSWORD` and the same value in `DATABASE_URL`. Set a unique 32+ character `SESSION_SECRET` and a bcrypt `ADMIN_PASSWORD_HASH`. Preserve these values across deploys. `APP_DOMAIN` must be a DNS name pointed at this VM. The app environment file is read in Compose's raw mode so `$` characters in the bcrypt hash remain intact.
 3. Open inbound TCP 80 and 443, UDP 443 (optional HTTP/3), and SSH from trusted sources. Do not expose PostgreSQL port 5432 or app port 3001. Caddy obtains and renews the TLS certificate automatically when DNS and ports are ready.
 4. Set repository variable `DEPLOY_ENABLED` to `true` only after the VM is prepared. Add a GitHub `production` environment and configure its protection rules and authorized reviewers as appropriate. Add these environment secrets:

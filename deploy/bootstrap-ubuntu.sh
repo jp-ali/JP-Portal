@@ -13,8 +13,8 @@ public_key="$(tr -d '\r\n' < "$public_key_file")"
 }
 
 . /etc/os-release
-[[ "$ID" == ubuntu && "$VERSION_CODENAME" == resolute && "$(dpkg --print-architecture)" == amd64 ]] || {
-  echo 'This bootstrap is prepared for Ubuntu 26.04 (resolute) amd64 only.' >&2
+[[ "$ID" == ubuntu && ( "$VERSION_CODENAME" == noble || "$VERSION_CODENAME" == resolute ) && "$(dpkg --print-architecture)" == amd64 ]] || {
+  echo 'This bootstrap is prepared for Ubuntu 24.04 or 26.04 amd64 only.' >&2
   exit 1
 }
 
