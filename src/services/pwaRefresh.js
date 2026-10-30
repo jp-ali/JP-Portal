@@ -29,7 +29,7 @@ export function installIosPullToRefresh() {
   const arrow = document.createElement("span");
   arrow.setAttribute("aria-hidden", "true");
   arrow.style.cssText = "display:grid;place-items:center;width:20px;height:20px;transform-origin:50% 50%";
-  arrow.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m0 0-5 5m5-5 5 5"/></svg>';
+  arrow.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
   indicator.appendChild(arrow);
   const style = document.createElement("style");
   style.textContent = "@keyframes jp-pull-refresh-arrow{to{transform:rotate(360deg)}}";
