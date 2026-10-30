@@ -2,7 +2,9 @@
 
 The `main` branch is the release source. Every pull request and push to `main` runs frontend tests, a production frontend build, and API tests. A successful `main` run builds the frontend and API into one Docker image and publishes it to GHCR under the commit SHA. Once `DEPLOY_ENABLED=true`, the same run deploys that immutable image over SSH. GitHub Pages is no longer used because it cannot host the API.
 
-The GitHub-hosted deploy job needs a reachable SSH address. A private VirtualBox address such as `10.20.10.60` works for local staging but cannot be used as `DEPLOY_HOST` from GitHub Actions. Keep `DEPLOY_ENABLED` unset until the production VPS has a public SSH endpoint, DNS, HTTPS, and a confirmed environment approval process. The local HTTP staging address is only for health checks: production session cookies require HTTPS.
+The GitHub-hosted deploy job needs a reachable SSH address. A private VirtualBox address such as `10.20.10.60` works for local staging but cannot be used as `DEPLOY_HOST` from GitHub Actions. Keep `DEPLOY_ENABLED` unset until the production VPS has a public SSH endpoint, DNS, HTTPS, and a confirmed environment approval process. By default, the local HTTP staging address is only for health checks because production session cookies require HTTPS.
+
+For a private LAN staging session that needs login, run `docker compose -f compose.yaml -f local-http.override.yaml up -d --wait --no-deps app`. This sets `NODE_ENV=local-staging` so the browser accepts a session cookie over HTTP. Credentials are sent without TLS; use this only on a trusted local network and do not copy the override to the production VPS. Reopen the page and sign in again after switching modes. The GitHub deploy job uploads only the production Compose file.
 
 The repository still contains `render.yaml` from the earlier hosting plan. If a Render service is connected to this repository, disable its automatic deploy before enabling the VM pipeline so a push does not release to both hosts.
 

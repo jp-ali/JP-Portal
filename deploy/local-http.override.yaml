@@ -1,0 +1,5 @@
+# Local VirtualBox staging only. HTTP session cookies are unsuitable for public deployment.
+services:
+  app:
+    environment:
+      NODE_ENV: local-staging

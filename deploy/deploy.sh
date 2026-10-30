@@ -34,6 +34,8 @@ for attempt in {1..30}; do
   if [[ -n "$container" && "$(docker inspect --format '{{.State.Health.Status}}' "$container")" == healthy ]]; then
     docker compose -f compose.yaml up -d --no-deps caddy
     docker compose -f compose.yaml exec -T caddy caddy reload --config /etc/caddy/Caddyfile
+    sed -i "s|^APP_IMAGE=.*$|APP_IMAGE=$image|" .env
+    chmod 600 .env
     printf '%s\n' "$image" > current-image
     trap - ERR
     echo "Deployed $image"
