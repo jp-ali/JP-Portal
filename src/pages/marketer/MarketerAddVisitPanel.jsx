@@ -3,9 +3,17 @@ import React from "react";
 import NumberOrCustomField from "../../ui/NumberOrCustomField.jsx";
 
 export default function MarketerAddVisitPanel() {
-  const nativeCameraInputRef = React.useRef(null);
   const { areasList, btnPrimary, cancelEditVisitSchool, capturePhoto, cardStyle, citiesList, editingVisitSchoolId, editingVisitSchoolName, fetchAreasForCity, fetchSchoolsForArea, handleAddVisitSchool, handleSubmitVisit, imageFile, inputStyle, isCameraActive, isOwnManualSchool, isUsableSchoolRecord, loading, newSchoolName, notes, phone, principalName, purpose, readCachedAreasForCity, removeOwnVisitSchool, retakePhoto, saveEditedVisitSchool, schoolsList, selectVisitArea, setEditingVisitSchoolId, setEditingVisitSchoolName, setFullScreenImage, setMarketerview, setNewSchoolName, setNotes, setPhone, setPrincipalName, setPurpose, setSchoolName, setVisitAddSchoolOpen, setVisitAreaId, setVisitAreaPickerOpen, setVisitAreaSearch, setVisitCityId, setVisitCityPickerOpen, setVisitCitySearch, setVisitSchoolIds, setVisitSchoolLoadError, setVisitSchoolManagerOpen, setVisitSchoolPickerOpen, setVisitSchoolSearch, setVisitSchoolsLoading, setVisitSession, startCamera, startEditVisitSchool, stopCamera, successMsg, syncAreasForCityFromOpenStreetMap, toggleVisitSchool, user, videoRef, visitAddSchoolOpen, visitAreaId, visitAreaPickerOpen, visitAreaSearch, visitCityId, visitCityPickerOpen, visitCitySearch, visitSchoolIds, visitSchoolLoadError, visitSchoolManagerOpen, visitSchoolPickerOpen, visitSchoolSearch, visitSchoolsLoading, visitSession, visitBranches, setVisitBranches, visitStrength, setVisitStrength } = usePortalContext();
   const { cameraBusy, cameraIssue, capturePhotoFromFile } = usePortalContext();
+  const isIOSDevice = typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const phoneCameraButton = (text, style) => (
+    <label style={{ ...style, display: "block", position: "relative", textAlign: "center", opacity: cameraBusy ? .6 : 1 }}>
+      {cameraBusy ? "Processing photo..." : text}
+      <input type="file" accept="image/*" capture="environment" onChange={capturePhotoFromFile} disabled={cameraBusy}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }}
+        aria-label="Take school photo with phone camera" />
+    </label>
+  );
   return (<div>
             <button onClick={() => { stopCamera(); setMarketerview("home"); }} style={{ marginBottom: "14px", padding: "8px 14px", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }}>← Back to Menu</button>
             <div style={cardStyle}>
@@ -434,7 +442,12 @@ style={{ ...inputStyle, padding: "10px 12px", fontSize: "13px" }}
                 </div>
                 <div style={{ background: "rgba(255,255,255,0.96)", padding: "16px", borderRadius: "14px", border: "1px solid rgba(143,21,50,.24)", textAlign: "center" }}>
                   <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "14px", color: "#3b2329" }}>📷 School Photo (Detailed Address, Date, Day & Time Stamped):</label>
-                  {!isCameraActive && !imageFile && !cameraIssue && (
+                  {!isCameraActive && !imageFile && (!cameraIssue || isIOSDevice) && (
+isIOSDevice ? phoneCameraButton("📸 Open Camera & Take Photo", {
+  padding: "12px 20px", background: "linear-gradient(135deg, #8f1532 0%, #941a39 100%)", color: "white",
+  borderRadius: "10px", fontWeight: 600, fontSize: "15px", width: "100%", boxSizing: "border-box",
+  boxShadow: "0 4px 12px rgba(143,21,50,.22)"
+}) :
 <button 
 type="button"
 onClick={startCamera}
@@ -482,14 +495,14 @@ style={{ flex: 1, padding: "10px", background: "#86132f", color: "white", border
                       </div>
                     </div>
 )}
-                  {cameraIssue && !imageFile && (
+                  {cameraIssue && !imageFile && !isIOSDevice && (
                     <div style={{ marginTop: "10px", display: "grid", gap: "8px" }}>
                       <p role="status" style={{ margin: 0, color: "#86132f", fontSize: "13px" }}>{cameraIssue}</p>
                       <button type="button" onClick={startCamera} disabled={cameraBusy} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #86132f", background: "white", color: "#86132f", fontWeight: 700 }}>Retry preview</button>
-                      <button type="button" onClick={() => nativeCameraInputRef.current?.click()} disabled={cameraBusy} style={{ padding: "10px", borderRadius: "8px", border: 0, background: "#15803d", color: "white", fontWeight: 700 }}>Use phone camera</button>
-                      <input ref={nativeCameraInputRef} type="file" accept="image/*" capture="environment" onChange={capturePhotoFromFile} style={{ display: "none" }} aria-label="Take school photo with phone camera" />
+                      {phoneCameraButton("Use phone camera", { padding: "10px", borderRadius: "8px", background: "#15803d", color: "white", fontWeight: 700 })}
                     </div>
                   )}
+                  {cameraIssue && !imageFile && isIOSDevice && <p role="status" style={{ margin: "10px 0 0", color: "#86132f", fontSize: "13px" }}>{cameraIssue}</p>}
                   {imageFile && !isCameraActive && (
 <div style={{ marginTop: "4px" }}>
                       <p style={{ color: "#b75a70", fontSize: "13px", fontWeight: "600", margin: "0 0 10px 0" }}>✅ Photo captured & stamped successfully!</p>
@@ -500,13 +513,17 @@ alt="Preview"
 onClick={() => setFullScreenImage(imageFile)}
 style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "10px", cursor: "pointer", border: "1px solid rgba(255,255,255,0.15)" }} 
 />
-                        <button 
+                        {isIOSDevice ? phoneCameraButton("🔄 Retake Photo", {
+                          padding: "10px 20px", background: "linear-gradient(135deg, #941a39 0%, #86132f 100%)", color: "white",
+                          borderRadius: "10px", fontWeight: 600, fontSize: "14px", width: "100%", boxSizing: "border-box",
+                          boxShadow: "0 4px 12px rgba(143,21,50,.30)"
+                        }) : <button
 type="button"
 onClick={retakePhoto}
 style={{ padding: "10px 20px", background: "linear-gradient(135deg, #941a39 0%, #86132f 100%)", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", cursor: "pointer", fontSize: "14px", boxShadow: "0 4px 12px rgba(143,21,50,.30)", width: "100%" }}
 >
                           🔄 Retake Photo
-                        </button>
+                        </button>}
                       </div>
                     </div>
 )}

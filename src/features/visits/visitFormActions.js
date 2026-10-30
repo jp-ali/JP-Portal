@@ -168,7 +168,13 @@ event.target.value = "";
 if (!file) return;
 setCameraBusy(true);
 try {
-  const imageUrl = URL.createObjectURL(file);
+  let imageBlob = file;
+  if (/\.(heic|heif)$/i.test(file.name) || /^image\/hei[cf]$/i.test(file.type)) {
+    const { default: convert } = await import("heic2any");
+    const converted = await convert({ blob: file, toType: "image/jpeg" });
+    imageBlob = Array.isArray(converted) ? converted[0] : converted;
+  }
+  const imageUrl = URL.createObjectURL(imageBlob);
   try {
     const picture = new Image();
     await new Promise((resolve, reject) => {
