@@ -25,7 +25,14 @@ export function installIosPullToRefresh() {
   const indicator = document.createElement("div");
   indicator.setAttribute("aria-label", "Pull down to refresh");
   indicator.style.cssText = "position:fixed;top:calc(env(safe-area-inset-top, 0px) + 8px);left:50%;z-index:2147483647;width:36px;height:36px;display:grid;place-items:center;border:1px solid #e8ccd5;border-radius:50%;background:#fff;color:#790a29;box-shadow:0 4px 14px #42091d30;font:700 22px system-ui;opacity:0;transform:translate(-50%,-50px);transition:transform .16s ease,opacity .16s ease;pointer-events:none";
-  indicator.textContent = "↻";
+  const arrow = document.createElement("span");
+  arrow.textContent = "\u21bb";
+  arrow.style.display = "inline-block";
+  arrow.style.lineHeight = "1";
+  indicator.appendChild(arrow);
+  const style = document.createElement("style");
+  style.textContent = "@keyframes jp-pull-refresh-arrow{to{transform:rotate(360deg)}}";
+  document.head.appendChild(style);
   document.body.appendChild(indicator);
 
   let startY = null;
@@ -58,11 +65,8 @@ export function installIosPullToRefresh() {
     refreshing = true;
     indicator.setAttribute("aria-label", "Refreshing app");
     indicator.style.transform = "translate(-50%,8px)";
-    indicator.style.animation = "jp-pull-refresh 1s linear infinite";
-    const style = document.createElement("style");
-    style.textContent = "@keyframes jp-pull-refresh{to{rotate:360deg}}";
-    document.head.appendChild(style);
-    refreshHomeScreenApp().catch(() => { refreshing = false; indicator.style.animation = "none"; reset(); });
+    arrow.style.animation = "jp-pull-refresh-arrow 1s linear infinite";
+    refreshHomeScreenApp().catch(() => { refreshing = false; arrow.style.animation = "none"; reset(); });
   }, { passive: true });
   document.addEventListener("touchcancel", reset, { passive: true });
 }
