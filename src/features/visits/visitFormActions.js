@@ -70,30 +70,34 @@ setCameraBusy(true);
 setCameraIssue("");
 setIsCameraActive(true);
 try {
-const constraints = {
-video: { facingMode: { exact: "environment" } },
-audio: false
-};
-let stream;
-try {
-stream = await navigator.mediaDevices.getUserMedia(constraints);
-} catch (err) {
-if (requestId !== cameraRequestRef.current) return null;
-stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+let lastError;
+for (const videoConstraints of [{ facingMode: { ideal: "environment" } }, true]) {
+  if (requestId !== cameraRequestRef.current) return null;
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints, audio: false });
+    if (requestId !== cameraRequestRef.current) {
+      stream.getTracks().forEach((track) => track.stop());
+      return null;
+    }
+    streamRef.current = stream;
+    const video = await attachCameraPreview(videoRef, stream);
+    if (requestId !== cameraRequestRef.current) return null;
+    setCameraBusy(false);
+    return video;
+  } catch (err) {
+    lastError = err;
+    if (requestId !== cameraRequestRef.current) return null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+    stream?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  }
 }
-if (requestId !== cameraRequestRef.current) {
-  stream.getTracks().forEach((track) => track.stop());
-  return null;
-}
-streamRef.current = stream;
-const video = await attachCameraPreview(videoRef, stream);
-if (requestId !== cameraRequestRef.current) return null;
-setCameraBusy(false);
-return video;
+throw lastError;
 } catch (err) {
 if (requestId !== cameraRequestRef.current) return null;
 stopCamera();
-setCameraIssue("Camera preview stopped. Try again or use your phone camera below.");
+setCameraIssue("Camera preview did not start. Retry preview or use your phone camera below.");
 console.warn("Camera preview unavailable:", err);
 return null;
 }

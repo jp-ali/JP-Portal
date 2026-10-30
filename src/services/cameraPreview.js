@@ -29,9 +29,11 @@ export async function attachCameraPreview(ref, stream) {
   const video = await waitForVideo(ref, stream, 2500);
   video.muted = true;
   video.playsInline = true;
+  video.setAttribute?.("webkit-playsinline", "");
   video.srcObject = stream;
-  const playing = Promise.resolve().then(() => video.play());
-  await Promise.race([playing.catch(() => {}), pause(3000)]);
+  let playing;
+  try { playing = video.play(); } catch { playing = null; }
+  await Promise.race([Promise.resolve(playing).catch(() => {}), pause(3000)]);
   try {
     await waitForFrame(video, stream, 5000);
   } catch (error) {
@@ -39,7 +41,7 @@ export async function attachCameraPreview(ref, stream) {
     video.srcObject = null;
     await pause(100);
     video.srcObject = stream;
-    Promise.resolve().then(() => video.play()).catch(() => {});
+    try { Promise.resolve(video.play()).catch(() => {}); } catch { /* Frame wait reports failure. */ }
     await waitForFrame(video, stream, 3000);
   }
   return video;
