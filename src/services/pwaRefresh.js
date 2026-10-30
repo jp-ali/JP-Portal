@@ -24,11 +24,12 @@ export function installIosPullToRefresh() {
 
   const indicator = document.createElement("div");
   indicator.setAttribute("aria-label", "Pull down to refresh");
-  indicator.style.cssText = "position:fixed;top:calc(env(safe-area-inset-top, 0px) + 8px);left:50%;z-index:2147483647;width:36px;height:36px;display:grid;place-items:center;border:1px solid #e8ccd5;border-radius:50%;background:#fff;color:#790a29;box-shadow:0 4px 14px #42091d30;font:700 22px system-ui;opacity:0;transform:translate(-50%,-50px);transition:transform .16s ease,opacity .16s ease;pointer-events:none";
+  indicator.style.cssText = "position:fixed;top:calc(env(safe-area-inset-top, 0px) + 8px);left:50%;z-index:2147483647;width:36px;height:36px;display:grid;place-items:center;border:1px solid #e8ccd5;border-radius:50%;background:#fff;color:#790a29;box-shadow:0 4px 14px #42091d30;opacity:0;transform:translate(-50%,-50px);transition:transform .16s ease,opacity .16s ease;pointer-events:none";
+  indicator.style.setProperty("animation", "none", "important");
   const arrow = document.createElement("span");
-  arrow.textContent = "\u21bb";
-  arrow.style.display = "inline-block";
-  arrow.style.lineHeight = "1";
+  arrow.setAttribute("aria-hidden", "true");
+  arrow.style.cssText = "display:grid;place-items:center;width:20px;height:20px;transform-origin:50% 50%";
+  arrow.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m0 0-5 5m5-5 5 5"/></svg>';
   indicator.appendChild(arrow);
   const style = document.createElement("style");
   style.textContent = "@keyframes jp-pull-refresh-arrow{to{transform:rotate(360deg)}}";
