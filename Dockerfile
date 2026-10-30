@@ -17,7 +17,9 @@ ARG REPOSITORY
 LABEL org.opencontainers.image.source="https://github.com/${REPOSITORY}"
 ENV NODE_ENV=production PORT=3001
 WORKDIR /app
+COPY --chown=node:node package.json ./package.json
 COPY --from=frontend --chown=node:node /app/dist ./dist
+COPY --chown=node:node src/domain ./src/domain
 COPY --from=backend-deps --chown=node:node /app/backend/node_modules ./backend/node_modules
 COPY --chown=node:node backend/package.json ./backend/package.json
 COPY --chown=node:node backend/src ./backend/src

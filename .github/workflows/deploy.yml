@@ -60,10 +60,14 @@ jobs:
         with:
           context: .
           push: false
+          load: true
+          tags: portal-ci:check
           build-args: |
             REPOSITORY=${{ github.repository }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Verify production app imports
+        run: docker run --rm --network none portal-ci:check node --input-type=module -e "await import('./backend/src/app.js')"
 
   publish:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

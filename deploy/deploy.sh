@@ -21,7 +21,7 @@ trap rollback ERR
 
 docker compose -f compose.yaml config --quiet
 docker compose -f compose.yaml pull app db caddy
-docker compose -f compose.yaml up -d db
+docker compose -f compose.yaml up -d --wait db
 
 # A fresh dump is retained on the VM before every migration. Copy backups off the VM too.
 mkdir -p backups
