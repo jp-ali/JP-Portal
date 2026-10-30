@@ -27,7 +27,9 @@ const faisalabadId = makeCityId("Faisalabad");
 const manualArea = store.collection("areas").doc(makeAreaId(faisalabadId, `Smoke Area ${suffix}`));
 let createdMarketerId;
 let createdNewsId;
+let createdExpenseNewsId;
 let createdReportId;
+const offlineVisit = store.collection("visits").doc(`offline-${suffix}`);
 const visitRows = [
   { date: "2026-10-20", schoolName: `Migration School A ${suffix}`, cityName: "Lahore", areaName: "Model Town" },
   { date: "2026-10-21", schoolName: `Migration School B ${suffix}`, cityName: "Lahore", areaName: "Model Town" }
@@ -93,6 +95,11 @@ try {
   assert.equal((await createdCard.get()).data().values.assignedCity, "Lahore");
   const createdCookie = await login(createdEmail, "created-smoke-password");
   assert.equal((await fetch(`${base}/api/auth/me`, { headers: { cookie: createdCookie } })).status, 200);
+  const cardResponse = await fetch(`${base}/api/cards/me`, { headers: { cookie: createdCookie } });
+  assert.equal(cardResponse.status, 200, `Marketer card load failed: ${cardResponse.status}`);
+  const loadedCard = (await cardResponse.json()).card;
+  assert.equal(loadedCard.marketerId, createdMarketerId);
+  assert.equal(loadedCard.values.assignedCity, "Lahore");
   const photo = await fetch(`${base}/api/marketers/me/photo`, {
     method: "PUT", headers: { ...json, cookie: createdCookie },
     body: JSON.stringify({ photo: `data:image/jpeg;base64,${Buffer.from("test-photo").toString("base64")}` })
@@ -106,6 +113,20 @@ try {
   const summary = await fetch(`${base}/api/visits/summary`, { headers: { cookie: marketerCookie } });
   assert.equal(summary.status, 200);
   assert.equal((await summary.json()).summary.visits, 2);
+  const offlineWrite = await fetch(`${base}/api/data/document?path=${encodeURIComponent(offlineVisit.path)}`, {
+    method: "PUT", headers: { ...json, cookie: marketerCookie },
+    body: JSON.stringify({ data: {
+      marketerId, marketerEmail, marketerName: "Migration probe", schoolName: "Offline Smoke School",
+      cityName: "Lahore", areaName: "Model Town", image: "data:image/jpeg;base64,dGVzdA==",
+      offlineVisit: true, createdAt: Timestamp.fromDate(new Date("2026-10-20T08:00:00+05:00"))
+    } })
+  });
+  assert.equal(offlineWrite.status, 200, `Offline visit upload failed: ${offlineWrite.status}`);
+  assert.equal((await offlineVisit.get()).data().offlineVisit, true);
+  const otherOfflineRead = await fetch(`${base}/api/data/document?path=${encodeURIComponent(offlineVisit.path)}`, {
+    headers: { cookie: createdCookie }
+  });
+  assert.equal(otherOfflineRead.status, 403);
   for (const route of ["/api/marketers", "/api/custom-reports", "/api/news", "/api/news/schedules"]) {
     const response = await fetch(`${base}${route}`, { headers: { cookie: adminCookie } });
     assert.equal(response.status, 200, `${route} returned ${response.status}`);
@@ -209,6 +230,19 @@ try {
   });
   assert.equal(readNews.status, 200);
   assert.equal((await readNews.json()).marked, 1);
+  const expenseResponse = await fetch(`${base}/api/news`, {
+    method: "POST", headers: { ...json, cookie: adminCookie },
+    body: JSON.stringify({ kind: "expense", fromDate: "2026-10-20", toDate: "2026-10-20", recipientIds: [marketerId] })
+  });
+  assert.equal(expenseResponse.status, 201, `Expense news creation failed: ${expenseResponse.status}`);
+  createdExpenseNewsId = (await expenseResponse.json()).news.id;
+  const pdfResponse = await fetch(`${base}/api/news/${createdExpenseNewsId}/report?download=1`, { headers: { cookie: marketerCookie } });
+  assert.equal(pdfResponse.status, 200, `Expense PDF download failed: ${pdfResponse.status}`);
+  assert.match(pdfResponse.headers.get("content-type") || "", /application\/pdf/);
+  assert.match(pdfResponse.headers.get("content-disposition") || "", /^attachment;/);
+  assert.equal(Buffer.from(await pdfResponse.arrayBuffer()).subarray(0, 5).toString(), "%PDF-");
+  const otherPdf = await fetch(`${base}/api/news/${createdExpenseNewsId}/report?download=1`, { headers: { cookie: createdCookie } });
+  assert.equal(otherPdf.status, 404);
   const denied = await fetch(`${base}/api/data/query`, {
     method: "POST", headers: { ...json, cookie: marketerCookie },
     body: JSON.stringify({ collectionPath: "customReports", filters: [] })
@@ -219,13 +253,23 @@ try {
   const afterLogout = await fetch(`${base}/api/auth/me`, { headers: { cookie: marketerCookie } });
   assert.equal(afterLogout.status, 401);
   await fetch(`${base}/api/auth/logout`, { method: "POST", headers: { cookie: adminCookie } });
-  console.log("PostgreSQL login, locations, cards/photos, attendance/action plan, visit media/import, catalogue, custom report, news/read, and JWT logout passed");
+  console.log("PostgreSQL login, locations, card load/photo, offline visit upload, attendance/action plan, visit media/import, catalogue, custom report, news/PDF download, and JWT logout passed");
 } finally {
+  if (createdExpenseNewsId) {
+    const reportRef = store.collection("news").doc(createdExpenseNewsId).collection("reports").doc(marketerId);
+    const report = await reportRef.get();
+    for (let index = 0; index < (report.data()?.chunks || 0); index++) await reportRef.collection("chunks").doc(String(index)).delete();
+    await reportRef.delete();
+    await store.collection("marketerNewsReads").doc(marketerId).collection("items").doc(createdExpenseNewsId).delete();
+    await store.collection("news").doc(createdExpenseNewsId).delete();
+  }
   await Promise.all([account.delete(), own.delete(), other.delete(), actionPlan.delete(), catalogue.delete(), manualArea.delete(), ...visitRefs.map((ref) => ref.delete()),
+    offlineVisit.delete(),
     ...(createdNewsId ? [store.collection("news").doc(createdNewsId).delete(), store.collection("marketerNewsReads").doc(marketerId).collection("items").doc(createdNewsId).delete()] : []),
     ...(createdReportId ? [store.collection("customReports").doc(createdReportId).delete()] : []),
     ...(createdMarketerId ? [store.collection("marketers").doc(createdMarketerId).delete(), store.collection("savedCards").doc(createdMarketerId).delete()] : [])]);
   await postgresPool().query("DELETE FROM portal_sessions WHERE account_id = $1", [marketerId]);
+  if (createdMarketerId) await postgresPool().query("DELETE FROM portal_sessions WHERE account_id = $1", [createdMarketerId]);
   await new Promise((resolve) => server.close(resolve));
   await closePostgresPool();
 }
