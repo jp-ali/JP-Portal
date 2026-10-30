@@ -1,7 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 
-export default function PhotoViewer({ image, mediaRecord, onClose, onDelete, onRestore, viewOnly = false }) {
+export default function PhotoViewer({ image, mediaRecord, onClose, onDelete, onRestore, viewOnly = false, allowDownload = false }) {
   if (!image) return null;
 
   return createPortal(
@@ -14,7 +14,7 @@ export default function PhotoViewer({ image, mediaRecord, onClose, onDelete, onR
     >
       <img className="photo-viewer-image" src={image} alt="Full view" />
       <div className="photo-viewer-actions" onClick={(event) => event.stopPropagation()}>
-        {!viewOnly && <a href={image} download="photo.jpg">Download image</a>}
+        {(!viewOnly || allowDownload) && <a href={image} download="photo.jpg">Download image</a>}
         {!viewOnly && onDelete && mediaRecord?.type === "active" && (
           <button type="button" onClick={() => onDelete(mediaRecord.record)}>Delete picture</button>
         )}

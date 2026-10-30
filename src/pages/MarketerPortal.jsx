@@ -189,6 +189,7 @@ return (
       {context.editingVisit && <VisitEditDialog key={context.editingVisit.id} visit={context.editingVisit} onClose={() => context.setEditingVisit(null)} onSave={context.saveVisitEdit} inputStyle={context.inputStyle} />}
       <PhotoViewer
           viewOnly
+          allowDownload
           image={fullScreenImage}
           mediaRecord={fullScreenMediaRecord}
           onClose={() => { setFullScreenImage(null); setFullScreenMediaRecord(null); }}
