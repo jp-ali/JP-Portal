@@ -1,5 +1,10 @@
 const pause = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
+export function hasCameraFrame(video, stream) {
+  return Boolean(video?.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0
+    && stream?.getVideoTracks().some((track) => track.readyState === "live" && !track.muted));
+}
+
 async function waitForVideo(ref, stream, milliseconds) {
   const until = Date.now() + milliseconds;
   while (Date.now() < until) {
@@ -14,7 +19,7 @@ async function waitForFrame(video, stream, milliseconds) {
   const until = Date.now() + milliseconds;
   while (Date.now() < until) {
     if (stream.getVideoTracks().every((track) => track.readyState === "ended")) throw new Error("Camera was stopped.");
-    if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) return;
+    if (hasCameraFrame(video, stream)) return;
     await pause(60);
   }
   throw new Error("Camera opened but no video appeared. Check Safari camera access, then reopen the camera.");

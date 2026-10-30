@@ -3,7 +3,9 @@ import React from "react";
 import NumberOrCustomField from "../../ui/NumberOrCustomField.jsx";
 
 export default function MarketerAddVisitPanel() {
+  const nativeCameraInputRef = React.useRef(null);
   const { areasList, btnPrimary, cancelEditVisitSchool, capturePhoto, cardStyle, citiesList, editingVisitSchoolId, editingVisitSchoolName, fetchAreasForCity, fetchSchoolsForArea, handleAddVisitSchool, handleSubmitVisit, imageFile, inputStyle, isCameraActive, isOwnManualSchool, isUsableSchoolRecord, loading, newSchoolName, notes, phone, principalName, purpose, readCachedAreasForCity, removeOwnVisitSchool, retakePhoto, saveEditedVisitSchool, schoolsList, selectVisitArea, setEditingVisitSchoolId, setEditingVisitSchoolName, setFullScreenImage, setMarketerview, setNewSchoolName, setNotes, setPhone, setPrincipalName, setPurpose, setSchoolName, setVisitAddSchoolOpen, setVisitAreaId, setVisitAreaPickerOpen, setVisitAreaSearch, setVisitCityId, setVisitCityPickerOpen, setVisitCitySearch, setVisitSchoolIds, setVisitSchoolLoadError, setVisitSchoolManagerOpen, setVisitSchoolPickerOpen, setVisitSchoolSearch, setVisitSchoolsLoading, setVisitSession, startCamera, startEditVisitSchool, stopCamera, successMsg, syncAreasForCityFromOpenStreetMap, toggleVisitSchool, user, videoRef, visitAddSchoolOpen, visitAreaId, visitAreaPickerOpen, visitAreaSearch, visitCityId, visitCityPickerOpen, visitCitySearch, visitSchoolIds, visitSchoolLoadError, visitSchoolManagerOpen, visitSchoolPickerOpen, visitSchoolSearch, visitSchoolsLoading, visitSession, visitBranches, setVisitBranches, visitStrength, setVisitStrength } = usePortalContext();
+  const { cameraBusy, cameraIssue, capturePhotoFromFile } = usePortalContext();
   return (<div>
             <button onClick={() => { stopCamera(); setMarketerview("home"); }} style={{ marginBottom: "14px", padding: "8px 14px", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }}>← Back to Menu</button>
             <div style={cardStyle}>
@@ -432,7 +434,7 @@ style={{ ...inputStyle, padding: "10px 12px", fontSize: "13px" }}
                 </div>
                 <div style={{ background: "rgba(255,255,255,0.96)", padding: "16px", borderRadius: "14px", border: "1px solid rgba(143,21,50,.24)", textAlign: "center" }}>
                   <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "14px", color: "#3b2329" }}>📷 School Photo (Detailed Address, Date, Day & Time Stamped):</label>
-                  {!isCameraActive && !imageFile && (
+                  {!isCameraActive && !imageFile && !cameraIssue && (
 <button 
 type="button"
 onClick={startCamera}
@@ -465,9 +467,10 @@ style={{ width: "100%", maxHeight: "280px", borderRadius: "10px", background: "#
                         <button 
 type="button" 
 onClick={capturePhoto}
-style={{ flex: 1, padding: "10px", background: "#15803d", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
+disabled={cameraBusy}
+style={{ flex: 1, padding: "10px", background: "#15803d", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: cameraBusy ? "wait" : "pointer", opacity: cameraBusy ? .6 : 1 }}
 >
-                          🟢 Capture Snap
+                          {cameraBusy ? "Opening camera..." : "🟢 Capture Snap"}
                         </button>
                         <button 
 type="button" 
@@ -479,6 +482,14 @@ style={{ flex: 1, padding: "10px", background: "#86132f", color: "white", border
                       </div>
                     </div>
 )}
+                  {cameraIssue && !imageFile && (
+                    <div style={{ marginTop: "10px", display: "grid", gap: "8px" }}>
+                      <p role="status" style={{ margin: 0, color: "#86132f", fontSize: "13px" }}>{cameraIssue}</p>
+                      <button type="button" onClick={startCamera} disabled={cameraBusy} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #86132f", background: "white", color: "#86132f", fontWeight: 700 }}>Retry preview</button>
+                      <button type="button" onClick={() => nativeCameraInputRef.current?.click()} disabled={cameraBusy} style={{ padding: "10px", borderRadius: "8px", border: 0, background: "#15803d", color: "white", fontWeight: 700 }}>Use phone camera</button>
+                      <input ref={nativeCameraInputRef} type="file" accept="image/*" capture="environment" onChange={capturePhotoFromFile} style={{ display: "none" }} aria-label="Take school photo with phone camera" />
+                    </div>
+                  )}
                   {imageFile && !isCameraActive && (
 <div style={{ marginTop: "4px" }}>
                       <p style={{ color: "#b75a70", fontSize: "13px", fontWeight: "600", margin: "0 0 10px 0" }}>✅ Photo captured & stamped successfully!</p>

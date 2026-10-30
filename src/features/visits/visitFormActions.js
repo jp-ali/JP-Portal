@@ -5,10 +5,10 @@ import { makeSchoolVisitDetails } from "../../domain/schoolVisitDetails.js";
 import { getSession } from "../../services/authApi";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
 import { formatAddressForStamp } from "../../services/visitPhotos.js";
-import { attachCameraPreview } from "../../services/cameraPreview.js";
+import { attachCameraPreview, hasCameraFrame } from "../../services/cameraPreview.js";
 
 export function createVisitFormActions({ form, user, setUser, setMarketerview, fetchTodayAttendance, areasList, citiesList, schoolsList, isUsableSchoolRecord, resetVisitAssignmentForm, fetchMarketerReports, fetchMarketerSamples, fetchCitiesByIds, fetchAreasForCities, fetchSchoolsForArea, mergeSchoolsIntoState, formatTime12, refreshLoggedInMarketerAssignments, setEditingVisitSchoolId, setEditingVisitSchoolName, setNewSchoolName, setSchoolSyncMessage, applySchoolVisitDetails }) {
-const { visitCityId, setVisitCityId, visitAreaId, setVisitAreaId, visitSchoolIds, setVisitSchoolIds, visitCitySearch, setVisitCitySearch, visitAreaSearch, setVisitAreaSearch, visitSchoolSearch, setVisitSchoolSearch, visitSession, setVisitSession, visitBranches, setVisitBranches, visitStrength, setVisitStrength, visitCityPickerOpen, setVisitCityPickerOpen, visitAreaPickerOpen, setVisitAreaPickerOpen, visitSchoolPickerOpen, setVisitSchoolPickerOpen, visitAddSchoolOpen, setVisitAddSchoolOpen, visitSchoolManagerOpen, setVisitSchoolManagerOpen, visitSchoolsLoading, setVisitSchoolsLoading, visitSchoolLoadError, setVisitSchoolLoadError, schoolName, setSchoolName, principalName, setPrincipalName, phone, setPhone, purpose, setPurpose, notes, setNotes, imageFile, setImageFile, loading, setLoading, successMsg, setSuccessMsg, sampleSchoolName, setSampleSchoolName, samplePrincipalName, setSamplePrincipalName, samplePhone, setSamplePhone, sampleDetailsText, setSampleDetailsText, sampleLoading, setSampleLoading, sampleSuccessMsg, setSampleSuccessMsg, isCameraActive, setIsCameraActive, videoRef, streamRef } = form;
+const { visitCityId, setVisitCityId, visitAreaId, setVisitAreaId, visitSchoolIds, setVisitSchoolIds, visitCitySearch, setVisitCitySearch, visitAreaSearch, setVisitAreaSearch, visitSchoolSearch, setVisitSchoolSearch, visitSession, setVisitSession, visitBranches, setVisitBranches, visitStrength, setVisitStrength, visitCityPickerOpen, setVisitCityPickerOpen, visitAreaPickerOpen, setVisitAreaPickerOpen, visitSchoolPickerOpen, setVisitSchoolPickerOpen, visitAddSchoolOpen, setVisitAddSchoolOpen, visitSchoolManagerOpen, setVisitSchoolManagerOpen, visitSchoolsLoading, setVisitSchoolsLoading, visitSchoolLoadError, setVisitSchoolLoadError, schoolName, setSchoolName, principalName, setPrincipalName, phone, setPhone, purpose, setPurpose, notes, setNotes, imageFile, setImageFile, loading, setLoading, successMsg, setSuccessMsg, sampleSchoolName, setSampleSchoolName, samplePrincipalName, setSamplePrincipalName, samplePhone, setSamplePhone, sampleDetailsText, setSampleDetailsText, sampleLoading, setSampleLoading, sampleSuccessMsg, setSampleSuccessMsg, isCameraActive, setIsCameraActive, cameraBusy, setCameraBusy, setCameraIssue, cameraRequestRef, videoRef, streamRef } = form;
 const openAddVisit = async () => {
 const attendance = await fetchTodayAttendance();
 if (attendance?.status === "leave") {
@@ -62,6 +62,12 @@ applySchoolVisitDetails(school);
 setVisitSchoolPickerOpen(false);
 };
 const startCamera = async () => {
+const requestId = ++cameraRequestRef.current;
+if (videoRef.current) videoRef.current.srcObject = null;
+streamRef.current?.getTracks().forEach((track) => track.stop());
+streamRef.current = null;
+setCameraBusy(true);
+setCameraIssue("");
 setIsCameraActive(true);
 try {
 const constraints = {
@@ -72,35 +78,59 @@ let stream;
 try {
 stream = await navigator.mediaDevices.getUserMedia(constraints);
 } catch (err) {
+if (requestId !== cameraRequestRef.current) return null;
 stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
 }
+if (requestId !== cameraRequestRef.current) {
+  stream.getTracks().forEach((track) => track.stop());
+  return null;
+}
 streamRef.current = stream;
-await attachCameraPreview(videoRef, stream);
+const video = await attachCameraPreview(videoRef, stream);
+if (requestId !== cameraRequestRef.current) return null;
+setCameraBusy(false);
+return video;
 } catch (err) {
+if (requestId !== cameraRequestRef.current) return null;
 stopCamera();
-alert("Camera could not start. Please check browser camera permission: " + err.message);
+setCameraIssue("Camera preview stopped. Try again or use your phone camera below.");
+console.warn("Camera preview unavailable:", err);
+return null;
 }
 };
 const stopCamera = () => {
+cameraRequestRef.current += 1;
 if (videoRef.current) videoRef.current.srcObject = null;
 if (streamRef.current) {
 streamRef.current.getTracks().forEach(track => track.stop());
 streamRef.current = null;
 }
 setIsCameraActive(false);
+setCameraBusy(false);
+setCameraIssue("");
 };
-const capturePhoto = () => {
-const video = videoRef.current;
-if (!video) return;
-if (video.readyState < 2 || !video.videoWidth) {
-  alert("Camera is still loading. Wait for the preview before taking a photo.");
-  return;
+const capturePhoto = async () => {
+if (cameraBusy) return;
+let video = videoRef.current;
+if (!hasCameraFrame(video, streamRef.current)) {
+  video = await startCamera();
+  if (!hasCameraFrame(video, streamRef.current)) return;
 }
+setCameraBusy(true);
+try {
 const canvas = document.createElement("canvas");
-canvas.width = video.videoWidth || 1280;
-canvas.height = video.videoHeight || 720;
+canvas.width = video.videoWidth;
+canvas.height = video.videoHeight;
 const ctx = canvas.getContext("2d");
 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+stampVisitCanvas(canvas, ctx);
+} catch (err) {
+  stopCamera();
+  setCameraIssue("Camera frame stopped. Try again or use your phone camera below.");
+  console.warn("Could not capture camera frame:", err);
+}
+};
+const stampVisitCanvas = (canvas, ctx) => {
 const now = new Date();
 const optionsDay = { weekday: 'long' };
 const dayName = now.toLocaleDateString('en-US', optionsDay);
@@ -130,6 +160,34 @@ drawStampAndSave(canvas, ctx, "Location: Unavailable", dayName, dateStr, timeStr
 );
 } else {
 drawStampAndSave(canvas, ctx, "Location: Not Supported", dayName, dateStr, timeStr);
+}
+};
+const capturePhotoFromFile = async (event) => {
+const file = event.target.files?.[0];
+event.target.value = "";
+if (!file) return;
+setCameraBusy(true);
+try {
+  const imageUrl = URL.createObjectURL(file);
+  try {
+    const picture = new Image();
+    await new Promise((resolve, reject) => {
+      picture.onload = resolve;
+      picture.onerror = () => reject(new Error("Photo could not be opened."));
+      picture.src = imageUrl;
+    });
+    const scale = Math.min(1, 1600 / Math.max(picture.naturalWidth, picture.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(picture.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(picture.naturalHeight * scale));
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(picture, 0, 0, canvas.width, canvas.height);
+    stampVisitCanvas(canvas, ctx);
+  } finally { URL.revokeObjectURL(imageUrl); }
+} catch (err) {
+  setCameraBusy(false);
+  setCameraIssue("Photo could not be opened. Please try again.");
+  console.warn("Phone camera photo unavailable:", err);
 }
 };
 const drawStampAndSave = (canvas, ctx, locText, dayName, dateStr, timeStr) => {
@@ -174,6 +232,7 @@ startY += lineHeight * 0.92;
 const dataUrl = compressCanvasToTargetDataUrl(canvas, 100 * 1024, 900, 0.50);
 setImageFile(dataUrl);
 stopCamera();
+setCameraIssue("");
 };
 const retakePhoto = () => {
 setImageFile(null);
@@ -299,5 +358,5 @@ alert("Error submitting sample: " + err.message);
 }
 setSampleLoading(false);
 };
-return { openAddVisit, selectVisitArea, toggleVisitSchool, startCamera, stopCamera, capturePhoto, retakePhoto, handleSubmitVisit, handleSubmitSample };
+return { openAddVisit, selectVisitArea, toggleVisitSchool, startCamera, stopCamera, capturePhoto, capturePhotoFromFile, retakePhoto, handleSubmitVisit, handleSubmitSample };
 }
