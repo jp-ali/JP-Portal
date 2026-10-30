@@ -1,10 +1,11 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
-import React from "react";
+import React, { useEffect } from "react";
 import AdminVisitActions from "../../ui/AdminVisitActions.jsx";
 import MarketerMultiSelect from "../../ui/MarketerMultiSelect.jsx";
 
 export default function AdminTodayVisitsPanel() {
   const { cardStyle, downloadExcel, downloadPDF, fetchMarketers, fetchTodayReports, getFilteredTodayVisitReports, handleDeletePicture, handleDeleteVisit, inputStyle, marketersList, renderExpandedReportChrome, renderReportExpandButton, renderVisitReportTable, reportViewClass, selectedTodayVisitMarketerEmails, setAdminView, setEditingVisit, setSelectedTodayVisitMarketerEmails, setVisitSearch, visitSearch } = usePortalContext();
+  useEffect(() => { fetchMarketers(); fetchTodayReports(); }, []);
   const visibleReports = getFilteredTodayVisitReports();
 
   return <div className={reportViewClass("today-visits")}>

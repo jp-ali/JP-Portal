@@ -166,7 +166,9 @@ return true;
 const getMarketerName = (email, fallback = "N/A") => {
 if (!email) return fallback;
 const found = marketersList.find(m => String(m.email || "").toLowerCase() === String(email).toLowerCase());
-return found?.name || fallback;
+if (found?.name) return found.name;
+if (String(user?.email || "").toLowerCase() === String(email).toLowerCase() && user?.name) return user.name;
+return fallback;
 };
 const { downloadExcel, downloadPDF, downloadSingleSample, downloadMarketersExcel, downloadMarketersPDF } = createReportExporters({ formatTime12, getMarketerName });
 const handleLogout = onLogout;

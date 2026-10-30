@@ -4,14 +4,16 @@ import App from './App.jsx'
 import ConfirmDialogHost from './ui/ConfirmDialogHost.jsx'
 import { installIosPullToRefresh } from './services/pwaRefresh.js'
 
-// GitHub Pages serves static files only. Sign-in needs the API behind the live
-// portal, so open that origin before rendering the login form.
-const livePortalUrl = import.meta.env.VITE_LIVE_PORTAL_URL || 'https://9tn88jsw-5173.inc1.devtunnels.ms/'
+// GitHub Pages is a static entry point. Only redirect when a stable live API
+// origin has been configured for the Pages build.
+const livePortalUrl = import.meta.env.VITE_LIVE_PORTAL_URL
 const isStaticPagesHost = window.location.hostname === 'jp-ali.github.io'
-if (isStaticPagesHost && navigator.onLine) {
+if (isStaticPagesHost && livePortalUrl && navigator.onLine) {
   const destination = new URL(livePortalUrl)
   destination.search = window.location.search
   window.location.replace(destination.href)
+} else if (isStaticPagesHost) {
+  document.getElementById('root').innerHTML = '<main style="max-width:34rem;margin:12vh auto;padding:2rem;font:16px system-ui;color:#3b2329"><h1>Portal server is not available here</h1><p>This GitHub Pages address hosts the frontend only. Open the live portal URL to sign in.</p></main>'
 } else {
   installIosPullToRefresh()
   ReactDOM.createRoot(document.getElementById('root')).render(

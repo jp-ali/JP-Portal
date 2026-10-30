@@ -240,6 +240,7 @@ notes,
 image: imageFile,
 marketerEmail: user.email,
 marketerId: user.marketerId || "",
+marketerName: user.name || "",
 createdAt: serverTimestamp()
 });
 setSuccessMsg("Visit report submitted successfully!");

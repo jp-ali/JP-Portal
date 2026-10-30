@@ -34,7 +34,7 @@ export async function syncOfflineVisits(user) {
       branches: draft.branches || "", strength: draft.strength || "",
       visitTime: capturedAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true }),
       notes: draft.notes || "", image: draft.image,
-      marketerEmail: user.email, marketerId: user.marketerId || "",
+      marketerEmail: user.email, marketerId: user.marketerId || "", marketerName: user.name || "",
       createdAt: Timestamp.fromDate(capturedAt), syncedAt: serverTimestamp(), offlineVisit: true
     };
     await setDoc(doc(db, "visits", draft.id), payload);

@@ -9,6 +9,17 @@ function configurePush() {
   return true;
 }
 
+export async function sendPushWithRetry(subscription, payload, send = webPush.sendNotification, wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try { return await send(subscription, payload, { TTL: 86400 }); }
+    catch (error) {
+      const status = Number(error?.statusCode);
+      if (attempt === 2 || (status !== 429 && (status < 500 || status > 599))) throw error;
+      await wait(500 * 2 ** attempt);
+    }
+  }
+}
+
 export async function sendNewsPush(db, recipients, news) {
   if (!configurePush()) return { configured: false, delivered: 0, subscribed: 0 };
   const ids = new Set(recipients.map((item) => item.id));
@@ -23,9 +34,9 @@ export async function sendNewsPush(db, recipients, news) {
   let delivered = 0;
   for (let start = 0; start < targets.length; start += 25) {
     const batch = targets.slice(start, start + 25);
-    const results = await Promise.allSettled(batch.map((item) => webPush.sendNotification({
+    const results = await Promise.allSettled(batch.map((item) => sendPushWithRetry({
       endpoint: item.data().endpoint, keys: item.data().keys
-    }, payload, { TTL: 86400 })));
+    }, payload)));
     await Promise.all(results.map(async (result, index) => {
       if (result.status === "fulfilled") { delivered++; return; }
       if ([404, 410].includes(result.reason?.statusCode)) await batch[index].ref.delete().catch(() => {});
