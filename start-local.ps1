@@ -61,8 +61,7 @@ if (-not $Dev) {
 if (Test-LocalPort 5173) {
   $frontendListener = Get-NetTCPConnection -LocalPort 5173 -State Listen | Select-Object -First 1
   $frontendProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$($frontendListener.OwningProcess)"
-  $isVite = ($frontendProcess.CommandLine -match 'vite[\\/]bin[\\/]vite\.js') -and
-    ($frontendProcess.CommandLine -like "*$projectRoot*")
+  $isVite = $frontendProcess.CommandLine -match 'vite[\\/]bin[\\/]vite\.js'
   $isPreview = $frontendProcess.CommandLine -match 'vite\.js[" ]+preview(?:[" ]|$)'
   if (-not $isVite) { throw 'Port 5173 is occupied by another application.' }
   if ($isPreview -eq $Dev) {

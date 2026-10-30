@@ -39,13 +39,16 @@ export function marketerProfile(record) {
 
 export async function authenticate(identifier, password, repository = { findMarketerByIdentifier }) {
   const email = process.env.ADMIN_EMAIL || "admin@portal.com";
-  if (identifier === email) {
+  const normalizedIdentifier = identifier.trim();
+  if (normalizedIdentifier.toLowerCase() === email.toLowerCase()) {
     const hash = process.env.ADMIN_PASSWORD_HASH;
     if (!hash) throw new Error("ADMIN_PASSWORD_HASH is not configured");
     if (!(await verifyPassword(password, hash))) return null;
     return { claims: { sub: "admin", role: "admin" }, profile: { email, name: process.env.ADMIN_NAME || "Muhammad Ali Ashfaq", role: "admin" } };
   }
-  const marketer = await repository.findMarketerByIdentifier(identifier);
+  const marketer = await repository.findMarketerByIdentifier(normalizedIdentifier)
+    || (normalizedIdentifier.includes("@") && normalizedIdentifier !== normalizedIdentifier.toLowerCase()
+      ? await repository.findMarketerByIdentifier(normalizedIdentifier.toLowerCase()) : null);
   if (!marketer) return null;
   if (!marketer.passwordHash || !(await verifyPassword(password, marketer.passwordHash))) return null;
   return { claims: { sub: marketer.id, role: "marketer" }, profile: marketerProfile(marketer) };
