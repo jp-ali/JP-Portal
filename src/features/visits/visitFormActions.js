@@ -1,12 +1,13 @@
 import { showNotice as alert } from "../../ui/confirmDialog.js";
-import { addDoc, collection, serverTimestamp } from "../../services/dataGateway.js";
+import { addDoc, collection, doc, serverTimestamp, setDoc } from "../../services/dataGateway.js";
 import { db } from "../../services/dataGateway.js";
+import { makeSchoolVisitDetails } from "../../domain/schoolVisitDetails.js";
 import { getSession } from "../../services/authApi";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
 import { formatAddressForStamp } from "../../services/visitPhotos.js";
 import { attachCameraPreview } from "../../services/cameraPreview.js";
 
-export function createVisitFormActions({ form, user, setUser, setMarketerview, fetchTodayAttendance, areasList, citiesList, schoolsList, isUsableSchoolRecord, resetVisitAssignmentForm, fetchMarketerReports, fetchMarketerSamples, fetchCitiesByIds, fetchAreasForCities, formatTime12, refreshLoggedInMarketerAssignments, setEditingVisitSchoolId, setEditingVisitSchoolName, setNewSchoolName, setSchoolSyncMessage }) {
+export function createVisitFormActions({ form, user, setUser, setMarketerview, fetchTodayAttendance, areasList, citiesList, schoolsList, isUsableSchoolRecord, resetVisitAssignmentForm, fetchMarketerReports, fetchMarketerSamples, fetchCitiesByIds, fetchAreasForCities, fetchSchoolsForArea, mergeSchoolsIntoState, formatTime12, refreshLoggedInMarketerAssignments, setEditingVisitSchoolId, setEditingVisitSchoolName, setNewSchoolName, setSchoolSyncMessage, applySchoolVisitDetails }) {
 const { visitCityId, setVisitCityId, visitAreaId, setVisitAreaId, visitSchoolIds, setVisitSchoolIds, visitCitySearch, setVisitCitySearch, visitAreaSearch, setVisitAreaSearch, visitSchoolSearch, setVisitSchoolSearch, visitSession, setVisitSession, visitBranches, setVisitBranches, visitStrength, setVisitStrength, visitCityPickerOpen, setVisitCityPickerOpen, visitAreaPickerOpen, setVisitAreaPickerOpen, visitSchoolPickerOpen, setVisitSchoolPickerOpen, visitAddSchoolOpen, setVisitAddSchoolOpen, visitSchoolManagerOpen, setVisitSchoolManagerOpen, visitSchoolsLoading, setVisitSchoolsLoading, visitSchoolLoadError, setVisitSchoolLoadError, schoolName, setSchoolName, principalName, setPrincipalName, phone, setPhone, purpose, setPurpose, notes, setNotes, imageFile, setImageFile, loading, setLoading, successMsg, setSuccessMsg, sampleSchoolName, setSampleSchoolName, samplePrincipalName, setSamplePrincipalName, samplePhone, setSamplePhone, sampleDetailsText, setSampleDetailsText, sampleLoading, setSampleLoading, sampleSuccessMsg, setSampleSuccessMsg, isCameraActive, setIsCameraActive, videoRef, streamRef } = form;
 const openAddVisit = async () => {
 const attendance = await fetchTodayAttendance();
@@ -39,6 +40,7 @@ if (!area?.id || area.cityId !== visitCityId) return;
 setVisitAreaId(area.id);
 setVisitSchoolIds([]);
 setSchoolName("");
+applySchoolVisitDetails(null);
 setVisitSchoolSearch("");
 setNewSchoolName("");
 setVisitAreaPickerOpen(false);
@@ -53,15 +55,11 @@ setVisitSchoolLoadError("");
 const toggleVisitSchool = (schoolId) => {
 const school = schoolsList.find(s => s.id === schoolId);
 if (!school || school.areaId !== visitAreaId || school.cityId !== visitCityId || !isUsableSchoolRecord(school)) return;
-setVisitSchoolIds(prev => {
-if (prev[0] === schoolId) {
-setSchoolName("");
-return [];
-}
+if (visitSchoolIds[0] === schoolId) return;
+setVisitSchoolIds([schoolId]);
 setSchoolName(school.name || "");
+applySchoolVisitDetails(school);
 setVisitSchoolPickerOpen(false);
-return [schoolId];
-});
 };
 const startCamera = async () => {
 setIsCameraActive(true);
@@ -247,7 +245,23 @@ marketerId: user.marketerId || "",
 marketerName: user.name || "",
 createdAt: serverTimestamp()
 });
-setSuccessMsg("Visit report submitted successfully!");
+let detailsSaved = false;
+try {
+  const visitDetails = makeSchoolVisitDetails({ principalName, phone, session: visitSession, branches: visitBranches, strength: visitStrength });
+  await setDoc(doc(db, "schools", selectedSchools[0].id), {
+    visitDetails,
+    visitDetailsUpdatedAt: serverTimestamp()
+  }, { merge: true });
+  detailsSaved = true;
+  mergeSchoolsIntoState(area.id, schoolsList.filter((school) => school.areaId === area.id)
+    .map((school) => school.id === selectedSchools[0].id ? { ...school, visitDetails } : school));
+  await fetchSchoolsForArea(area.id, city.id);
+} catch (schoolError) {
+  console.error("Visit saved but school details could not be remembered:", schoolError);
+}
+setSuccessMsg(detailsSaved
+  ? "Visit report submitted successfully! School details will fill automatically next time."
+  : "Visit report submitted, but school details could not be saved for next time. Please retry on your next visit.");
 resetVisitAssignmentForm();
 setPrincipalName("");
 setPhone("");

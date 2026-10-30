@@ -3,6 +3,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { compressCanvasToTargetDataUrl } from "../services/imageCompression.js";
 import { listOfflineVisits, removeOfflineVisit, saveOfflineVisit } from "../services/offlineVisitStore.js";
 import { readOfflineVisitCatalog } from "../services/offlineVisitCatalog.js";
+import { makeSchoolId } from "../domain/catalog.js";
+import { getSchoolVisitDetails, makeSchoolVisitDetails } from "../domain/schoolVisitDetails.js";
 import NumberOrCustomField from "../ui/NumberOrCustomField.jsx";
 import offlineCss from "../styles/offlineVisit.css?raw";
 
@@ -77,17 +79,17 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
   const selectCity = (event) => {
     const city = cities.find((item) => item.id === event.target.value);
     setSchoolCustom(false);
-    setForm((current) => ({ ...current, cityId: city?.id || "", cityName: city?.name || "", areaId: "", areaName: "", schoolId: "", schoolName: "" }));
+    setForm((current) => ({ ...current, cityId: city?.id || "", cityName: city?.name || "", areaId: "", areaName: "", schoolId: "", schoolName: "", ...getSchoolVisitDetails(null) }));
   };
   const selectArea = (event) => {
     const area = areas.find((item) => item.id === event.target.value);
     setSchoolCustom(false);
-    setForm((current) => ({ ...current, areaId: area?.id || "", areaName: area?.name || "", schoolId: "", schoolName: "" }));
+    setForm((current) => ({ ...current, areaId: area?.id || "", areaName: area?.name || "", schoolId: "", schoolName: "", ...getSchoolVisitDetails(null) }));
   };
   const selectSchool = (event) => {
     const school = schools.find((item) => item.id === event.target.value);
     setSchoolCustom(event.target.value === "custom");
-    setForm((current) => ({ ...current, schoolId: school?.id || "", schoolName: school?.name || "" }));
+    setForm((current) => ({ ...current, schoolId: school?.id || "", schoolName: school?.name || "", ...getSchoolVisitDetails(school) }));
   };
   const acceptCameraPhoto = async (event) => {
     const file = event.target.files?.[0];
@@ -107,6 +109,18 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
         ...Object.fromEntries(Object.entries(form).map(([key, value]) => [key, String(value).trim()])),
         image: photo, ownerEmail, capturedAt: new Date().toISOString()
       });
+      if (form.areaId && form.cityId && form.schoolName.trim()) {
+        const schoolId = form.schoolId || makeSchoolId(form.areaId, form.schoolName);
+        const key = `javed_portal_schools_${form.areaId}`;
+        const previous = readStoredRows(key);
+        const school = previous.find((item) => item.id === schoolId)
+          || schools.find((item) => item.id === schoolId)
+          || { id: schoolId, name: form.schoolName.trim(), areaId: form.areaId, cityId: form.cityId, source: "manual-marketer" };
+        const visitDetails = makeSchoolVisitDetails(form);
+        try {
+          localStorage.setItem(key, JSON.stringify([...previous.filter((item) => item.id !== schoolId), { ...school, visitDetails }]));
+        } catch (error) { console.warn("Could not cache school details for offline visits:", error); }
+      }
       setForm(emptyForm); setSchoolCustom(false); setFormResetKey((value) => value + 1); setPhoto("");
       if (cameraInput.current) cameraInput.current.value = "";
       setMessage("Visit saved on this device. Sign in online with the same marketer email, then tap Sync.");

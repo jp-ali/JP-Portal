@@ -569,7 +569,9 @@ syncedAt: serverTimestamp()
 }
 })), (record) => makeSchoolId(area.id, record.school.name));
 }
+const savedById = new Map(schoolsList.filter((school) => school.areaId === area.id).map((school) => [school.id, school]));
 const importedForState = schoolsToWrite.map((school) => ({
+...savedById.get(makeSchoolId(area.id, school.name)),
 id: makeSchoolId(area.id, school.name),
 name: school.name,
 normalizedName: normalizeEntityName(school.name),

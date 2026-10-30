@@ -2,6 +2,7 @@ import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from "./dataGateway.j
 import { db } from "./dataGateway.js";
 import { makeAreaId, makeCityId, makeSchoolId, normalizeEntityName } from "../domain/catalog.js";
 import { listOfflineVisits, removeOfflineVisit } from "./offlineVisitStore.js";
+import { makeSchoolVisitDetails } from "../domain/schoolVisitDetails.js";
 
 export async function syncOfflineVisits(user) {
   if (user?.role !== "marketer" || !navigator.onLine) return { synced: 0, pending: 0 };
@@ -38,6 +39,10 @@ export async function syncOfflineVisits(user) {
       createdAt: Timestamp.fromDate(capturedAt), syncedAt: serverTimestamp(), offlineVisit: true
     };
     await setDoc(doc(db, "visits", draft.id), payload);
+    await setDoc(doc(db, "schools", schoolId), {
+      visitDetails: makeSchoolVisitDetails(draft),
+      visitDetailsUpdatedAt: serverTimestamp()
+    }, { merge: true });
     await removeOfflineVisit(draft.id);
     synced += 1;
   }

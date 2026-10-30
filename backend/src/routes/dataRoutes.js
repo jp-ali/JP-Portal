@@ -92,7 +92,10 @@ async function assertCanWrite(ref, operation, data, user, merge = false) {
     if (root === "areas" && !assignedCities.includes(data?.cityId || old.cityId)) throw bad("City is not assigned", 403);
     if (root === "schools" && !assignedAreas.includes(data?.areaId || old.areaId)) throw bad("Area is not assigned", 403);
     if (root === "schools" && existing.exists && old.source === "manual-marketer"
-      && old.addedByMarketerEmail?.toLowerCase() !== user.email?.toLowerCase()) throw bad("School belongs to another marketer", 403);
+      && old.addedByMarketerEmail?.toLowerCase() !== user.email?.toLowerCase()
+      && !(operation === "set" && merge && Object.keys(data || {}).every((key) => ["visitDetails", "visitDetailsUpdatedAt"].includes(key)))) {
+      throw bad("School belongs to another marketer", 403);
+    }
     if (root === "schools" && existing.exists && old.source !== "manual-marketer" && operation === "delete") throw bad("Only your own schools can be deleted", 403);
     if (data?.cityId && root === "areas" && data.cityId !== old.cityId && existing.exists) throw bad("Area city cannot change", 403);
     if (data?.areaId && root === "schools" && data.areaId !== old.areaId && existing.exists) throw bad("School area cannot change", 403);

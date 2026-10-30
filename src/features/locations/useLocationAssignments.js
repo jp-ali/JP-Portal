@@ -5,7 +5,7 @@ import { db } from "../../services/dataGateway.js";
 import { getSession } from "../../services/authApi";
 import { normalizeEntityName, makeCityId, makeAreaId, makeSchoolId } from "../../domain/catalog.js";
 
-export function useLocationAssignments({ user, setUser, assignmentAreaFocusId, setAssignmentAreaFocusId, citiesList, areasList, schoolsList, fetchAreasForCity, fetchSchoolsForArea, mergeCitiesIntoState, readCachedAreasForCity, readCachedSchoolsForArea, syncAreasForCityFromOpenStreetMap, setAreaSyncMessage, setSchoolSyncMessage, visitAreaId, visitCityId, visitSchoolIds, setVisitAreaId, setVisitCityId, setVisitSchoolIds, setSchoolName, setVisitAddSchoolOpen, setVisitAreaPickerOpen, setVisitAreaSearch, setVisitCityPickerOpen, setVisitCitySearch, setVisitSchoolLoadError, setVisitSchoolManagerOpen, setVisitSchoolPickerOpen, setVisitSchoolSearch, setVisitSession }) {
+export function useLocationAssignments({ user, setUser, assignmentAreaFocusId, setAssignmentAreaFocusId, citiesList, areasList, schoolsList, fetchAreasForCity, fetchSchoolsForArea, mergeCitiesIntoState, readCachedAreasForCity, readCachedSchoolsForArea, syncAreasForCityFromOpenStreetMap, setAreaSyncMessage, setSchoolSyncMessage, visitAreaId, visitCityId, visitSchoolIds, setVisitAreaId, setVisitCityId, setVisitSchoolIds, setSchoolName, setVisitAddSchoolOpen, setVisitAreaPickerOpen, setVisitAreaSearch, setVisitCityPickerOpen, setVisitCitySearch, setVisitSchoolLoadError, setVisitSchoolManagerOpen, setVisitSchoolPickerOpen, setVisitSchoolSearch, setVisitSession, applySchoolVisitDetails }) {
 const [assignedCityIds, setAssignedCityIds] = useState([]);
 const [assignedAreaIds, setAssignedAreaIds] = useState([]);
 const [assignedSchoolIds, setAssignedSchoolIds] = useState([]);
@@ -33,6 +33,7 @@ const existing = schoolsList.find((school) => school.areaId === area.id && norma
 if (existing) {
 setVisitSchoolIds([existing.id]);
 setSchoolName(existing.name);
+applySchoolVisitDetails(existing);
 setVisitSchoolLoadError("");
 setNewSchoolName("");
 setVisitAddSchoolOpen(false);
@@ -57,6 +58,7 @@ createdAt: serverTimestamp()
 await fetchSchoolsForArea(area.id, city.id);
 setVisitSchoolIds([id]);
 setSchoolName(name);
+applySchoolVisitDetails(null);
 setVisitSchoolLoadError("");
 setNewSchoolName("");
 setVisitAddSchoolOpen(false);
