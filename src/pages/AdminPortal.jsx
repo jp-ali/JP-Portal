@@ -209,10 +209,10 @@ setMediaView("deleted");
 const adminSidebarItems = [
 { key: "home", icon: "🏠", label: "Home", active: adminView === "home" },
 { key: "attendance", icon: "🕘", label: "Attendance", active: adminView === "attendance" || adminView === "attendance-media" },
-{ key: "monthly-attendance", icon: "📅", label: "Monthly Attendance", active: adminView === "monthly-attendance" },
 { key: "action-plans", icon: "🗓️", label: "Action Plan", active: adminView === "action-plans" },
 { key: "today-visits", icon: "☀️", label: "Today Visits", active: adminView === "today-visits" },
 { key: "visits", icon: "📊", label: "All Visits & Reports", active: adminView === "visits" },
+{ key: "monthly-attendance", icon: "📅", label: "Monthly Attendance", active: adminView === "monthly-attendance" },
 { key: "sample-details", icon: "📦", label: "Sample Details", active: adminView === "sample-details" },
 { key: "expense-report", icon: "🧾", label: "Expense Report", active: adminView === "expense-report" },
 { key: "news", icon: "📰", label: "News", active: ["news", "news-add", "news-expense", "news-old", "news-deleted"].includes(adminView) },

@@ -45,20 +45,21 @@ export default function AdminHomePanel() {
   const openAttendance = () => { const day = c.getTodayInputDate(); c.setAdminAttendanceFromDate(day); c.setAdminAttendanceToDate(day); c.setAdminAttendanceSearch(""); c.setAdminView("attendance"); c.fetchAttendanceRecords(); };
   const openActionPlans = () => { const day = c.getTodayInputDate(); c.setAdminActionPlanFromDate(day); c.setAdminActionPlanToDate(day); c.setAdminActionPlanMarketerIds([]); c.setAdminView("action-plans"); c.fetchActionPlans(); };
   const openTodayVisits = () => { c.setAdminView("today-visits"); c.fetchTodayReports(); c.setSelectedAdminMarketerBox(null); };
+  const openMonthlyAttendance = () => { c.setAdminView("monthly-attendance"); c.fetchMarketers(); };
   const openMarketers = () => { c.setAdminView("marketers-detail"); c.fetchMarketers(); c.setSelectedMarketerDetailBox(null); };
   const stats = [
     { label: "All Marketers", value: statsReady.marketers ? (c.marketersList || []).length : "—", icon: "♟", tone: "rose", onClick: openMarketers },
     { label: "Today's Attendance", value: statsReady.attendance ? todayCounts.attendance : "—", icon: "◷", tone: "mint", onClick: openAttendance },
     { label: "Today's Action Plan", value: statsReady.plans ? todayCounts.plans : "—", icon: "▤", tone: "pink", onClick: openActionPlans },
-    { label: "Today's Visits", value: statsReady.reports ? todayCounts.visits : "—", icon: "▦", tone: "amber", onClick: openTodayVisits }
+    { label: "Monthly Attendance", value: "View", icon: "▦", tone: "amber", onClick: openMonthlyAttendance }
   ];
   const openVisits = () => { c.setAdminView("visits"); c.fetchAllReports(); c.fetchMarketers(); c.setSelectedAdminAllBoxKey(null); c.setAllVisitsFromDate(""); c.setAllVisitsToDate(""); c.setSelectedMarketersFilter([]); };
   const sections = [
     { title: "Overview", icon: "▥", description: "Quick access to daily activities", items: [
       { title: "Attendance", description: "Daily readings and expenses", icon: "◷", tone: "rose", onClick: openAttendance },
-      { title: "Monthly Attendance", description: "View one marketer's calendar", icon: "▦", tone: "mint", onClick: () => { c.setAdminView("monthly-attendance"); c.fetchMarketers(); } },
       { title: "View Today Visits", description: "Check today's marketer visits", icon: "☀", tone: "amber", onClick: openTodayVisits },
-      { title: "All Visits and Reports", description: "See all marketer visits", icon: "▥", tone: "mint", onClick: openVisits }
+      { title: "All Visits and Reports", description: "See all marketer visits", icon: "▥", tone: "mint", onClick: openVisits },
+      { title: "Monthly Attendance", description: "View one marketer's calendar", icon: "▦", tone: "mint", onClick: openMonthlyAttendance }
     ] },
     { title: "Reports & Planning", icon: "▤", description: "Plans, expenses and samples", items: [
       { title: "Action Plan", description: "See marketers' daily plans", icon: "▣", tone: "rose", onClick: openActionPlans },

@@ -65,9 +65,9 @@ if (key === "support") { setMarketerview("support"); return; }
 const marketerSidebarItems = [
 { key: "home", icon: "⌂", label: "Home", active: marketerView === "home" },
 { key: "attendance", icon: "🕘", label: "Mark Attendance", active: marketerView === "attendance" },
-{ key: "monthly-attendance", icon: "📅", label: "Monthly Attendance", active: marketerView === "monthly-attendance" },
 { key: "action-plan", icon: "🗓️", label: "Daily Action Plan", active: marketerView === "action-plan" },
 { key: "add-visit", icon: "➕", label: "Add Visit", active: marketerView === "add-visit" },
+{ key: "monthly-attendance", icon: "📅", label: "Monthly Attendance", active: marketerView === "monthly-attendance" },
 { key: "today-visits", icon: "☀️", label: "Today's Visits", active: marketerView === "today-visits" },
 { key: "range-visits", icon: "📅", label: "Visit History", active: marketerView === "range-visits" },
 { key: "add-sample", icon: "📦", label: "Add Sample", active: marketerView === "add-sample" },
