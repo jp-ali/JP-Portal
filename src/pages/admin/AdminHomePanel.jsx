@@ -56,6 +56,7 @@ export default function AdminHomePanel() {
   const sections = [
     { title: "Overview", icon: "▥", description: "Quick access to daily activities", items: [
       { title: "Attendance", description: "Daily readings and expenses", icon: "◷", tone: "rose", onClick: openAttendance },
+      { title: "Monthly Attendance", description: "View one marketer's calendar", icon: "▦", tone: "mint", onClick: () => { c.setAdminView("monthly-attendance"); c.fetchMarketers(); } },
       { title: "View Today Visits", description: "Check today's marketer visits", icon: "☀", tone: "amber", onClick: openTodayVisits },
       { title: "All Visits and Reports", description: "See all marketer visits", icon: "▥", tone: "mint", onClick: openVisits }
     ] },

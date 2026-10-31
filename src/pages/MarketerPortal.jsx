@@ -20,6 +20,7 @@ import PhotoViewer from "../ui/PhotoViewer.jsx";
 import VisitEditDialog from "../ui/VisitEditDialog.jsx";
 import PortalTopBar from "../ui/PortalTopBar.jsx";
 import DesktopSectionBanner from "../ui/DesktopSectionBanner.jsx";
+import MonthlyAttendance from "../ui/MonthlyAttendance.jsx";
 
 function MarketerPortalContent({ context }) {
   const { containerStyle, fetchCatalogues, fetchMarketerReports, fetchMarketerSamples, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getMarketerName, globalStyle, handleLogout, marketerCss, marketerSidebarOpen, marketerView, notes, onSync, syncState, online, openActionPlanForm, openAddVisit, openAttendanceForm, openExpenseReport, openVisitHistory, pdfExportData, pdfTemplateRef, phone, portalSkeletonLoading, principalName, purpose, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderRedSkeleton, renderResponsiveStyles, restoreMedia, setCatalogueSearch, setFullScreenImage, setFullScreenMediaRecord, setMarketerSidebarOpen, setMarketerview, setSampleDetailsText, setSampleHistoryFromDate, setSampleHistorySearch, setSampleHistoryToDate, setSamplePhone, setSamplePrincipalName, setSampleSchoolName, setSampleSuccessMsg, setSelectedAdminMarketerBox, softDeleteMedia, user, setUser } = context;
@@ -48,6 +49,7 @@ const openMarketerSidebarSection = (key) => {
 setMarketerSidebarOpen(false);
 if (key === "home") { setMarketerview("home"); return; }
 if (key === "attendance") { openAttendanceForm(); return; }
+if (key === "monthly-attendance") { setMarketerview("monthly-attendance"); return; }
 if (key === "action-plan") { openActionPlanForm(); return; }
 if (key === "add-visit") { openAddVisit(); return; }
 if (key === "today-visits") { setMarketerview("today-visits"); fetchMarketerReports(user.email); setSelectedAdminMarketerBox(null); return; }
@@ -63,6 +65,7 @@ if (key === "support") { setMarketerview("support"); return; }
 const marketerSidebarItems = [
 { key: "home", icon: "⌂", label: "Home", active: marketerView === "home" },
 { key: "attendance", icon: "🕘", label: "Mark Attendance", active: marketerView === "attendance" },
+{ key: "monthly-attendance", icon: "📅", label: "Monthly Attendance", active: marketerView === "monthly-attendance" },
 { key: "action-plan", icon: "🗓️", label: "Daily Action Plan", active: marketerView === "action-plan" },
 { key: "add-visit", icon: "➕", label: "Add Visit", active: marketerView === "add-visit" },
 { key: "today-visits", icon: "☀️", label: "Today's Visits", active: marketerView === "today-visits" },
@@ -114,6 +117,7 @@ return (
         {marketerView === "attendance" && (
 <MarketerAttendancePanel />
 )}
+        {marketerView === "monthly-attendance" && <MonthlyAttendance role="marketer" onBack={() => setMarketerview("home")} />}
         {marketerView === "action-plan" && (
 <MarketerActionPlanPanel />
 )}

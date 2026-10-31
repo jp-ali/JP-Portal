@@ -146,6 +146,35 @@ dataRoutes.post("/count", async (request, response, next) => {
     response.json({ count });
   } catch (error) { sendError(error, response, next); }
 });
+dataRoutes.get("/attendance/monthly", async (request, response, next) => {
+  try {
+    const month = String(request.query.month || "");
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw bad("Invalid month");
+    const selectedId = request.user.role === "admin" ? String(request.query.marketerId || "") : String(request.user.marketerId || "");
+    if (request.user.role === "admin" && (!selectedId || !/^[A-Za-z0-9_-]{1,200}$/.test(selectedId))) throw bad("Select a valid marketer");
+    let email = String(request.user.email || "").trim().toLowerCase();
+    if (request.user.role === "admin") {
+      const marketer = await postgresDocumentStore().collection("marketers").doc(selectedId).get();
+      if (!marketer.exists) return response.status(404).json({ error: "Marketer not found" });
+      email = String(marketer.data().email || "").trim().toLowerCase();
+    }
+    const store = postgresDocumentStore().collection("attendance");
+    const start = `${month}-01`;
+    const end = `${month}-31`;
+    const searches = await Promise.all([
+      selectedId ? store.where("marketerId", "==", selectedId).where("date", ">=", start).where("date", "<=", end).select("date", "marketerId", "marketerEmail", "status", "startMarked", "startTime", "leaveTime").get() : { docs: [] },
+      email ? store.where("marketerEmail", "==", email).where("date", ">=", start).where("date", "<=", end).select("date", "marketerId", "marketerEmail", "status", "startMarked", "startTime", "leaveTime").get() : { docs: [] }
+    ]);
+    const days = [...new Map(searches.flatMap((result) => result.docs).map((snapshot) => [snapshot.ref.path, snapshot])).values()]
+      .map((snapshot) => snapshot.data())
+      .filter((row) => String(row.date || "").startsWith(`${month}-`) && (
+        (selectedId && row.marketerId === selectedId) ||
+        (email && String(row.marketerEmail || "").trim().toLowerCase() === email)
+      ))
+      .map((row) => ({ date: row.date, status: row.status || "", startMarked: Boolean(row.startMarked), startTime: row.startTime || "", leaveTime: row.leaveTime || "" }));
+    response.json({ days });
+  } catch (error) { sendError(error, response, next); }
+});
 dataRoutes.get("/document", async (request, response, next) => {
   try {
     const path = request.query.path;

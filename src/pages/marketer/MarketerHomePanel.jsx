@@ -31,6 +31,7 @@ export default function MarketerHomePanel({ unreadNewsCount = 0 }) {
   const sections = [
     { title: "Daily Activity", icon: "▥", description: "Start and manage your day", items: [
       { title: "Mark Attendance", description: attendance?.endMarked ? "Day completed" : attendance?.startMarked ? "End time pending" : attendance?.status === "leave" ? "Leave submitted" : "Start, end or leave", icon: "◷", tone: "rose", onClick: c.openAttendanceForm },
+      { title: "Monthly Attendance", description: "View your own calendar", icon: "▦", tone: "mint", onClick: () => c.setMarketerview("monthly-attendance") },
       { title: "Daily Action Plan", description: attendance?.actionPlanSent ? "Today's plan submitted" : attendance?.startMarked ? "Send your daily plan" : "Mark start time first", icon: attendance?.actionPlanSent ? "✓" : "▣", tone: "violet", muted: !attendance?.startMarked, onClick: c.openActionPlanForm },
       { title: "Add Visit", description: attendance?.status === "leave" ? "Closed for leave" : attendance?.endMarked ? "Closed after end time" : !attendance?.startMarked ? "Mark attendance first" : !attendance?.actionPlanSent ? "Send action plan first" : "Submit a school report", icon: "+", tone: "mint", muted: !attendance?.startMarked || !attendance?.actionPlanSent || attendance?.endMarked || attendance?.status === "leave", onClick: c.openAddVisit }
     ] },

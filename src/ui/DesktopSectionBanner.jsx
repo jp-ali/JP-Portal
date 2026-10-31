@@ -8,6 +8,7 @@ import { dashboardItemKeys, useDashboardVisibility } from "../services/dashboard
 
 const sectionDetails = {
   attendance: ["Attendance", "Daily readings, expenses and attendance records.", "team", "🕘"],
+  "monthly-attendance": ["Monthly Attendance", "Your attendance calendar.", "team", "📅"],
   "attendance-media": ["Attendance Media", "View and manage attendance pictures.", "media", "🖼️"],
   "action-plans": ["Action Plan", "Plan and review daily team activities.", "reports", "🗓️"],
   "action-plan": ["Action Plan", "Keep your daily plan organized.", "reports", "🗓️"],

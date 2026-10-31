@@ -52,6 +52,16 @@ test("admin cannot change a marketer profile photo", async () => {
   assert.equal(response.status, 403);
 });
 
+test("monthly attendance requires login and a selected marketer", async () => {
+  const path = `${baseUrl}/api/data/attendance/monthly?month=2026-10`;
+  assert.equal((await fetch(path)).status, 401);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
+  const headers = { cookie: `school_visit_session=${token}` };
+  assert.equal((await fetch(path, { headers })).status, 400);
+  assert.equal((await fetch(`${path}&marketerId=../other`, { headers })).status, 400);
+  assert.equal((await fetch(`${baseUrl}/api/data/attendance/monthly?month=2026-13&marketerId=example`, { headers })).status, 400);
+});
+
 test("admin photo edit route validates image content", async () => {
   const token = await createJwtSession({ sub: "admin", role: "admin" });
   const response = await fetch(`${baseUrl}/api/marketers/example/photo`, {

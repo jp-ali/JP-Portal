@@ -28,6 +28,7 @@ import PhotoViewer from "../ui/PhotoViewer.jsx";
 import VisitEditDialog from "../ui/VisitEditDialog.jsx";
 import PortalTopBar from "../ui/PortalTopBar.jsx";
 import DesktopSectionBanner from "../ui/DesktopSectionBanner.jsx";
+import MonthlyAttendance from "../ui/MonthlyAttendance.jsx";
 
 function AdminPortalContent({ context }) {
   const { setMarketerCnic } = context;
@@ -66,6 +67,11 @@ setAdminAttendanceToDate(getTodayInputDate());
 setAdminAttendanceSearch("");
 setAdminView("attendance");
 fetchAttendanceRecords();
+return;
+}
+if (key === "monthly-attendance") {
+setAdminView("monthly-attendance");
+fetchMarketers();
 return;
 }
 if (key === "action-plans") {
@@ -203,6 +209,7 @@ setMediaView("deleted");
 const adminSidebarItems = [
 { key: "home", icon: "🏠", label: "Home", active: adminView === "home" },
 { key: "attendance", icon: "🕘", label: "Attendance", active: adminView === "attendance" || adminView === "attendance-media" },
+{ key: "monthly-attendance", icon: "📅", label: "Monthly Attendance", active: adminView === "monthly-attendance" },
 { key: "action-plans", icon: "🗓️", label: "Action Plan", active: adminView === "action-plans" },
 { key: "today-visits", icon: "☀️", label: "Today Visits", active: adminView === "today-visits" },
 { key: "visits", icon: "📊", label: "All Visits & Reports", active: adminView === "visits" },
@@ -268,6 +275,7 @@ onClick={() => openAdminSidebarSection(item.key)}
           {adminView === "attendance" && (
 <AdminAttendancePanel />
 )}
+          {adminView === "monthly-attendance" && <MonthlyAttendance role="admin" marketers={context.marketersList} onBack={() => setAdminView("home")} />}
           {adminView === "catalogues" && (
 <AdminCataloguesPanel />
 )}
