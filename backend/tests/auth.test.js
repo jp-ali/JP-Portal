@@ -62,6 +62,16 @@ test("monthly attendance requires login and a selected marketer", async () => {
   assert.equal((await fetch(`${baseUrl}/api/data/attendance/monthly?month=2026-13&marketerId=example`, { headers })).status, 400);
 });
 
+test("gazetted holiday changes require login and valid calendar dates", async () => {
+  const path = `${baseUrl}/api/data/attendance/holidays`;
+  assert.equal((await fetch(path, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ date: "2026-06-05", name: "Holiday" }) })).status, 401);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
+  const headers = { "content-type": "application/json", cookie: `school_visit_session=${token}` };
+  assert.equal((await fetch(path, { method: "PUT", headers, body: JSON.stringify({ date: "2026-02-31", name: "Invalid" }) })).status, 400);
+  assert.equal((await fetch(`${path}/invalid`, { method: "DELETE", headers })).status, 400);
+  assert.equal((await fetch(`${path}?month=2026-13`, { headers })).status, 400);
+});
+
 test("admin photo edit route validates image content", async () => {
   const token = await createJwtSession({ sub: "admin", role: "admin" });
   const response = await fetch(`${baseUrl}/api/marketers/example/photo`, {

@@ -14,6 +14,9 @@ const directApiCollections = new Set(["marketers", "deleted_marketers", "admin_p
 const operationKey = "__portalDocumentOperation";
 const typeKey = "__schoolVisitValueType";
 const fieldPattern = /^[A-Za-z][A-Za-z0-9_.]{0,80}$/;
+const validHolidayDate = (value) => /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(String(value || ""))
+  && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
+  && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
 
 function bad(message, status = 400) { return Object.assign(new Error(message), { status }); }
 function rootOf(path) { return String(path || "").split("/")[0]; }
@@ -144,6 +147,34 @@ dataRoutes.post("/count", async (request, response, next) => {
       ? await queryFor(path, filters).count().get().then((snapshot) => snapshot.data().count)
       : (await scopedDocuments(path, filters, request.user)).length;
     response.json({ count });
+  } catch (error) { sendError(error, response, next); }
+});
+dataRoutes.get("/attendance/holidays", async (request, response, next) => {
+  try {
+    const month = String(request.query.month || "");
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw bad("Invalid month");
+    const snapshot = await postgresDocumentStore().collection("gazetted_holidays")
+      .where("date", ">=", `${month}-01`).where("date", "<=", `${month}-31`)
+      .select("date", "name").get();
+    response.json({ holidays: snapshot.docs.map((row) => row.data()).filter((row) => validHolidayDate(row.date)) });
+  } catch (error) { sendError(error, response, next); }
+});
+dataRoutes.put("/attendance/holidays", async (request, response, next) => {
+  try {
+    if (request.user.role !== "admin") throw bad("Admin access required", 403);
+    const date = String(request.body?.date || "");
+    const name = String(request.body?.name || "").trim();
+    if (!validHolidayDate(date) || !name || name.length > 100) throw bad("Enter a valid holiday date and name");
+    await postgresDocumentStore().collection("gazetted_holidays").doc(date).set({ date, name });
+    response.json({ saved: true });
+  } catch (error) { sendError(error, response, next); }
+});
+dataRoutes.delete("/attendance/holidays/:date", async (request, response, next) => {
+  try {
+    if (request.user.role !== "admin") throw bad("Admin access required", 403);
+    if (!validHolidayDate(request.params.date)) throw bad("Invalid holiday date");
+    await postgresDocumentStore().collection("gazetted_holidays").doc(request.params.date).delete();
+    response.status(204).end();
   } catch (error) { sendError(error, response, next); }
 });
 dataRoutes.get("/attendance/monthly", async (request, response, next) => {

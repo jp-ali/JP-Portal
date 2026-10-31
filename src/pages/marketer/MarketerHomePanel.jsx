@@ -8,7 +8,7 @@ export default function MarketerHomePanel({ unreadNewsCount = 0 }) {
   const c = usePortalContext();
   const [statsReady, setStatsReady] = useState({ visits: false, samples: false });
   const [summary, setSummary] = useState(null);
-  const [monthlyAttendanceDays, setMonthlyAttendanceDays] = useState(null);
+  const [monthlyAttendance, setMonthlyAttendance] = useState(null);
   useEffect(() => {
     let active = true;
     request("/visits/summary").then((result) => {
@@ -25,11 +25,14 @@ export default function MarketerHomePanel({ unreadNewsCount = 0 }) {
   const today = c.getDateKey(new Date());
   useEffect(() => {
     let active = true;
-    setMonthlyAttendanceDays(null);
-    request(`/data/attendance/monthly?month=${today.slice(0, 7)}`).then((result) => {
-      if (active) setMonthlyAttendanceDays(result.days || []);
+    setMonthlyAttendance(null);
+    Promise.all([
+      request(`/data/attendance/monthly?month=${today.slice(0, 7)}`),
+      request(`/data/attendance/holidays?month=${today.slice(0, 7)}`)
+    ]).then(([attendanceResult, holidayResult]) => {
+      if (active) setMonthlyAttendance({ days: attendanceResult.days || [], holidays: holidayResult.holidays || [] });
     }).catch(() => {
-      if (active) setMonthlyAttendanceDays(null);
+      if (active) setMonthlyAttendance(null);
     });
     return () => { active = false; };
   }, [c.user.email, today, c.syncState?.syncedAt]);
@@ -45,7 +48,7 @@ export default function MarketerHomePanel({ unreadNewsCount = 0 }) {
     { label: "Today's Visits", value: statsReady.visits ? summary?.todayVisits ?? visits.filter((item) => c.getDateKey(item.createdAt) === today).length : "—", icon: "▦", tone: "mint", onClick: openTodayVisits },
     { label: "Monthly Visits", value: statsReady.visits ? summary?.monthlyVisits ?? visits.filter((item) => c.getDateKey(item.createdAt).startsWith(today.slice(0, 7))).length : "—", icon: "▥", tone: "pink", onClick: openMonthlyVisits },
     { label: "My Samples", value: statsReady.samples ? summary?.samples ?? (c.marketerSamples || []).length : "—", icon: "◇", tone: "amber", onClick: openMySamples },
-    { label: "Monthly Attendance", value: monthlyAttendanceDays === null ? "—" : `${creditedAttendanceDays(monthlyAttendanceDays, today.slice(0, 7), today)} Days`, icon: "▦", tone: "rose", onClick: () => c.setMarketerview("monthly-attendance") }
+    { label: "Monthly Attendance", value: monthlyAttendance === null ? "—" : `${creditedAttendanceDays(monthlyAttendance.days, today.slice(0, 7), today, monthlyAttendance.holidays)} Days`, icon: "▦", tone: "rose", onClick: () => c.setMarketerview("monthly-attendance") }
   ];
   const sections = [
     { title: "Daily Activity", icon: "▥", description: "Start and manage your day", items: [
