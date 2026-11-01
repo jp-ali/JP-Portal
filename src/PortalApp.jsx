@@ -472,7 +472,7 @@ return (
 <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
 </button>
 {(refreshAction || excelAction || pdfAction) && <div className="report-expanded-exports">
-{refreshAction && <button type="button" className="white-refresh-btn" onClick={refreshAction} title="Refresh today's visits" aria-label="Refresh today's visits" style={{ width: 32, minWidth: 32, padding: 0, background: "#fff", color: "#7a0f2b", border: "1px solid #ddcbd0", fontSize: 18 }}>↻</button>}
+{refreshAction && <button type="button" className="white-refresh-btn" onClick={refreshAction} title={customActions.refreshTitle || "Refresh report"} aria-label={customActions.refreshTitle || "Refresh report"} style={{ width: 32, minWidth: 32, padding: 0, background: "#fff", color: "#7a0f2b", border: "1px solid #ddcbd0", fontSize: 18 }}>↻</button>}
 {excelAction && <button type="button" className="report-expanded-excel" onClick={excelAction}>Excel</button>}
 {pdfAction && <button type="button" className="report-expanded-pdf" onClick={pdfAction}>PDF</button>}
 </div>}

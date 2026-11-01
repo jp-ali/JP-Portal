@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { request } from "../services/authApi.js";
 import { buildMonthlyAttendanceReport } from "../domain/monthlyAttendanceExport.js";
 import { downloadMonthlyAttendanceExcel, downloadMonthlyAttendancePDF } from "../services/monthlyAttendanceExports.js";
+import { usePortalContext } from "../context/PortalContext.jsx";
 import "../styles/monthlyAttendance.css";
 
 const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -11,6 +12,7 @@ const localMonth = () => {
 };
 
 export default function MonthlyAttendance({ role, marketers = [], currentUser = null, onBack }) {
+  const { renderExpandedReportChrome, renderReportExpandButton, reportViewClass } = usePortalContext();
   const [month, setMonth] = useState(localMonth);
   const [marketerId, setMarketerId] = useState("");
   const [days, setDays] = useState([]);
@@ -26,6 +28,7 @@ export default function MonthlyAttendance({ role, marketers = [], currentUser = 
   const [exportBusy, setExportBusy] = useState("");
   const [exportError, setExportError] = useState("");
   const admin = role === "admin";
+  const exportScope = admin && !marketerId ? "all" : "selected";
 
   const download = async (format, scope) => {
     if (exportBusy) return;
@@ -134,24 +137,27 @@ export default function MonthlyAttendance({ role, marketers = [], currentUser = 
     return { cells, totals, percent: totals.working ? (totals.present / totals.working * 100).toFixed(1) : "0.0" };
   }, [days, holidays, month]);
 
-  return <div className="monthly-attendance-page">
-    <button type="button" className="monthly-attendance-back" onClick={onBack}>← Back to Menu</button>
+  return <div className={`${reportViewClass("monthly-attendance")} monthly-attendance-page`}>
+    {renderExpandedReportChrome("monthly-attendance", {
+      refresh: () => setRefresh((value) => value + 1),
+      refreshTitle: "Refresh monthly attendance",
+      excel: () => download("excel", exportScope),
+      pdf: () => download("pdf", exportScope)
+    })}
+    <div className="report-normal-toolbar monthly-attendance-toolbar">
+      <button type="button" className="monthly-attendance-back" onClick={onBack}>← Back to Menu</button>
+      <div className="report-normal-actions monthly-attendance-actions">
+        <button type="button" className="monthly-attendance-export monthly-attendance-export--excel" onClick={() => download("excel", exportScope)} disabled={Boolean(exportBusy)}>{exportBusy === `excel-${exportScope}` ? "Preparing…" : `📥 Excel${admin ? marketerId ? " (Selected)" : " (All)" : ""}`}</button>
+        <button type="button" className="monthly-attendance-export monthly-attendance-export--pdf" onClick={() => download("pdf", exportScope)} disabled={Boolean(exportBusy)}>{exportBusy === `pdf-${exportScope}` ? "Preparing…" : `📄 PDF${admin ? marketerId ? " (Selected)" : " (All)" : ""}`}</button>
+        {renderReportExpandButton("monthly-attendance", "Expand monthly attendance")}
+      </div>
+    </div>
     <div className="monthly-attendance-box">
       <h2>Monthly Attendance</h2>
       <div className="monthly-attendance-controls">
         {admin && <label>Marketer<select value={marketerId} onChange={(event) => setMarketerId(event.target.value)}><option value="">Select marketer</option>{marketers.map((marketer) => <option key={marketer.id} value={marketer.id}>{marketer.name || marketer.email}</option>)}</select></label>}
         <label>Month<input type="month" value={month} onChange={(event) => { if (event.target.value) setMonth(event.target.value); }} /></label>
-        {(!admin || marketerId) && <button type="button" onClick={() => setRefresh((value) => value + 1)} disabled={loading}>Refresh</button>}
-      </div>
-      <div className="monthly-attendance-downloads">
-        {admin && <>
-          <button type="button" disabled={Boolean(exportBusy)} onClick={() => download("excel", "all")}>{exportBusy === "excel-all" ? "Preparing Excel…" : "Download All Marketers Excel"}</button>
-          <button type="button" disabled={Boolean(exportBusy)} onClick={() => download("pdf", "all")}>{exportBusy === "pdf-all" ? "Preparing PDF…" : "Download All Marketers PDF"}</button>
-        </>}
-        {(!admin || marketerId) && <>
-          <button type="button" disabled={Boolean(exportBusy)} onClick={() => download("excel", "selected")}>{exportBusy === "excel-selected" ? "Preparing Excel…" : admin ? "Selected Marketer Excel" : "Download My Excel"}</button>
-          <button type="button" disabled={Boolean(exportBusy)} onClick={() => download("pdf", "selected")}>{exportBusy === "pdf-selected" ? "Preparing PDF…" : admin ? "Selected Marketer PDF" : "Download My PDF"}</button>
-        </>}
+        <button type="button" className="monthly-attendance-refresh white-refresh-btn" title="Refresh monthly attendance" aria-label="Refresh monthly attendance" onClick={() => setRefresh((value) => value + 1)} disabled={loading || holidayLoading}>↻</button>
       </div>
       {exportError && <p className="monthly-attendance-error" role="alert">{exportError}</p>}
       {admin && <details className="monthly-attendance-holidays"><summary>Gazetted holidays ({holidays.length})</summary>
