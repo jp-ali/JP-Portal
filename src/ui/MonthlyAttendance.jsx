@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { request } from "../services/authApi.js";
+import { buildMonthlyAttendanceReport } from "../domain/monthlyAttendanceExport.js";
+import { downloadMonthlyAttendanceExcel, downloadMonthlyAttendancePDF } from "../services/monthlyAttendanceExports.js";
 import "../styles/monthlyAttendance.css";
 
 const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -8,7 +10,7 @@ const localMonth = () => {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 };
 
-export default function MonthlyAttendance({ role, marketers = [], onBack }) {
+export default function MonthlyAttendance({ role, marketers = [], currentUser = null, onBack }) {
   const [month, setMonth] = useState(localMonth);
   const [marketerId, setMarketerId] = useState("");
   const [days, setDays] = useState([]);
@@ -21,7 +23,32 @@ export default function MonthlyAttendance({ role, marketers = [], onBack }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
+  const [exportBusy, setExportBusy] = useState("");
+  const [exportError, setExportError] = useState("");
   const admin = role === "admin";
+
+  const download = async (format, scope) => {
+    if (exportBusy) return;
+    setExportBusy(`${format}-${scope}`);
+    setExportError("");
+    try {
+      const [holidayResult, attendanceResult] = await Promise.all([
+        request(`/data/attendance/holidays?month=${month}`, { timeoutMs: 60000 }),
+        admin && scope === "all"
+          ? request(`/data/attendance/monthly-all?month=${month}`, { timeoutMs: 60000 })
+          : request(`/data/attendance/monthly?${new URLSearchParams({ month, ...(admin ? { marketerId } : {}) })}`, { timeoutMs: 60000 })
+      ]);
+      const people = admin && scope === "all" ? attendanceResult.marketers || [] : [{
+        ...(admin ? marketers.find((item) => item.id === marketerId) : currentUser),
+        days: attendanceResult.days || []
+      }];
+      if (!people.length) throw new Error("No marketers available for this export.");
+      const report = buildMonthlyAttendanceReport(month, people, holidayResult.holidays || []);
+      if (format === "excel") await downloadMonthlyAttendanceExcel(report);
+      else await downloadMonthlyAttendancePDF(report);
+    } catch (cause) { setExportError(cause.message || "Download failed. Please try again."); }
+    finally { setExportBusy(""); }
+  };
 
   useEffect(() => {
     let active = true;
@@ -116,6 +143,17 @@ export default function MonthlyAttendance({ role, marketers = [], onBack }) {
         <label>Month<input type="month" value={month} onChange={(event) => { if (event.target.value) setMonth(event.target.value); }} /></label>
         {(!admin || marketerId) && <button type="button" onClick={() => setRefresh((value) => value + 1)} disabled={loading}>Refresh</button>}
       </div>
+      <div className="monthly-attendance-downloads">
+        {admin && <>
+          <button type="button" disabled={Boolean(exportBusy)} onClick={() => download("excel", "all")}>{exportBusy === "excel-all" ? "Preparing Excel…" : "Download All Marketers Excel"}</button>
+          <button type="button" disabled={Boolean(exportBusy)} onClick={() => download("pdf", "all")}>{exportBusy === "pdf-all" ? "Preparing PDF…" : "Download All Marketers PDF"}</button>
+        </>}
+        {(!admin || marketerId) && <>
+          <button type="button" disabled={Boolean(exportBusy)} onClick={() => download("excel", "selected")}>{exportBusy === "excel-selected" ? "Preparing Excel…" : admin ? "Selected Marketer Excel" : "Download My Excel"}</button>
+          <button type="button" disabled={Boolean(exportBusy)} onClick={() => download("pdf", "selected")}>{exportBusy === "pdf-selected" ? "Preparing PDF…" : admin ? "Selected Marketer PDF" : "Download My PDF"}</button>
+        </>}
+      </div>
+      {exportError && <p className="monthly-attendance-error" role="alert">{exportError}</p>}
       {admin && <details className="monthly-attendance-holidays"><summary>Gazetted holidays ({holidays.length})</summary>
         <form onSubmit={saveHoliday} className="monthly-attendance-holiday-form">
           <input type="date" value={holidayDate} min={`${month}-01`} max={`${month}-${String(new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0).getDate()).padStart(2, "0")}`} onChange={(event) => setHolidayDate(event.target.value)} aria-label="Holiday date" required />

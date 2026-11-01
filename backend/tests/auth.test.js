@@ -62,6 +62,14 @@ test("monthly attendance requires login and a selected marketer", async () => {
   assert.equal((await fetch(`${baseUrl}/api/data/attendance/monthly?month=2026-13&marketerId=example`, { headers })).status, 400);
 });
 
+test("all-marketer monthly export is admin-only and validates the month", async () => {
+  const path = `${baseUrl}/api/data/attendance/monthly-all?month=2026-10`;
+  assert.equal((await fetch(path)).status, 401);
+  const token = await createJwtSession({ sub: "admin", role: "admin" });
+  const headers = { cookie: `school_visit_session=${token}` };
+  assert.equal((await fetch(`${baseUrl}/api/data/attendance/monthly-all?month=2026-13`, { headers })).status, 400);
+});
+
 test("gazetted holiday changes require login and valid calendar dates", async () => {
   const path = `${baseUrl}/api/data/attendance/holidays`;
   assert.equal((await fetch(path, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ date: "2026-06-05", name: "Holiday" }) })).status, 401);

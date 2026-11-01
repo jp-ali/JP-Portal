@@ -117,7 +117,7 @@ return (
         {marketerView === "attendance" && (
 <MarketerAttendancePanel />
 )}
-        {marketerView === "monthly-attendance" && <MonthlyAttendance role="marketer" onBack={() => setMarketerview("home")} />}
+        {marketerView === "monthly-attendance" && <MonthlyAttendance role="marketer" currentUser={user} onBack={() => setMarketerview("home")} />}
         {marketerView === "action-plan" && (
 <MarketerActionPlanPanel />
 )}

@@ -206,6 +206,33 @@ dataRoutes.get("/attendance/monthly", async (request, response, next) => {
     response.json({ days });
   } catch (error) { sendError(error, response, next); }
 });
+dataRoutes.get("/attendance/monthly-all", async (request, response, next) => {
+  try {
+    if (request.user.role !== "admin") throw bad("Admin access required", 403);
+    const month = String(request.query.month || "");
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw bad("Invalid month");
+    const store = postgresDocumentStore();
+    const [marketerSnapshot, attendanceSnapshot] = await Promise.all([
+      store.collection("marketers").select("name", "email", "designation").get(),
+      store.collection("attendance").where("date", ">=", `${month}-01`).where("date", "<=", `${month}-31`)
+        .select("date", "marketerId", "marketerEmail", "status", "startMarked", "startTime", "leaveTime").get()
+    ]);
+    const marketers = marketerSnapshot.docs.map((doc) => ({ id: doc.id, name: doc.data().name || "", email: doc.data().email || "", designation: doc.data().designation || "" }));
+    const byId = new Map(marketers.map((marketer) => [marketer.id, marketer.id]));
+    const byEmail = new Map(marketers.filter((marketer) => marketer.email).map((marketer) => [marketer.email.trim().toLowerCase(), marketer.id]));
+    const daysByMarketer = new Map(marketers.map((marketer) => [marketer.id, new Map()]));
+    for (const doc of attendanceSnapshot.docs) {
+      const row = doc.data();
+      const id = byId.get(row.marketerId) || byEmail.get(String(row.marketerEmail || "").trim().toLowerCase());
+      if (!id || !String(row.date || "").startsWith(`${month}-`)) continue;
+      const days = daysByMarketer.get(id);
+      const existing = days.get(row.date);
+      if (existing && existing.marketerId === id && row.marketerId !== id) continue;
+      days.set(row.date, { date: row.date, marketerId: row.marketerId, status: row.status || "", startMarked: Boolean(row.startMarked), startTime: row.startTime || "", leaveTime: row.leaveTime || "" });
+    }
+    response.json({ marketers: marketers.map((marketer) => ({ ...marketer, days: [...daysByMarketer.get(marketer.id).values()].map(({ marketerId: _id, ...day }) => day) })) });
+  } catch (error) { sendError(error, response, next); }
+});
 dataRoutes.get("/document", async (request, response, next) => {
   try {
     const path = request.query.path;
