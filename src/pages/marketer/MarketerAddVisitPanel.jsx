@@ -5,6 +5,7 @@ import NumberOrCustomField from "../../ui/NumberOrCustomField.jsx";
 export default function MarketerAddVisitPanel() {
   const { areasList, btnPrimary, cancelEditVisitSchool, capturePhoto, cardStyle, citiesList, editingVisitSchoolId, editingVisitSchoolName, fetchAreasForCity, fetchSchoolsForArea, handleAddVisitSchool, handleSubmitVisit, imageFile, inputStyle, isCameraActive, isOwnManualSchool, isUsableSchoolRecord, loading, newSchoolName, notes, phone, principalName, purpose, readCachedAreasForCity, removeOwnVisitSchool, retakePhoto, saveEditedVisitSchool, schoolsList, selectVisitArea, setEditingVisitSchoolId, setEditingVisitSchoolName, setFullScreenImage, setMarketerview, setNewSchoolName, setNotes, setPhone, setPrincipalName, setPurpose, setSchoolName, setVisitAddSchoolOpen, setVisitAreaId, setVisitAreaPickerOpen, setVisitAreaSearch, setVisitCityId, setVisitCityPickerOpen, setVisitCitySearch, setVisitSchoolIds, setVisitSchoolLoadError, setVisitSchoolManagerOpen, setVisitSchoolPickerOpen, setVisitSchoolSearch, setVisitSchoolsLoading, setVisitSession, startCamera, startEditVisitSchool, stopCamera, successMsg, syncAreasForCityFromOpenStreetMap, toggleVisitSchool, user, videoRef, visitAddSchoolOpen, visitAreaId, visitAreaPickerOpen, visitAreaSearch, visitCityId, visitCityPickerOpen, visitCitySearch, visitSchoolIds, visitSchoolLoadError, visitSchoolManagerOpen, visitSchoolPickerOpen, visitSchoolSearch, visitSchoolsLoading, visitSession, visitBranches, setVisitBranches, visitStrength, setVisitStrength } = usePortalContext();
   const { cameraBusy, cameraIssue, capturePhotoFromFile } = usePortalContext();
+  const cameraPreviewAvailable = Boolean(navigator.mediaDevices?.getUserMedia);
   const phoneCameraButton = (text, style) => (
     <label style={{ ...style, display: "block", position: "relative", textAlign: "center", opacity: cameraBusy ? .6 : 1 }}>
       {cameraBusy ? "Processing photo..." : text}
@@ -441,7 +442,7 @@ style={{ ...inputStyle, padding: "10px 12px", fontSize: "13px" }}
                 </div>
                 <div style={{ background: "rgba(255,255,255,0.96)", padding: "16px", borderRadius: "14px", border: "1px solid rgba(143,21,50,.24)", textAlign: "center" }}>
                   <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "14px", color: "#3b2329" }}>📷 School Photo (Detailed Address, Date, Day & Time Stamped):</label>
-                  {!isCameraActive && !imageFile && !cameraIssue && (
+                  {!isCameraActive && !imageFile && !cameraIssue && (cameraPreviewAvailable ? (
 <button 
 type="button"
 onClick={startCamera}
@@ -460,7 +461,12 @@ width: "100%"
 >
                       📸 Open Camera & Take Photo
                     </button>
-)}
+) : phoneCameraButton("📸 Open Phone Camera & Take Photo", {
+  padding: "12px 20px", borderRadius: "10px", width: "100%", boxSizing: "border-box",
+  background: "linear-gradient(135deg, #8f1532 0%, #941a39 100%)", color: "white",
+  fontWeight: 600, fontSize: "15px", cursor: "pointer",
+  boxShadow: "0 4px 12px rgba(143,21,50,.22)"
+}))}
                   {isCameraActive && (
 <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center" }}>
                       <video 
@@ -492,7 +498,7 @@ style={{ flex: 1, padding: "10px", background: "#86132f", color: "white", border
                   {cameraIssue && !imageFile && (
                     <div style={{ marginTop: "10px", display: "grid", gap: "8px" }}>
                       <p role="status" style={{ margin: 0, color: "#86132f", fontSize: "13px" }}>{cameraIssue}</p>
-                      <button type="button" onClick={startCamera} disabled={cameraBusy} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #86132f", background: "white", color: "#86132f", fontWeight: 700 }}>Retry preview</button>
+                      {cameraPreviewAvailable && <button type="button" onClick={startCamera} disabled={cameraBusy} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #86132f", background: "white", color: "#86132f", fontWeight: 700 }}>Retry preview</button>}
                       {phoneCameraButton("Use phone camera", { padding: "10px", borderRadius: "8px", background: "#15803d", color: "white", fontWeight: 700 })}
                     </div>
                   )}

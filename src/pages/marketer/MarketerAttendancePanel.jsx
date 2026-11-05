@@ -13,7 +13,18 @@ const PhotoActions = ({ label, onView, onRetake, btnPrimary }) => <div style={{ 
 </div>;
 
 export default function MarketerAttendancePanel() {
-  const { attendanceCameraActive, attendanceCameraTarget, attendanceEndPhoto, attendanceEndReading, attendanceFoodExpense, attendanceFoodExpensePhoto, attendanceLeaveReason, attendanceNightStayExpense, attendanceNightStayExpensePhoto, attendanceOtherExpense, attendanceOtherExpensePhoto, attendanceStartPhoto, attendanceStartReading, attendanceSubmitting, attendanceTransportExpense, attendanceTransportExpensePhoto, attendanceType, attendanceVideoRef, btnPrimary, captureAttendancePhoto, cardStyle, formatActionPlanDate, formatTime12, getTodayInputDate, inputStyle, renderExpandedReportChrome, renderReportExpandButton, reportViewClass, setAttendanceEndReading, setAttendanceFoodExpense, setAttendanceLeaveReason, setAttendanceNightStayExpense, setAttendanceOtherExpense, setAttendanceStartReading, setAttendanceTransportExpense, setAttendanceType, setFullScreenImage, setMarketerview, startAttendanceCamera, stopAttendanceCamera, submitAttendanceEnd, submitAttendanceLeave, submitAttendanceStart, todayAttendance, user } = usePortalContext();
+  const { attendanceCameraActive, attendanceCameraTarget, attendanceEndPhoto, attendanceEndReading, attendanceFoodExpense, attendanceFoodExpensePhoto, attendanceLeaveReason, attendanceNightStayExpense, attendanceNightStayExpensePhoto, attendanceOtherExpense, attendanceOtherExpensePhoto, attendanceStartPhoto, attendanceStartReading, attendanceSubmitting, attendanceTransportExpense, attendanceTransportExpensePhoto, attendanceType, attendanceVideoRef, btnPrimary, captureAttendancePhoto, captureAttendancePhotoFromFile, cardStyle, formatActionPlanDate, formatTime12, getTodayInputDate, inputStyle, renderExpandedReportChrome, renderReportExpandButton, reportViewClass, setAttendanceEndReading, setAttendanceFoodExpense, setAttendanceLeaveReason, setAttendanceNightStayExpense, setAttendanceOtherExpense, setAttendanceStartReading, setAttendanceTransportExpense, setAttendanceType, setFullScreenImage, setMarketerview, startAttendanceCamera, stopAttendanceCamera, submitAttendanceEnd, submitAttendanceLeave, submitAttendanceStart, todayAttendance, user } = usePortalContext();
+  const cameraInputs = React.useRef({});
+  const previewAvailable = Boolean(navigator.mediaDevices?.getUserMedia);
+  const cameraButton = (target, photo, title, height = 49, fontSize = 20) => previewAvailable
+    ? <button type="button" title={title} onClick={() => startAttendanceCamera(target)} style={cameraButtonStyle(photo, height, fontSize)}><CameraIcon /></button>
+    : <label title={title} style={cameraButtonStyle(photo, height, fontSize)}>
+        <CameraIcon />
+        <input ref={(input) => { cameraInputs.current[target] = input; }} type="file" accept="image/*" capture="environment"
+          onChange={(event) => captureAttendancePhotoFromFile(target, event)} aria-label={title}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }} />
+      </label>;
+  const retakePhoto = (target) => previewAvailable ? startAttendanceCamera(target) : cameraInputs.current[target]?.click();
   return (<div className={reportViewClass("marketer-attendance")}>
             {renderExpandedReportChrome("marketer-attendance")}
             <div className="report-normal-toolbar" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:"8px", marginBottom:"14px" }}>
@@ -51,9 +62,9 @@ export default function MarketerAttendancePanel() {
                   <label style={{ color:"#5c484e", fontSize:"12px", fontWeight:700 }}>Day In / Start Reading</label>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 48px", gap:"8px" }}>
                     <input type="number" min="0" step="0.1" value={attendanceStartReading} onChange={(e)=>setAttendanceStartReading(e.target.value)} placeholder="Type start reading" style={{...inputStyle,height:"49px"}} />
-                    <button type="button" title="Capture start picture" onClick={()=>startAttendanceCamera("start")} style={cameraButtonStyle(attendanceStartPhoto)}><CameraIcon /></button>
+                    {cameraButton("start", attendanceStartPhoto, "Capture start picture")}
                   </div>
-                  {attendanceStartPhoto && <PhotoActions label="start" onView={()=>setFullScreenImage(attendanceStartPhoto)} onRetake={()=>startAttendanceCamera("start")} btnPrimary={btnPrimary} />}
+                  {attendanceStartPhoto && <PhotoActions label="start" onView={()=>setFullScreenImage(attendanceStartPhoto)} onRetake={()=>retakePhoto("start")} btnPrimary={btnPrimary} />}
                   <button type="button" disabled={attendanceSubmitting} onClick={submitAttendanceStart} style={{...btnPrimary,background:"linear-gradient(135deg,#77102a,#941a39)",boxShadow:"0 6px 18px rgba(143,21,50,.20)"}}>{attendanceSubmitting?"Saving...":"Mark"}</button>
                 </div>
 )}
@@ -63,9 +74,9 @@ export default function MarketerAttendancePanel() {
                     <label style={{ display:"block", color:"#5c484e", fontSize:"12px", fontWeight:700, marginBottom:"6px" }}>Day Out / End Reading</label>
                     <div style={{ display:"grid", gridTemplateColumns:"1fr 48px", gap:"8px" }}>
                       <input type="number" min="0" step="0.1" value={attendanceEndReading} onChange={(e)=>setAttendanceEndReading(e.target.value)} placeholder="Type end reading" style={{...inputStyle,height:"49px"}} />
-                      <button type="button" title="Capture end picture" onClick={()=>startAttendanceCamera("end")} style={cameraButtonStyle(attendanceEndPhoto)}><CameraIcon /></button>
+                      {cameraButton("end", attendanceEndPhoto, "Capture end picture")}
                     </div>
-                    {attendanceEndPhoto && <PhotoActions label="end" onView={()=>setFullScreenImage(attendanceEndPhoto)} onRetake={()=>startAttendanceCamera("end")} btnPrimary={btnPrimary} />}
+                    {attendanceEndPhoto && <PhotoActions label="end" onView={()=>setFullScreenImage(attendanceEndPhoto)} onRetake={()=>retakePhoto("end")} btnPrimary={btnPrimary} />}
                     {todayAttendance?.startReading !== undefined && attendanceEndReading && Number(attendanceEndReading) >= Number(todayAttendance.startReading) && <div style={{marginTop:"5px",color:"#b75a70",fontSize:"10.5px"}}>Calculated Total KMs: {(Number(attendanceEndReading)-Number(todayAttendance.startReading)).toFixed(1).replace(/\.0$/,"")}</div>}
                   </div>
                   <div style={{ display:"grid", gap:"9px" }}>
@@ -79,9 +90,9 @@ export default function MarketerAttendancePanel() {
                         <label style={{ display:"block", color:"#5c484e", fontSize:"11px", fontWeight:700, marginBottom:"5px" }}>{label}</label>
                         <div style={{ display:"grid", gridTemplateColumns:"1fr 48px", gap:"8px" }}>
                           <input type="number" min="0" step="1" value={value} onChange={(e)=>setter(e.target.value)} placeholder="0" style={{...inputStyle,height:"46px"}} />
-                          <button type="button" title={`Capture ${label} picture`} onClick={()=>startAttendanceCamera(target)} style={cameraButtonStyle(photo, 46, 19)}><CameraIcon /></button>
+                          {cameraButton(target, photo, `Capture ${label} picture`, 46, 19)}
                         </div>
-                        {photo && <PhotoActions label={label.toLowerCase()} onView={()=>setFullScreenImage(photo)} onRetake={()=>startAttendanceCamera(target)} btnPrimary={btnPrimary} />}
+                        {photo && <PhotoActions label={label.toLowerCase()} onView={()=>setFullScreenImage(photo)} onRetake={()=>retakePhoto(target)} btnPrimary={btnPrimary} />}
                       </div>
 ))}
                   </div>

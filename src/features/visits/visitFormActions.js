@@ -62,6 +62,10 @@ applySchoolVisitDetails(school);
 setVisitSchoolPickerOpen(false);
 };
 const startCamera = async () => {
+if (!navigator.mediaDevices?.getUserMedia) {
+  setCameraIssue("Live camera preview needs HTTPS. Use your phone camera below.");
+  return null;
+}
 const requestId = ++cameraRequestRef.current;
 if (videoRef.current) videoRef.current.srcObject = null;
 streamRef.current?.getTracks().forEach((track) => track.stop());
