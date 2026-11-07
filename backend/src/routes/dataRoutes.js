@@ -6,6 +6,7 @@ import { canSeeSchool } from "../domain/schoolVisibility.js";
 
 export const dataRoutes = Router();
 dataRoutes.use(requireAuth);
+dataRoutes.use((request, response, next) => request.user.role === "trainer" ? response.status(403).json({ error: "Trainer portal only" }) : next());
 
 const publicCollections = new Set(["cities", "areas", "schools", "catalogues", "petrol_rates", "system_meta"]);
 const ownedCollections = new Set(["visits", "samples", "attendance", "action_plans"]);

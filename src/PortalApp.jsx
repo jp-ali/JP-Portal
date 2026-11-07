@@ -27,8 +27,10 @@ import { cacheOfflineVisitCatalog } from "./services/offlineVisitCatalog.js";
 import { collection, deleteDoc, doc, getDocs } from "./services/dataGateway.js";
 const AdminPortal = lazy(() => import("./pages/AdminPortal.jsx"));
 const MarketerPortal = lazy(() => import("./pages/MarketerPortal.jsx"));
+const TrainerPortal = lazy(() => import("./pages/TrainerPortal.jsx"));
 export default function PortalApp({ initialUser, onLogout, onSync, syncState, online }) {
 const [user, setUser] = useState(initialUser);
+const [trainerMode, setTrainerMode] = useState(false);
 const [adminView, setAdminView] = useState("home");
 const [adminSidebarOpen, setAdminSidebarOpen] = useState(false);
 const [marketerSidebarOpen, setMarketerSidebarOpen] = useState(false);
@@ -479,7 +481,9 @@ return (
 </div>
 );
 };
+if (user.role === "admin" && trainerMode) return <Suspense fallback={<PortalLoading />}><TrainerPortal user={user} onLogout={onLogout} onBack={() => setTrainerMode(false)} /></Suspense>;
 if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminPortal context={{
+    onSwitchToTrainer: () => setTrainerMode(true),
     setUser,
     activeMedia,
     adminActionPlanFromDate,

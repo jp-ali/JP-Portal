@@ -39,7 +39,7 @@ export async function request(path, options = {}) {
 
 export async function login(identifier, password) {
   const user = (await request("/auth/login", { method: "POST", body: JSON.stringify({ identifier, password }) })).user;
-  if (!user || !["admin", "marketer"].includes(user.role)) {
+  if (!user || !["admin", "marketer", "trainer"].includes(user.role)) {
     throw new Error("Login service did not return an account. Check the app URL and try again.");
   }
   return user;

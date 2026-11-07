@@ -13,6 +13,7 @@ const preloadPortal = (allPages = false) => allPages ? Promise.all([
   import("./pages/MarketerPortal.jsx")
 ]) : loadPortalApp();
 const PortalApp = lazy(loadPortalApp);
+const TrainerPortal = lazy(() => import("./pages/TrainerPortal.jsx"));
 const PROFILE_KEY = "jp-offline-marketer-profile";
 function cachedMarketer() {
   try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || "null"); }
@@ -181,6 +182,7 @@ export default function App() {
   }
   if (session.loading) return <PortalLoading />;
   if (session.user) {
+    if (session.user.role === "trainer") return <PortalLoadErrorBoundary><Suspense fallback={<PortalLoading />}><TrainerPortal user={session.user} onLogout={handleLogout} /></Suspense></PortalLoadErrorBoundary>;
     const identity = session.user.marketerId || session.user.email || session.user.role;
     return <PortalLoadErrorBoundary><Suspense fallback={<PortalLoading />}>
       <PortalApp key={session.user.role + ':' + identity} initialUser={session.user} onLogout={handleLogout} onSync={syncDrafts} syncState={syncState} online={online} />

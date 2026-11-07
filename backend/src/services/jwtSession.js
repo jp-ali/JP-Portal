@@ -12,7 +12,7 @@ function secret() {
 }
 
 export async function createJwtSession(claims, db = postgresPool()) {
-  if (!["admin", "marketer"].includes(claims.role) || typeof claims.sub !== "string" || !claims.sub) {
+  if (!["admin", "marketer", "trainer"].includes(claims.role) || typeof claims.sub !== "string" || !claims.sub) {
     throw new Error("Invalid account claims");
   }
   const tokenId = randomUUID();
@@ -41,7 +41,7 @@ export async function verifyJwtSession(token, db = postgresPool()) {
       audience: "school-visit-portal"
     });
   } catch { return null; }
-  if (!["admin", "marketer"].includes(claims.role) || !claims.sub || !claims.jti) return null;
+  if (!["admin", "marketer", "trainer"].includes(claims.role) || !claims.sub || !claims.jti) return null;
   const { rows } = await db.query(
     "SELECT 1 FROM portal_sessions WHERE token_id = $1 AND account_id = $2 AND role = $3 AND revoked_at IS NULL AND expires_at > now()",
     [claims.jti, claims.sub, claims.role]

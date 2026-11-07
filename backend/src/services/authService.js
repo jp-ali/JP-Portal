@@ -1,6 +1,7 @@
 import { findMarketerById, findMarketerByIdentifier } from "../models/marketerModel.js";
 import { portalStore } from "../config/portalStore.js";
 import { verifyPassword } from "./passwordVerifier.js";
+import { findTrainerById, findTrainerByIdentifier } from "./trainerService.js";
 
 const adminPhotoRef = () => portalStore().collection("admin_profiles").doc("primary");
 
@@ -49,9 +50,13 @@ export async function authenticate(identifier, password, repository = { findMark
   const marketer = await repository.findMarketerByIdentifier(normalizedIdentifier)
     || (normalizedIdentifier.includes("@") && normalizedIdentifier !== normalizedIdentifier.toLowerCase()
       ? await repository.findMarketerByIdentifier(normalizedIdentifier.toLowerCase()) : null);
-  if (!marketer) return null;
-  if (!marketer.passwordHash || !(await verifyPassword(password, marketer.passwordHash))) return null;
-  return { claims: { sub: marketer.id, role: "marketer" }, profile: marketerProfile(marketer) };
+  if (marketer) {
+    if (!marketer.passwordHash || !(await verifyPassword(password, marketer.passwordHash))) return null;
+    return { claims: { sub: marketer.id, role: "marketer" }, profile: marketerProfile(marketer) };
+  }
+  const trainer = await findTrainerByIdentifier(normalizedIdentifier);
+  if (!trainer || trainer.active === false || !trainer.passwordHash || !(await verifyPassword(password, trainer.passwordHash))) return null;
+  return { claims: { sub: trainer.id, role: "trainer" }, profile: { trainerId: trainer.id, name: trainer.name, email: trainer.email, designation: trainer.designation, role: "trainer" } };
 }
 
 export async function profileFromClaims(claims) {
@@ -59,6 +64,11 @@ export async function profileFromClaims(claims) {
     if (claims.sub !== "admin") return null;
     return { email: process.env.ADMIN_EMAIL || "admin@portal.com", name: process.env.ADMIN_NAME || "Muhammad Ali Ashfaq", role: "admin" };
   }
+  if (claims.role === "trainer") {
+    const trainer = await findTrainerById(claims.sub);
+    return trainer && trainer.active !== false ? { trainerId: trainer.id, name: trainer.name, email: trainer.email, designation: trainer.designation, role: "trainer" } : null;
+  }
+  if (claims.role !== "marketer") return null;
   const marketer = await findMarketerById(claims.sub);
   return marketer ? marketerProfile(marketer) : null;
 }

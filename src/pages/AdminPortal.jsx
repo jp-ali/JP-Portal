@@ -262,7 +262,7 @@ onClick={() => openAdminSidebarSection(item.key)}
               </button>
 ))}
           </nav>
-          <div className="portal-sidebar-footer"><div className="portal-sidebar-profile"><span className="portal-sidebar-avatar">{context.user?.profilePhoto ? <img src={context.user.profilePhoto} alt="" /> : "A"}</span><span><strong>Admin</strong><small>Javed Publishers</small></span></div><button type="button" onClick={handleLogout}>{renderLogoutArrowIcon(16)} Logout</button></div>
+          <div className="portal-sidebar-footer"><div className="portal-sidebar-profile"><span className="portal-sidebar-avatar">{context.user?.profilePhoto ? <img src={context.user.profilePhoto} alt="" /> : "A"}</span><span><strong>Admin</strong><small>Javed Publishers</small></span></div><button type="button" onClick={context.onSwitchToTrainer}>Switch to Trainer</button><button type="button" onClick={handleLogout}>{renderLogoutArrowIcon(16)} Logout</button></div>
         </aside>
         <div className={`app-responsive admin-desktop-content ${adminSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
           {renderResponsiveStyles()}
@@ -375,6 +375,7 @@ onClick={() => openAdminSidebarSection(item.key)}
           onRestore={async (record) => { setFullScreenImage(null); setFullScreenMediaRecord(null); await restoreMedia(record); }}
         />
         <div className="mobile-footer-area" style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", margin: "0 auto", padding: "18px 0 10px", position: "relative", left: 0, right: 0 }}>
+          <button type="button" onClick={context.onSwitchToTrainer} style={{ marginBottom: 10, padding: "10px 16px", borderRadius: 8, border: "1px solid #86132f", color: "#86132f", background: "#fff", fontWeight: 700 }}>Switch to Trainer</button>
           <button className="mobile-footer-logout" onClick={handleLogout} style={{ display: "flex", width: "104px", height: "36px", margin: "0 auto 8px", padding: "0 11px", alignItems: "center", justifyContent: "center", gap:"7px", alignSelf: "center", position: "static", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "#fff", border: "none", borderRadius: "7px", fontWeight: 800, fontSize: "13px", lineHeight: 1, textAlign: "center", cursor: "pointer", boxShadow: "0 5px 12px rgba(122,15,43,.26)" }}>{renderLogoutArrowIcon(16)} Logout</button>
           <div style={{ ...footerStyle, width: "100%", textAlign: "center", margin: "0 auto", padding: "0" }}>Developed by Ali Ashfaq</div>
         </div>
