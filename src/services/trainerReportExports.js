@@ -79,11 +79,18 @@ export async function downloadTrainerPDF(kind, rows, options) {
   const body = weekly ? weekly.body : reportRows.map((row) => row.map((value) => String(value).replace(/[^\x20-\x7E]/g, "-")));
   const visitReport = kind === "today-visits" || kind === "visits";
   const expenseReport = ["today-expenses", "expenses", "my-expenses"].includes(kind);
+  const expenseTotal = expenseReport ? rows.reduce((sum, item) => sum + Number(item.amount || 0), 0) : 0;
+  const amountColumn = headers.indexOf("Amount (Rs.)");
   const pdf = new jsPDF({ unit: "pt", format: visitReport ? "a3" : "a4", orientation: kind === "attendance" || kind === "details" || kind === "weekly" || visitReport || expenseReport ? "landscape" : "portrait" });
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   autoTable(pdf, {
     startY: weekly ? 119 : 108, head: [headers], body, theme: "grid",
+    ...(expenseReport ? {
+      foot: [[{ content: "TOTAL (Rs.)", colSpan: amountColumn, styles: { halign: "right" } }, expenseTotal.toFixed(2), ""]],
+      showFoot: "lastPage",
+      footStyles: { fillColor: [255, 243, 246], textColor: [122, 15, 43], fontStyle: "bold" }
+    } : {}),
     styles: { fontSize: visitReport ? 7 : 8, cellPadding: visitReport ? 4 : 5, overflow: "linebreak", valign: "top" },
     ...(weekly ? { columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 125 }, 2: { cellWidth: 105 }, 3: { cellWidth: 135 } } } : {}),
     headStyles: { fillColor: [122, 15, 43], textColor: [255, 255, 255] },
