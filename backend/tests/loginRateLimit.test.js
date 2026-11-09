@@ -40,5 +40,5 @@ test("too many failed logins return a clear JSON error", async () => {
   }
   const blocked = await attempt("wrong-password");
   assert.equal(blocked.status, 429);
-  assert.match((await blocked.json()).error, /too many login attempts/i);
+  assert.match((await blocked.json()).error, /try again in 5 minutes/i);
 });
