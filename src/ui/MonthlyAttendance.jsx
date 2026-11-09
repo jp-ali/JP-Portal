@@ -17,6 +17,11 @@ export default function MonthlyAttendance({ role, marketers = [], currentUser = 
   const peopleLabel = trainer ? "trainer" : "marketer";
   const base = trainer ? "/trainers/attendance" : "/data/attendance";
   const [expanded, setExpanded] = useState(false);
+  useEffect(() => {
+    if (!expanded || portal) return undefined;
+    document.body.classList.add("report-fullscreen-active");
+    return () => document.body.classList.remove("report-fullscreen-active");
+  }, [expanded, portal]);
   const reportViewClass = portal?.reportViewClass || (() => expanded ? "admin-report-expanded" : "");
   const renderExpandedReportChrome = portal?.renderExpandedReportChrome || (() => expanded ? <div className="report-expanded-toolbar"><button type="button" className="report-expanded-back" onClick={() => setExpanded(false)} aria-label="Exit expanded report">←</button><div className="report-expanded-exports"><button type="button" onClick={() => setRefresh((value) => value + 1)}>↻</button><button type="button" onClick={() => download("excel", exportScope)}>Excel</button><button type="button" onClick={() => download("pdf", exportScope)}>PDF</button></div></div> : null);
   const renderReportExpandButton = portal?.renderReportExpandButton || (() => <button type="button" className="report-expand-btn" onClick={() => setExpanded(true)} aria-label="Expand monthly attendance">⛶</button>);

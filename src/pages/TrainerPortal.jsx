@@ -93,6 +93,7 @@ export default function TrainerPortal({ user, onLogout, onBack }) {
 
   const navigate = (key) => {
     if (key !== view) scrollPositions.current.set(view, window.scrollY);
+    if (key === "today-visits" && key !== view) setTrainerId("");
     setView(key); setSelectedWeeklyId(""); setExpandedView(""); setSidebarOpen(false); setError(""); setNotice("");
   };
   useLayoutEffect(() => {
@@ -113,6 +114,8 @@ export default function TrainerPortal({ user, onLogout, onBack }) {
       if (photoClose) { photoClose.click(); return true; }
       const expenseExpandClose = document.querySelector(".trainer-expense-expanded .report-expanded-back");
       if (expenseExpandClose) { expenseExpandClose.click(); return true; }
+      const monthlyExpandClose = document.querySelector(".monthly-attendance-page.admin-report-expanded .report-expanded-back");
+      if (monthlyExpandClose) { monthlyExpandClose.click(); return true; }
       if (expandedView) { setExpandedView(""); return true; }
       const openPicker = document.querySelector('.trainer-portal .verification-marketer-field button[aria-expanded="true"], .trainer-expense-proof-button[aria-expanded="true"]');
       if (openPicker) { openPicker.click(); return true; }
@@ -145,7 +148,7 @@ export default function TrainerPortal({ user, onLogout, onBack }) {
     setExportBusy(true); setError("");
     try {
       const rows = kind === "details" ? visibleTrainers : ["today-visits", "visits"].includes(kind) ? visits : kind === "weekly" ? [selectedWeeklyRecord] : records;
-      const options = { showTrainer: admin && !trainerId, compactAttendance: admin };
+      const options = { showTrainer: admin && (["today-visits", "visits"].includes(kind) || !trainerId), compactAttendance: admin };
       await (format === "excel" ? downloadTrainerExcel(kind, rows, options) : downloadTrainerPDF(kind, rows, options));
     } catch (cause) { setError(cause.message || "Report download failed."); }
     finally { setExportBusy(false); }
@@ -370,7 +373,7 @@ export default function TrainerPortal({ user, onLogout, onBack }) {
       {!admin && view === "weekly-add" && <TrainerWeeklyPlanForm onBack={() => navigate("home")} onSaved={(record) => { navigate("weekly"); setSelectedWeeklyId(record.id); setNotice("Weekly plan saved."); }} />}
       {!admin && view === "weekly-edit" && editingWeekly && <TrainerWeeklyPlanForm key={editingWeekly.id} editing={editingWeekly} onBack={() => { navigate("weekly"); setSelectedWeeklyId(editingWeekly.id); }} onSaved={(record) => { navigate("weekly"); setSelectedWeeklyId(record.id); setNotice("Weekly plan updated."); }} />}
       {((!admin && ["expenses-add", "expenses-all"].includes(view)) || (admin && ["today-expenses", "expense-report"].includes(view))) && <TrainerExpensePanel mode={view === "expenses-add" ? "add" : view === "expenses-all" ? "all" : view === "today-expenses" ? "today" : "report"} trainers={trainers} onBack={() => navigate("home")} onNavigate={navigate} inputStyle={inputStyle} cardStyle={cardStyle} btnPrimary={btnPrimary} />}
-      {["today-visits", "visits"].includes(view) && <TrainerVisitsPanel view={view} admin={admin} visits={visits} trainers={trainers} trainerId={trainerId} setTrainerId={setTrainerId} filter={filter} setFilter={setFilter} expandedView={expandedView} reportControls={reportControls} refresh={() => loadVisits().catch((cause) => setError(cause.message))} />}
+      {["today-visits", "visits"].includes(view) && <TrainerVisitsPanel view={view} admin={admin} visits={visits} trainers={trainers} trainerId={trainerId} setTrainerId={setTrainerId} filter={filter} setFilter={setFilter} expandedView={expandedView} reportControls={reportControls} refresh={() => loadVisits().catch((cause) => setError(cause.message))} loading={loadedVisitsKey !== visitsKey && !error} />}
       {admin && view === "trainers" && <div className="marketer-form-page"><button type="button" className="marketer-form-back" onClick={() => navigate(editId ? "details" : "home")}>← Back</button><div className="marketer-form-hero"><span className="marketer-form-hero-icon">♟</span><div><h2>{editId ? "Edit Trainer Details" : "Add Trainer"}</h2><p>{editId ? "Update this trainer's account." : "Create a trainer account for attendance and action plans."}</p></div></div><form onSubmit={saveAccount}>
         <section className="marketer-form-section"><h3><span>♟</span> Basic Information</h3><div className="marketer-form-grid">
           {field("♟", "Name *", <input required maxLength="120" value={account.name} onChange={(e) => setAccount({ ...account, name: e.target.value })} placeholder="Full name" />)}
