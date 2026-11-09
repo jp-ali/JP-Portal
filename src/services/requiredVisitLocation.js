@@ -16,7 +16,7 @@ export function getRequiredVisitPosition(geolocation = globalThis.navigator?.geo
         resolve({ latitude, longitude });
       },
       (error) => reject(new Error(error?.code === 1
-        ? "Location permission is required. Allow Location for this site in your browser settings, then retake the photo."
+        ? "Location permission is required. Turn on phone Location Services, allow Location for this site in browser settings, then retry the camera."
         : error?.code === 3
           ? "Location timed out. Move where GPS can work, turn on Location Services, and retry the photo."
           : "Location is unavailable. Turn on Location Services and retry the photo.")),

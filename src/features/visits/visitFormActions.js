@@ -72,6 +72,15 @@ streamRef.current?.getTracks().forEach((track) => track.stop());
 streamRef.current = null;
 setCameraBusy(true);
 setCameraIssue("");
+try {
+  await getRequiredVisitPosition();
+  if (requestId !== cameraRequestRef.current) return null;
+} catch (err) {
+  if (requestId !== cameraRequestRef.current) return null;
+  setCameraBusy(false);
+  setCameraIssue(err.message || "Allow Location access, then retry the camera.");
+  return null;
+}
 setIsCameraActive(true);
 try {
 let lastError;

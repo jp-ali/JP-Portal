@@ -447,6 +447,7 @@ style={{ ...inputStyle, padding: "10px 12px", fontSize: "13px" }}
 <button 
 type="button"
 onClick={startCamera}
+disabled={cameraBusy}
 style={{ 
 padding: "12px 20px", 
 background: "linear-gradient(135deg, #8f1532 0%, #941a39 100%)", 
@@ -468,6 +469,7 @@ width: "100%"
   fontWeight: 600, fontSize: "15px", cursor: "pointer",
   boxShadow: "0 4px 12px rgba(143,21,50,.22)"
 }))}
+                  {cameraBusy && !isCameraActive && !imageFile && <p role="status" style={{ color: "#86132f", fontSize: "13px" }}>Checking location permission, then opening camera...</p>}
                   {isCameraActive && (
 <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center" }}>
                       <video 
