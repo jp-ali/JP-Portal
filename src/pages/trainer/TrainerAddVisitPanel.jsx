@@ -4,7 +4,7 @@ import { request } from "../../services/authApi.js";
 import { getSchoolVisitDetails } from "../../domain/schoolVisitDetails.js";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
 import { checkTrainerCompressedPhoto, checkTrainerPhotoFile, TRAINER_VISIT_PHOTO_KB } from "../../services/trainerPhotoChecks.js";
-import { formatAddressForStamp } from "../../services/visitPhotos.js";
+import { getRequiredVisitPosition, visitLocationStamp } from "../../services/requiredVisitLocation.js";
 import { attachCameraPreview, hasCameraFrame } from "../../services/cameraPreview.js";
 import { btnPrimary, cardStyle, inputStyle } from "../../ui/portalPresentation.jsx";
 import { cacheTrainerOfflineCatalog } from "../../services/trainerOfflineCatalog.js";
@@ -83,18 +83,7 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
   const stampPhoto = async (canvas) => {
     const context = canvas.getContext("2d");
     const now = new Date();
-    let location = `Location: ${cities.find((city) => city.id === form.cityId)?.name || "Unavailable"}`;
-    if (navigator.geolocation) {
-      try {
-        const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000, enableHighAccuracy: true }));
-        const { latitude, longitude } = position.coords;
-        location = `GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-        try {
-          const result = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`, { signal: AbortSignal.timeout(5000) });
-          if (result.ok) { const data = await result.json(); location = formatAddressForStamp(data.address || {}, latitude, longitude) || data.display_name || location; }
-        } catch { /* Coordinates remain on the photo. */ }
-      } catch { /* Camera still works when location is unavailable. */ }
-    }
+    const location = await visitLocationStamp(await getRequiredVisitPosition());
     const font = Math.max(16, Math.round(canvas.width * .022));
     const lineHeight = Math.max(24, Math.round(canvas.width * .025));
     context.font = `600 ${font}px sans-serif`;
@@ -114,6 +103,7 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
   };
   const capture = async () => {
     if (cameraBusy) return;
+    set("image", "");
     let video = videoRef.current;
     if (!hasCameraFrame(video, streamRef.current)) video = await startCamera();
     if (!hasCameraFrame(video, streamRef.current)) return;
@@ -123,6 +113,7 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
   };
   const captureFile = async (event) => {
     const file = event.target.files?.[0]; event.target.value = ""; if (!file) return;
+    set("image", "");
     setCameraBusy(true); setCameraError("");
     let url;
     try {
@@ -195,6 +186,7 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
       <label>Visit Notes / Remarks<textarea style={inputStyle} rows="3" value={form.notes} onChange={(event) => set("notes", event.target.value)} placeholder="Write visit summary or remarks" /></label>
       <section className="trainer-visit-photo">
         <h3>📷 School Photo (Detailed Address, Date, Day & Time Stamped)</h3>
+        <small className="trainer-photo-limit">Location access is required. Turn on Location Services and allow this site to use your location.</small>
         <small className="trainer-photo-limit">Photo upload automatically compresses to {TRAINER_VISIT_PHOTO_KB} KB or less.</small>
         {!previewActive && !form.image && !cameraError && (navigator.mediaDevices?.getUserMedia
           ? <button type="button" className="trainer-open-camera" onClick={startCamera}>📸 Open Camera & Take Photo</button>

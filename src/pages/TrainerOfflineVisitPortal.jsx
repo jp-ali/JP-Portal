@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { confirmAction } from "../ui/confirmDialog.js";
 import { compressCanvasToTargetDataUrl } from "../services/imageCompression.js";
+import { getRequiredVisitPosition, gpsStamp } from "../services/requiredVisitLocation.js";
 import { checkTrainerCompressedPhoto, checkTrainerPhotoFile, TRAINER_VISIT_PHOTO_KB } from "../services/trainerPhotoChecks.js";
 import { readTrainerOfflineCatalog } from "../services/trainerOfflineCatalog.js";
 import { readOfflineVisitCatalog } from "../services/offlineVisitCatalog.js";
@@ -10,8 +11,9 @@ import offlineCss from "../styles/offlineVisit.css?raw";
 
 const emptyForm = { cityId: "", cityName: "", schoolId: "", schoolName: "", principalName: "", phone: "", notes: "" };
 
-async function preparePhoto(file, cityName) {
+async function preparePhoto(file) {
   checkTrainerPhotoFile(file);
+  const location = gpsStamp(await getRequiredVisitPosition());
   let image = file;
   if (/\.(heic|heif)$/i.test(file.name) || /^image\/hei[cf]$/i.test(file.type)) {
     const { default: convert } = await import("heic2any");
@@ -29,7 +31,6 @@ async function preparePhoto(file, cityName) {
     const context = canvas.getContext("2d");
     context.drawImage(picture, 0, 0, canvas.width, canvas.height);
     const capturedAt = new Date();
-    const location = `Location: ${cityName || "Unavailable"}`;
     const lines = [
       `Day & Date: ${capturedAt.toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", weekday: "long", day: "2-digit", month: "short", year: "numeric" })}`,
       `Time: ${capturedAt.toLocaleTimeString("en-PK", { timeZone: "Asia/Karachi", hour: "2-digit", minute: "2-digit", hour12: true })}`,
@@ -82,8 +83,8 @@ export default function TrainerOfflineVisitPortal({ user, cachedProfile, online,
   const choosePhoto = async (event) => {
     const file = event.target.files?.[0]; event.target.value = "";
     if (!file) return;
-    setBusy(true); setMessage("");
-    try { setPhoto(await preparePhoto(file, form.cityName)); }
+    setPhoto(null); setBusy(true); setMessage("");
+    try { setPhoto(await preparePhoto(file)); }
     catch (error) { setMessage(error.message || "Photo could not be opened."); }
     finally { setBusy(false); }
   };
@@ -122,7 +123,7 @@ export default function TrainerOfflineVisitPortal({ user, cachedProfile, online,
           <label>Contact Person *<input value={form.principalName} onChange={setField("principalName")} required maxLength={200} /></label>
           <label>Phone *<input type="tel" value={form.phone} onChange={setField("phone")} required maxLength={100} /></label>
           <label className="offline-wide">Visit Notes / Remarks<textarea value={form.notes} onChange={setField("notes")} rows="3" /></label>
-          <div className="offline-photo-field offline-wide"><strong>School photo * ({TRAINER_VISIT_PHOTO_KB} KB maximum after compression)</strong><div className="offline-photo-actions"><button type="button" onClick={() => cameraInput.current?.click()} disabled={busy}>📷 Take Photo</button><button type="button" onClick={() => galleryInput.current?.click()} disabled={busy}>🖼️ Choose from Gallery</button></div><input ref={cameraInput} className="offline-file-input" type="file" accept="image/*" capture="environment" onChange={choosePhoto} /><input ref={galleryInput} className="offline-file-input" type="file" accept="image/*" onChange={choosePhoto} /></div>
+          <div className="offline-photo-field offline-wide"><strong>School photo * · GPS location required ({TRAINER_VISIT_PHOTO_KB} KB maximum)</strong><div className="offline-photo-actions"><button type="button" onClick={() => cameraInput.current?.click()} disabled={busy}>📷 Take Photo</button><button type="button" onClick={() => galleryInput.current?.click()} disabled={busy}>🖼️ Choose from Gallery</button></div><input ref={cameraInput} className="offline-file-input" type="file" accept="image/*" capture="environment" onChange={choosePhoto} /><input ref={galleryInput} className="offline-file-input" type="file" accept="image/*" onChange={choosePhoto} /></div>
           {photo && <img className="offline-photo" src={photo.image} alt="School visit preview" />}
           <button className="offline-save offline-wide" type="submit" disabled={busy}>{busy ? "Saving..." : "Save visit on this device"}</button>
         </form>{message && <p className="offline-message" role="status">{message}</p>}

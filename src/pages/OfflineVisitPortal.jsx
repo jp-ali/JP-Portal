@@ -1,6 +1,7 @@
 import { confirmAction } from "../ui/confirmDialog.js";
 import React, { useEffect, useRef, useState } from "react";
 import { compressCanvasToTargetDataUrl } from "../services/imageCompression.js";
+import { getRequiredVisitPosition, gpsStamp } from "../services/requiredVisitLocation.js";
 import { listOfflineVisits, removeOfflineVisit, saveOfflineVisit } from "../services/offlineVisitStore.js";
 import { readOfflineVisitCatalog } from "../services/offlineVisitCatalog.js";
 import { canSeeSchool, makeMarketerSchoolId } from "../domain/schoolOwnership.js";
@@ -16,7 +17,8 @@ const readStoredRows = (key) => {
   catch { return []; }
 };
 
-function readPhoto(file) {
+async function readPhoto(file) {
+  const location = gpsStamp(await getRequiredVisitPosition());
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const picture = new Image();
@@ -26,7 +28,22 @@ function readPhoto(file) {
         const scale = Math.min(1, 1600 / Math.max(picture.naturalWidth, picture.naturalHeight));
         canvas.width = Math.max(1, Math.round(picture.naturalWidth * scale));
         canvas.height = Math.max(1, Math.round(picture.naturalHeight * scale));
-        canvas.getContext("2d").drawImage(picture, 0, 0, canvas.width, canvas.height);
+        const context = canvas.getContext("2d");
+        context.drawImage(picture, 0, 0, canvas.width, canvas.height);
+        const capturedAt = new Date();
+        const lines = [
+          `Day & Date: ${capturedAt.toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", weekday: "long", day: "2-digit", month: "short", year: "numeric" })}`,
+          `Time: ${capturedAt.toLocaleTimeString("en-PK", { timeZone: "Asia/Karachi", hour: "2-digit", minute: "2-digit", hour12: true })}`,
+          location
+        ];
+        const font = Math.max(15, Math.round(canvas.width * .022));
+        const lineHeight = Math.max(24, Math.round(canvas.width * .028));
+        context.fillStyle = "rgba(0,0,0,.75)";
+        context.fillRect(0, canvas.height - lines.length * lineHeight - 20, canvas.width, lines.length * lineHeight + 20);
+        context.font = `600 ${font}px sans-serif`;
+        context.fillStyle = "white";
+        context.textBaseline = "top";
+        lines.forEach((line, index) => context.fillText(line, 12, canvas.height - lines.length * lineHeight - 10 + index * lineHeight, canvas.width - 24));
         resolve(compressCanvasToTargetDataUrl(canvas, 140 * 1024, 1100, 0.7));
       } catch (error) { reject(error); }
       finally { URL.revokeObjectURL(url); }
@@ -95,7 +112,7 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
     const file = event.target.files?.[0];
     if (!file) return;
     event.target.value = "";
-    setBusy(true); setMessage("");
+    setPhoto(""); setBusy(true); setMessage("");
     try { setPhoto(await readPhoto(file)); }
     catch (error) { setMessage(error.message); }
     finally { setBusy(false); }
@@ -168,7 +185,7 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
             <NumberOrCustomField label="Strength" value={form.strength} onChange={(value) => setForm((current) => ({ ...current, strength: value }))} values={Array.from({ length: 10 }, (_, index) => String((index + 1) * 100))} inputStyle={{}} resetKey={formResetKey} required />
             <label className="offline-wide">Purpose of Visit *<select value={form.purpose} onChange={setField("purpose")} required><option value="">Select purpose</option>{purposes.map((purpose) => <option key={purpose} value={purpose}>{purpose}</option>)}</select></label>
             <label className="offline-wide">Remarks<textarea value={form.notes} onChange={setField("notes")} rows="2" /></label>
-            <div className="offline-photo-field offline-wide"><strong>Visit photo *</strong><div className="offline-photo-actions"><button type="button" onClick={() => { setMessage(""); cameraInput.current?.click(); }} disabled={busy}>📷 Take Photo</button></div><input ref={cameraInput} type="file" accept="image/*" capture="environment" onChange={acceptCameraPhoto} className="offline-file-input" aria-label="Take visit photo with camera" /></div>
+            <div className="offline-photo-field offline-wide"><strong>Visit photo * · GPS location required</strong><div className="offline-photo-actions"><button type="button" onClick={() => { setMessage(""); cameraInput.current?.click(); }} disabled={busy}>📷 Take Photo</button></div><input ref={cameraInput} type="file" accept="image/*" capture="environment" onChange={acceptCameraPhoto} className="offline-file-input" aria-label="Take visit photo with camera" /></div>
             {photo && <img className="offline-photo" src={photo} alt="Visit preview" />}
             <button className="offline-save offline-wide" type="submit" disabled={busy}>{busy ? "Saving..." : "Save visit on this device"}</button>
           </form>

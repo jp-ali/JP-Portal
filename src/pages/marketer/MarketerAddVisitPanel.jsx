@@ -442,6 +442,7 @@ style={{ ...inputStyle, padding: "10px 12px", fontSize: "13px" }}
                 </div>
                 <div style={{ background: "rgba(255,255,255,0.96)", padding: "16px", borderRadius: "14px", border: "1px solid rgba(143,21,50,.24)", textAlign: "center" }}>
                   <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "14px", color: "#3b2329" }}>📷 School Photo (Detailed Address, Date, Day & Time Stamped):</label>
+                  <small style={{ display: "block", marginBottom: "10px", color: "#7a4052" }}>Location access is required. Turn on Location Services and allow this site to use your location before taking a photo.</small>
                   {!isCameraActive && !imageFile && !cameraIssue && (cameraPreviewAvailable ? (
 <button 
 type="button"

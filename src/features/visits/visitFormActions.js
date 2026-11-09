@@ -4,7 +4,7 @@ import { db } from "../../services/dataGateway.js";
 import { makeSchoolVisitDetails } from "../../domain/schoolVisitDetails.js";
 import { getSession } from "../../services/authApi";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
-import { formatAddressForStamp } from "../../services/visitPhotos.js";
+import { getRequiredVisitPosition, visitLocationStamp } from "../../services/requiredVisitLocation.js";
 import { attachCameraPreview, hasCameraFrame } from "../../services/cameraPreview.js";
 
 export function createVisitFormActions({ form, user, setUser, setMarketerview, fetchTodayAttendance, areasList, citiesList, schoolsList, isUsableSchoolRecord, resetVisitAssignmentForm, fetchMarketerReports, fetchMarketerSamples, fetchCitiesByIds, fetchAreasForCities, fetchSchoolsForArea, mergeSchoolsIntoState, formatTime12, refreshLoggedInMarketerAssignments, setEditingVisitSchoolId, setEditingVisitSchoolName, setNewSchoolName, setSchoolSyncMessage, applySchoolVisitDetails }) {
@@ -119,6 +119,7 @@ setCameraIssue("");
 };
 const capturePhoto = async () => {
 if (cameraBusy) return;
+setImageFile(null);
 let video = videoRef.current;
 if (!hasCameraFrame(video, streamRef.current)) {
   video = await startCamera();
@@ -131,49 +132,28 @@ canvas.width = video.videoWidth;
 canvas.height = video.videoHeight;
 const ctx = canvas.getContext("2d");
 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-stampVisitCanvas(canvas, ctx);
+await stampVisitCanvas(canvas, ctx);
 } catch (err) {
   stopCamera();
-  setCameraIssue("Camera frame stopped. Try again or use your phone camera below.");
+  setCameraIssue(err.message || "Camera frame stopped. Try again or use your phone camera below.");
   console.warn("Could not capture camera frame:", err);
 }
 };
-const stampVisitCanvas = (canvas, ctx) => {
+const stampVisitCanvas = async (canvas, ctx) => {
 const now = new Date();
 const optionsDay = { weekday: 'long' };
 const dayName = now.toLocaleDateString('en-US', optionsDay);
 const dateStr = now.toLocaleDateString();
 const timeStr = formatTime12(now);
-if (navigator.geolocation) {
-navigator.geolocation.getCurrentPosition(
-(position) => {
-const lat = position.coords.latitude;
-const lon = position.coords.longitude;
-fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`)
-.then(res => res.json())
-.then(data => {
-const address = data.address || {};
-const properLocation = formatAddressForStamp(address, lat, lon) || data.display_name || `GPS: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-drawStampAndSave(canvas, ctx, properLocation, dayName, dateStr, timeStr);
-})
-.catch(() => {
-drawStampAndSave(canvas, ctx, `Lat: ${lat.toFixed(5)}, Lon: ${lon.toFixed(5)}`, dayName, dateStr, timeStr);
-});
-},
-(error) => {
-console.warn("Location fetch error: ", error.message);
-drawStampAndSave(canvas, ctx, "Location: Unavailable", dayName, dateStr, timeStr);
-},
-{ timeout: 10000, enableHighAccuracy: true }
-);
-} else {
-drawStampAndSave(canvas, ctx, "Location: Not Supported", dayName, dateStr, timeStr);
-}
+const position = await getRequiredVisitPosition();
+const location = await visitLocationStamp(position);
+drawStampAndSave(canvas, ctx, location, dayName, dateStr, timeStr);
 };
 const capturePhotoFromFile = async (event) => {
 const file = event.target.files?.[0];
 event.target.value = "";
 if (!file) return;
+setImageFile(null);
 setCameraBusy(true);
 try {
   let imageBlob = file;
@@ -196,16 +176,16 @@ try {
     canvas.height = Math.max(1, Math.round(picture.naturalHeight * scale));
     const ctx = canvas.getContext("2d");
     ctx.drawImage(picture, 0, 0, canvas.width, canvas.height);
-    stampVisitCanvas(canvas, ctx);
+    await stampVisitCanvas(canvas, ctx);
   } finally { URL.revokeObjectURL(imageUrl); }
 } catch (err) {
   setCameraBusy(false);
-  setCameraIssue("Photo could not be opened. Please try again.");
+  setCameraIssue(err.message || "Photo could not be opened. Please try again.");
   console.warn("Phone camera photo unavailable:", err);
 }
 };
 const drawStampAndSave = (canvas, ctx, locText, dayName, dateStr, timeStr) => {
-const locationText = String(locText || "Location: Unavailable");
+const locationText = String(locText);
 const paddingLeft = 20;
 const fontSize = Math.max(16, canvas.width * 0.022);
 const lineHeight = Math.max(24, canvas.width * 0.025);
