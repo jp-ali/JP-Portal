@@ -36,6 +36,7 @@ const validPhoto = (value, maxKB) => {
     : match[1] === "png" ? bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
       : bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP";
 };
+const TRAINER_VISIT_PHOTO_KB = 80;
 const trainerOnly = (request, response, next) => request.user.role === "trainer" ? next() : fail(response, "Trainer account required", 403);
 const visitSummary = (snapshot) => { const { image, ...record } = snapshot.data(); return { id: snapshot.id, ...record, photoAvailable: Boolean(record.photoAvailable || image) }; };
 const trainerCanSeeSchool = (school, trainerId) => school.source === "manual-trainer" ? school.addedByTrainerId === trainerId : school.source !== "manual-marketer";
@@ -255,7 +256,7 @@ trainerRoutes.post("/offline-visits", run(async (request, response) => {
   const principalName = clean(body.principalName), phone = clean(body.phone), notes = clean(body.notes);
   if (!cityName || cityName.length > 120 || !schoolName || schoolName.length > 200 || !principalName || principalName.length > 200 || !phone || phone.length > 100 || notes.length > 10000) return fail(response, "Enter a valid city, school, contact and phone");
   const image = String(body.image || "");
-  if (!validPhoto(image, 100)) return fail(response, "A valid school photo under 100 KB is required");
+  if (!validPhoto(image, TRAINER_VISIT_PHOTO_KB)) return fail(response, `A valid school photo under ${TRAINER_VISIT_PHOTO_KB} KB is required`);
   const actor = request.user.role === "trainer" ? await findTrainerById(request.user.trainerId) : await findMarketerById(request.user.marketerId);
   if (!actor || actor.active === false) return fail(response, "Account inactive", 403);
   let city;
@@ -321,7 +322,7 @@ trainerRoutes.post("/visits", trainerOnly, run(async (request, response) => {
   const fields = Object.fromEntries(["principalName", "phone", "notes"].map((key) => [key, clean(body[key])]));
   if (!fields.principalName || !fields.phone) return fail(response, "Enter principal name and phone number");
   const image = String(body.image || "");
-  if (!validPhoto(image, 100)) return fail(response, "A valid school photo under 100 KB is required");
+  if (!validPhoto(image, TRAINER_VISIT_PHOTO_KB)) return fail(response, `A valid school photo under ${TRAINER_VISIT_PHOTO_KB} KB is required`);
   const now = new Date();
   const record = { trainerId: request.user.trainerId, trainerName: trainer.name, trainerEmail: trainer.email, date: today(), createdAt: now.toISOString(), visitTime: now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true, timeZone: "Asia/Karachi" }), cityId, cityName: city.data().name || "", areaId, areaName: area?.data().name || school.data().areaName || "", schoolId, schoolName: school.data().name || "", ...fields, image, photoAvailable: true };
   const ref = portalStore().collection("trainer_visits").doc(randomUUID());

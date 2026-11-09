@@ -64,7 +64,7 @@ test("trainer adds a school and photo visit; admin sees the report", async () =>
   const oversizedPhoto = `data:image/png;base64,${Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), Buffer.alloc(100 * 1024 - 7)]).toString("base64")}`;
   const tooLarge = await fetch(`${base}/api/trainers/visits`, { method: "POST", headers: headers(trainerToken), body: JSON.stringify({ cityId: ownCity.id, schoolId: school.id, principalName: "Principal", phone: "1234567890", image: oversizedPhoto }) });
   assert.equal(tooLarge.status, 400);
-  assert.match((await tooLarge.json()).error, /100 KB/);
+  assert.match((await tooLarge.json()).error, /80 KB/);
   const fakePhoto = await fetch(`${base}/api/trainers/visits`, { method: "POST", headers: headers(trainerToken), body: JSON.stringify({ cityId: ownCity.id, schoolId: school.id, principalName: "Principal", phone: "1234567890", image: "data:image/png;base64,ZmFrZQ==" }) });
   assert.equal(fakePhoto.status, 400);
   const own = await fetch(`${base}/api/trainers/visits`, { headers: headers(trainerToken) });

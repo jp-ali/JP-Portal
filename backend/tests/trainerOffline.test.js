@@ -42,6 +42,10 @@ test("offline trainer visits require assigned mode and sync once", async () => {
   cleanup.push(["trainer_visits", offlineId], ["trainer_school_details", `marketer_${marketerId}_${schoolId}`]);
   assert.equal(visit.trainerId, `marketer_${marketerId}`);
   assert.equal(visit.offlineVisit, true);
+  const oversizedPhoto = `data:image/png;base64,${Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), Buffer.alloc(80 * 1024 - 7)]).toString("base64")}`;
+  const oversized = await fetch(`${base}/api/trainers/offline-visits`, { method: "POST", headers: headers(token), body: JSON.stringify({ ...payload, offlineId: `offline-${randomUUID()}`, image: oversizedPhoto }) });
+  assert.equal(oversized.status, 400);
+  assert.match((await oversized.json()).error, /80 KB/);
   assert.equal((await send()).status, 200);
   assert.equal((await portalStore().collection("trainer_visits").doc(offlineId).get()).exists, true);
   await portalStore().collection("marketers").doc(marketerId).update({ offlineMode: "trainer" });

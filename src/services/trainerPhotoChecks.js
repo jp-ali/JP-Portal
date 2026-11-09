@@ -1,4 +1,4 @@
-export const TRAINER_VISIT_PHOTO_KB = 100;
+export const TRAINER_VISIT_PHOTO_KB = 80;
 export const TRAINER_EXPENSE_PHOTO_KB = 65;
 export const TRAINER_SOURCE_PHOTO_MB = 12;
 

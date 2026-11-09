@@ -195,7 +195,7 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
       <label>Visit Notes / Remarks<textarea style={inputStyle} rows="3" value={form.notes} onChange={(event) => set("notes", event.target.value)} placeholder="Write visit summary or remarks" /></label>
       <section className="trainer-visit-photo">
         <h3>📷 School Photo (Detailed Address, Date, Day & Time Stamped)</h3>
-        <small className="trainer-photo-limit">Photo upload automatically compresses to 100 KB or less.</small>
+        <small className="trainer-photo-limit">Photo upload automatically compresses to {TRAINER_VISIT_PHOTO_KB} KB or less.</small>
         {!previewActive && !form.image && !cameraError && (navigator.mediaDevices?.getUserMedia
           ? <button type="button" className="trainer-open-camera" onClick={startCamera}>📸 Open Camera & Take Photo</button>
           : <label className="trainer-phone-camera trainer-open-camera">📸 Open Phone Camera & Take Photo<input type="file" accept="image/*" capture="environment" onChange={captureFile} disabled={cameraBusy} /></label>)}
