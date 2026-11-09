@@ -6,10 +6,15 @@ export default function MarketerAddVisitPanel() {
   const { areasList, btnPrimary, cancelEditVisitSchool, capturePhoto, cardStyle, citiesList, editingVisitSchoolId, editingVisitSchoolName, fetchAreasForCity, fetchSchoolsForArea, handleAddVisitSchool, handleSubmitVisit, imageFile, inputStyle, isCameraActive, isOwnManualSchool, isUsableSchoolRecord, loading, newSchoolName, notes, phone, principalName, purpose, readCachedAreasForCity, removeOwnVisitSchool, retakePhoto, saveEditedVisitSchool, schoolsList, selectVisitArea, setEditingVisitSchoolId, setEditingVisitSchoolName, setFullScreenImage, setMarketerview, setNewSchoolName, setNotes, setPhone, setPrincipalName, setPurpose, setSchoolName, setVisitAddSchoolOpen, setVisitAreaId, setVisitAreaPickerOpen, setVisitAreaSearch, setVisitCityId, setVisitCityPickerOpen, setVisitCitySearch, setVisitSchoolIds, setVisitSchoolLoadError, setVisitSchoolManagerOpen, setVisitSchoolPickerOpen, setVisitSchoolSearch, setVisitSchoolsLoading, setVisitSession, startCamera, startEditVisitSchool, stopCamera, successMsg, syncAreasForCityFromOpenStreetMap, toggleVisitSchool, user, videoRef, visitAddSchoolOpen, visitAreaId, visitAreaPickerOpen, visitAreaSearch, visitCityId, visitCityPickerOpen, visitCitySearch, visitSchoolIds, visitSchoolLoadError, visitSchoolManagerOpen, visitSchoolPickerOpen, visitSchoolSearch, visitSchoolsLoading, visitSession, visitBranches, setVisitBranches, visitStrength, setVisitStrength } = usePortalContext();
   const { cameraBusy, cameraIssue, capturePhotoFromFile } = usePortalContext();
   const cameraPreviewAvailable = Boolean(navigator.mediaDevices?.getUserMedia);
+  const releasePreviewForPhoneCamera = () => {
+    const video = videoRef.current;
+    video?.srcObject?.getTracks().forEach((track) => track.stop());
+    if (video) video.srcObject = null;
+  };
   const phoneCameraButton = (text, style) => (
     <label style={{ ...style, display: "block", position: "relative", textAlign: "center", opacity: cameraBusy ? .6 : 1 }}>
       {cameraBusy ? "Processing photo..." : text}
-      <input type="file" accept="image/*" capture="environment" onChange={capturePhotoFromFile} disabled={cameraBusy}
+      <input type="file" accept="image/*" capture="environment" onClick={releasePreviewForPhoneCamera} onChange={capturePhotoFromFile} disabled={cameraBusy}
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }}
         aria-label="Take school photo with phone camera" />
     </label>
@@ -482,11 +487,11 @@ style={{ width: "100%", maxHeight: "280px", borderRadius: "10px", background: "#
                       <div style={{ display: "flex", gap: "10px", width: "100%" }}>
                         <button 
 type="button" 
-onClick={capturePhoto}
+onClick={cameraIssue ? startCamera : capturePhoto}
 disabled={cameraBusy}
 style={{ flex: 1, padding: "10px", background: "#15803d", color: "white", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: cameraBusy ? "wait" : "pointer", opacity: cameraBusy ? .6 : 1 }}
 >
-                          {cameraBusy ? "Opening camera..." : "🟢 Capture Snap"}
+                          {cameraBusy ? "Opening camera..." : cameraIssue ? "▶ Start preview" : "🟢 Capture Snap"}
                         </button>
                         <button 
 type="button" 
@@ -501,7 +506,7 @@ style={{ flex: 1, padding: "10px", background: "#86132f", color: "white", border
                   {cameraIssue && !imageFile && (
                     <div style={{ marginTop: "10px", display: "grid", gap: "8px" }}>
                       <p role="status" style={{ margin: 0, color: "#86132f", fontSize: "13px" }}>{cameraIssue}</p>
-                      {cameraPreviewAvailable && <button type="button" onClick={startCamera} disabled={cameraBusy} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #86132f", background: "white", color: "#86132f", fontWeight: 700 }}>Retry preview</button>}
+                      {cameraPreviewAvailable && <button type="button" onClick={startCamera} disabled={cameraBusy} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #86132f", background: "white", color: "#86132f", fontWeight: 700 }}>{isCameraActive ? "Start preview" : "Retry preview"}</button>}
                       {phoneCameraButton("Use phone camera", { padding: "10px", borderRadius: "8px", background: "#15803d", color: "white", fontWeight: 700 })}
                     </div>
                   )}

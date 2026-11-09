@@ -5,7 +5,7 @@ import { makeSchoolVisitDetails } from "../../domain/schoolVisitDetails.js";
 import { getSession } from "../../services/authApi";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
 import { getRequiredVisitPosition, visitLocationStamp } from "../../services/requiredVisitLocation.js";
-import { attachCameraPreview, hasCameraFrame } from "../../services/cameraPreview.js";
+import { attachCameraPreview, cameraStartMessage, CameraPlaybackRequiredError, hasCameraFrame } from "../../services/cameraPreview.js";
 
 export function createVisitFormActions({ form, user, setUser, setMarketerview, fetchTodayAttendance, areasList, citiesList, schoolsList, isUsableSchoolRecord, resetVisitAssignmentForm, fetchMarketerReports, fetchMarketerSamples, fetchCitiesByIds, fetchAreasForCities, fetchSchoolsForArea, mergeSchoolsIntoState, formatTime12, refreshLoggedInMarketerAssignments, setEditingVisitSchoolId, setEditingVisitSchoolName, setNewSchoolName, setSchoolSyncMessage, applySchoolVisitDetails }) {
 const { visitCityId, setVisitCityId, visitAreaId, setVisitAreaId, visitSchoolIds, setVisitSchoolIds, visitCitySearch, setVisitCitySearch, visitAreaSearch, setVisitAreaSearch, visitSchoolSearch, setVisitSchoolSearch, visitSession, setVisitSession, visitBranches, setVisitBranches, visitStrength, setVisitStrength, visitCityPickerOpen, setVisitCityPickerOpen, visitAreaPickerOpen, setVisitAreaPickerOpen, visitSchoolPickerOpen, setVisitSchoolPickerOpen, visitAddSchoolOpen, setVisitAddSchoolOpen, visitSchoolManagerOpen, setVisitSchoolManagerOpen, visitSchoolsLoading, setVisitSchoolsLoading, visitSchoolLoadError, setVisitSchoolLoadError, schoolName, setSchoolName, principalName, setPrincipalName, phone, setPhone, purpose, setPurpose, notes, setNotes, imageFile, setImageFile, loading, setLoading, successMsg, setSuccessMsg, sampleSchoolName, setSampleSchoolName, samplePrincipalName, setSamplePrincipalName, samplePhone, setSamplePhone, sampleDetailsText, setSampleDetailsText, sampleLoading, setSampleLoading, sampleSuccessMsg, setSampleSuccessMsg, isCameraActive, setIsCameraActive, cameraBusy, setCameraBusy, setCameraIssue, cameraRequestRef, videoRef, streamRef } = form;
@@ -67,11 +67,27 @@ if (!navigator.mediaDevices?.getUserMedia) {
   return null;
 }
 const requestId = ++cameraRequestRef.current;
+setCameraBusy(true);
+setCameraIssue("");
+if (streamRef.current && videoRef.current) {
+  try {
+    const video = await attachCameraPreview(videoRef, streamRef.current);
+    if (requestId !== cameraRequestRef.current) return null;
+    setCameraBusy(false);
+    return video;
+  } catch (err) {
+    if (requestId !== cameraRequestRef.current) return null;
+    if (err instanceof CameraPlaybackRequiredError) {
+      setCameraBusy(false);
+      setCameraIssue(err.message);
+      return null;
+    }
+  }
+}
 if (videoRef.current) videoRef.current.srcObject = null;
 streamRef.current?.getTracks().forEach((track) => track.stop());
 streamRef.current = null;
-setCameraBusy(true);
-setCameraIssue("");
+setIsCameraActive(false);
 try {
   await getRequiredVisitPosition();
   if (requestId !== cameraRequestRef.current) return null;
@@ -101,16 +117,22 @@ for (const videoConstraints of [{ facingMode: { ideal: "environment" } }, true])
   } catch (err) {
     lastError = err;
     if (requestId !== cameraRequestRef.current) return null;
+    if (err instanceof CameraPlaybackRequiredError) {
+      setCameraBusy(false);
+      setCameraIssue(err.message);
+      return null;
+    }
     if (videoRef.current) videoRef.current.srcObject = null;
     stream?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
+    if (err?.name === "NotAllowedError" || err?.name === "SecurityError") break;
   }
 }
 throw lastError;
 } catch (err) {
 if (requestId !== cameraRequestRef.current) return null;
 stopCamera();
-setCameraIssue("Camera preview did not start. Retry preview or use your phone camera below.");
+setCameraIssue(cameraStartMessage(err));
 console.warn("Camera preview unavailable:", err);
 return null;
 }

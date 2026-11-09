@@ -5,7 +5,7 @@ import { getSchoolVisitDetails } from "../../domain/schoolVisitDetails.js";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
 import { checkTrainerCompressedPhoto, checkTrainerPhotoFile, TRAINER_VISIT_PHOTO_KB } from "../../services/trainerPhotoChecks.js";
 import { getRequiredVisitPosition, visitLocationStamp } from "../../services/requiredVisitLocation.js";
-import { attachCameraPreview, hasCameraFrame } from "../../services/cameraPreview.js";
+import { attachCameraPreview, cameraStartMessage, CameraPlaybackRequiredError, hasCameraFrame } from "../../services/cameraPreview.js";
 import { btnPrimary, cardStyle, inputStyle } from "../../ui/portalPresentation.jsx";
 import { cacheTrainerOfflineCatalog } from "../../services/trainerOfflineCatalog.js";
 
@@ -57,11 +57,33 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
     streamRef.current = null;
     setPreviewActive(false); setCameraBusy(false);
   };
+  const releasePreviewForPhoneCamera = () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  };
   const startCamera = async () => {
     if (!navigator.mediaDevices?.getUserMedia) { setCameraError("Camera preview needs HTTPS. Use the phone camera button below."); return null; }
-    stopCamera();
     const id = ++requestRef.current;
     setCameraBusy(true); setCameraError("");
+    if (streamRef.current && videoRef.current) {
+      try {
+        const element = await attachCameraPreview(videoRef, streamRef.current);
+        if (id !== requestRef.current) return null;
+        setCameraBusy(false);
+        return element;
+      } catch (cause) {
+        if (id !== requestRef.current) return null;
+        if (cause instanceof CameraPlaybackRequiredError) {
+          setCameraBusy(false); setCameraError(cause.message);
+          return null;
+        }
+      }
+    }
+    if (videoRef.current) videoRef.current.srcObject = null;
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setPreviewActive(false);
     try {
       await getRequiredVisitPosition();
       if (id !== requestRef.current) return null;
@@ -74,6 +96,7 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
     setPreviewActive(true);
     let lastError;
     for (const video of [{ facingMode: { ideal: "environment" } }, true]) {
+      if (id !== requestRef.current) return null;
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video, audio: false });
         if (id !== requestRef.current) { stream.getTracks().forEach((track) => track.stop()); return null; }
@@ -84,10 +107,17 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
         return element;
       } catch (cause) {
         lastError = cause;
+        if (id !== requestRef.current) return null;
+        if (cause instanceof CameraPlaybackRequiredError) {
+          setCameraBusy(false); setCameraError(cause.message);
+          return null;
+        }
+        if (videoRef.current) videoRef.current.srcObject = null;
         streamRef.current?.getTracks().forEach((track) => track.stop()); streamRef.current = null;
+        if (cause?.name === "NotAllowedError" || cause?.name === "SecurityError") break;
       }
     }
-    if (id === requestRef.current) { stopCamera(); setCameraError("Camera preview did not start. Retry or use your phone camera below."); console.warn("Trainer camera unavailable:", lastError); }
+    if (id === requestRef.current) { stopCamera(); setCameraError(cameraStartMessage(lastError)); console.warn("Trainer camera unavailable:", lastError); }
     return null;
   };
   const stampPhoto = async (canvas) => {
@@ -200,10 +230,10 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
         <small className="trainer-photo-limit">Photo upload automatically compresses to {TRAINER_VISIT_PHOTO_KB} KB or less.</small>
         {!previewActive && !form.image && !cameraError && (navigator.mediaDevices?.getUserMedia
           ? <button type="button" className="trainer-open-camera" onClick={startCamera} disabled={cameraBusy}>📸 Open Camera & Take Photo</button>
-          : <label className="trainer-phone-camera trainer-open-camera">📸 Open Phone Camera & Take Photo<input type="file" accept="image/*" capture="environment" onChange={captureFile} disabled={cameraBusy} /></label>)}
+          : <label className="trainer-phone-camera trainer-open-camera">📸 Open Phone Camera & Take Photo<input type="file" accept="image/*" capture="environment" onClick={releasePreviewForPhoneCamera} onChange={captureFile} disabled={cameraBusy} /></label>)}
         {cameraBusy && !previewActive && !form.image && <p role="status">Checking location permission, then opening camera...</p>}
-        {previewActive && <><video ref={videoRef} autoPlay playsInline muted /><div className="trainer-camera-actions"><button type="button" disabled={cameraBusy} onClick={capture}>{cameraBusy ? "Opening camera..." : "🟢 Capture Snap"}</button><button type="button" onClick={stopCamera}>❌ Cancel</button></div></>}
-        {cameraError && !form.image && <div className="trainer-camera-error"><p role="status">{cameraError}</p>{navigator.mediaDevices?.getUserMedia && <button type="button" onClick={startCamera} disabled={cameraBusy}>Retry preview</button>}<label className="trainer-phone-camera">Use phone camera<input type="file" accept="image/*" capture="environment" onChange={captureFile} disabled={cameraBusy} /></label></div>}
+        {previewActive && <><video ref={videoRef} autoPlay playsInline muted /><div className="trainer-camera-actions"><button type="button" disabled={cameraBusy} onClick={cameraError ? startCamera : capture}>{cameraBusy ? "Opening camera..." : cameraError ? "▶ Start preview" : "🟢 Capture Snap"}</button><button type="button" onClick={stopCamera}>❌ Cancel</button></div></>}
+        {cameraError && !form.image && <div className="trainer-camera-error"><p role="status">{cameraError}</p>{navigator.mediaDevices?.getUserMedia && <button type="button" onClick={startCamera} disabled={cameraBusy}>{previewActive ? "Start preview" : "Retry preview"}</button>}<label className="trainer-phone-camera">Use phone camera<input type="file" accept="image/*" capture="environment" onClick={releasePreviewForPhoneCamera} onChange={captureFile} disabled={cameraBusy} /></label></div>}
         {form.image && !previewActive && <><p className="trainer-photo-success">✅ Photo captured & stamped successfully!</p><button type="button" className="trainer-photo-preview-button" onClick={() => setPhotoOpen(true)}><img src={form.image} alt="School photo preview" /></button><button type="button" onClick={() => { set("image", ""); startCamera(); }}>🔄 Retake Photo</button></>}
       </section>
       <button type="submit" style={btnPrimary} disabled={loading || cameraBusy}>{loading ? "Submitting Report..." : "Submit Visit Report"}</button>
