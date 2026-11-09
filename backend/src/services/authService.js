@@ -32,6 +32,7 @@ export function marketerProfile(record) {
     subordinateMarketerIds: Array.isArray(record.subordinateMarketerIds) ? record.subordinateMarketerIds.filter(Boolean) : [],
     designation: record.designation || "Regional Manager",
     assignedKms: Number(record.assignedKms || 0),
+    offlineMode: ["marketer", "trainer", "both"].includes(record.offlineMode) ? record.offlineMode : "marketer",
     profilePhoto: record.profilePhoto || null,
     whatsappGroupName: record.whatsappGroupName || "",
     whatsappGroupLink: record.whatsappGroupLink || ""
@@ -56,7 +57,7 @@ export async function authenticate(identifier, password, repository = { findMark
   }
   const trainer = await findTrainerByIdentifier(normalizedIdentifier);
   if (!trainer || trainer.active === false || !trainer.passwordHash || !(await verifyPassword(password, trainer.passwordHash))) return null;
-  return { claims: { sub: trainer.id, role: "trainer" }, profile: { trainerId: trainer.id, name: trainer.name, email: trainer.email, designation: trainer.designation, role: "trainer" } };
+  return { claims: { sub: trainer.id, role: "trainer" }, profile: { trainerId: trainer.id, name: trainer.name, email: trainer.email, designation: trainer.designation, offlineMode: trainer.offlineMode === "none" ? "none" : "trainer", profilePhoto: trainer.profilePhoto || null, role: "trainer" } };
 }
 
 export async function profileFromClaims(claims) {
@@ -66,7 +67,7 @@ export async function profileFromClaims(claims) {
   }
   if (claims.role === "trainer") {
     const trainer = await findTrainerById(claims.sub);
-    return trainer && trainer.active !== false ? { trainerId: trainer.id, name: trainer.name, email: trainer.email, designation: trainer.designation, role: "trainer" } : null;
+    return trainer && trainer.active !== false ? { trainerId: trainer.id, name: trainer.name, email: trainer.email, designation: trainer.designation, offlineMode: trainer.offlineMode === "none" ? "none" : "trainer", profilePhoto: trainer.profilePhoto || null, role: "trainer" } : null;
   }
   if (claims.role !== "marketer") return null;
   const marketer = await findMarketerById(claims.sub);

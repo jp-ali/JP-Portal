@@ -1,7 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import bcrypt from "bcryptjs";
-import { authenticate } from "../src/services/authService.js";
+import { authenticate, marketerProfile } from "../src/services/authService.js";
+
+test("marketer offline mode defaults to marketer and preserves admin assignment", () => {
+  assert.equal(marketerProfile({ id: "one", email: "one@example.test" }).offlineMode, "marketer");
+  assert.equal(marketerProfile({ id: "one", email: "one@example.test", offlineMode: "both" }).offlineMode, "both");
+  assert.equal(marketerProfile({ id: "one", email: "one@example.test", offlineMode: "invalid" }).offlineMode, "marketer");
+});
 
 test("marketer login verifies a hashed password and keeps the account ID", async () => {
   const hash = await bcrypt.hash("account-secret", 4);

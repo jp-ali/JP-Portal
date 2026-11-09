@@ -4,7 +4,7 @@ import { portalStore } from "../config/portalStore.js";
 import { publicMarketer } from "../models/marketerModel.js";
 import { defaultMarketerCard, syncMarketerCard } from "./marketerCardService.js";
 
-const fields = ["name", "phone", "email", "cnic", "designation", "assignedKms", "cardCity", "showCardCity", "whatsappGroupName", "whatsappGroupLink", "assignedCityIds", "assignedAreaIds", "assignedSchoolIds", "subordinateMarketerIds"];
+const fields = ["name", "phone", "email", "cnic", "designation", "assignedKms", "offlineMode", "cardCity", "showCardCity", "whatsappGroupName", "whatsappGroupLink", "assignedCityIds", "assignedAreaIds", "assignedSchoolIds", "subordinateMarketerIds"];
 const arrayFields = new Set(["assignedCityIds", "assignedAreaIds", "assignedSchoolIds", "subordinateMarketerIds"]);
 
 function validate(input, creating) {
@@ -17,6 +17,9 @@ function validate(input, creating) {
       data[field] = [...new Set(input[field])];
     } else if (field === "showCardCity") {
       if (typeof input[field] !== "boolean") throw new Error("Invalid showCardCity");
+      data[field] = input[field];
+    } else if (field === "offlineMode") {
+      if (!["marketer", "trainer", "both"].includes(input[field])) throw new Error("Invalid offline mode");
       data[field] = input[field];
     } else if (field === "assignedKms") {
       const value = Number(input[field]);
@@ -57,6 +60,7 @@ export async function accessibleMarketers(profile) {
 
 export async function createMarketer(input) {
   const data = validate(input, true);
+  data.offlineMode = data.offlineMode || "marketer";
   data.showCardCity = data.showCardCity === true;
   data.cardCity = data.cardCity || "";
   delete data.password;

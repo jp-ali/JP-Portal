@@ -3,6 +3,7 @@ import { entityHash, makeSchoolId } from "./catalog.js";
 export const normalizeSchoolOwner = (email) => String(email || "").trim().toLowerCase();
 
 export function canSeeSchool(school, user) {
+  if (school?.source === "manual-trainer") return user?.role === "admin" || (user?.role === "trainer" && school.addedByTrainerId === user.trainerId);
   if (!school || school.source !== "manual-marketer" || user?.role === "admin") return true;
   return Boolean(normalizeSchoolOwner(user?.email)
     && normalizeSchoolOwner(school.addedByMarketerEmail) === normalizeSchoolOwner(user.email));

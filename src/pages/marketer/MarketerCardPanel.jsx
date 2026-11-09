@@ -14,9 +14,10 @@ function CardPreview({ card }) {
   </div>;
 }
 
-export default function MarketerCardPanel({ onBack, endpoint = "/cards/me", title = "My Card", embedded = false, onEdit }) {
-  const { user } = useContext(PortalContext);
-  const cacheKey = `${user?.marketerId || user?.email || "guest"}:${endpoint}`;
+export default function MarketerCardPanel({ onBack, endpoint = "/cards/me", title = "My Card", embedded = false, onEdit, account }) {
+  const portal = useContext(PortalContext);
+  const user = account || portal?.user;
+  const cacheKey = `${user?.trainerId || user?.marketerId || user?.email || "guest"}:${endpoint}`;
   const activeKey = useRef(cacheKey);
   activeKey.current = cacheKey;
   const [card, setCard] = useState(() => cardCache.get(cacheKey) || null);

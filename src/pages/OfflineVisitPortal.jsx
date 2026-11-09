@@ -36,7 +36,7 @@ function readPhoto(file) {
   });
 }
 
-export default function OfflineVisitPortal({ user, cachedProfile, online, onSignIn, onResume, onSync, onBackToLogin }) {
+export default function OfflineVisitPortal({ user, cachedProfile, online, onSignIn, onResume, onSync, onBackToLogin, switcher }) {
   const [profile, setProfile] = useState(() => user || cachedProfile || null);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -51,7 +51,7 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
   const cameraInput = useRef(null);
 
   const ownerEmail = String(user?.email || profile?.email || "").trim().toLowerCase();
-  const refresh = () => listOfflineVisits().then((items) => setDrafts(items.filter((item) => item.ownerEmail === ownerEmail))).catch((error) => setMessage(error.message));
+  const refresh = () => listOfflineVisits().then((items) => setDrafts(items.filter((item) => item.mode !== "trainer" && item.ownerEmail === ownerEmail))).catch((error) => setMessage(error.message));
   useEffect(() => { if (ownerEmail) refresh(); }, [ownerEmail]);
   useEffect(() => { if (ownerEmail) setCatalog(readOfflineVisitCatalog(ownerEmail)); }, [ownerEmail]);
   useEffect(() => { if (user) setProfile(user); }, [user]);
@@ -107,7 +107,7 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
     try {
       await saveOfflineVisit({
         ...Object.fromEntries(Object.entries(form).map(([key, value]) => [key, String(value).trim()])),
-        image: photo, ownerEmail, capturedAt: new Date().toISOString()
+        image: photo, ownerEmail, mode: "marketer", capturedAt: new Date().toISOString()
       });
       if (form.areaId && form.cityId && form.schoolName.trim()) {
         const schoolId = form.schoolId || makeMarketerSchoolId(form.areaId, form.schoolName, ownerEmail);
@@ -144,7 +144,7 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
   return <div className="offline-portal">
     <style>{offlineCss}</style>
     <header className="offline-header"><div className="offline-logo">JP.</div><div><strong>JAVED PUBLISHERS</strong><small>School Visit Portal</small></div><span className="offline-badge">{online ? "Draft mode" : "Offline"}</span></header>
-    <main className="offline-main">
+    <main className="offline-main">{switcher}
       <button className="offline-back" type="button" onClick={onBackToLogin}>← Back to Login</button>
       {!profile ? <section className="offline-card offline-identity">
         <h1>Work offline</h1>

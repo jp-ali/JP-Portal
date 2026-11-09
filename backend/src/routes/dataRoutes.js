@@ -95,6 +95,7 @@ async function assertCanWrite(ref, operation, data, user, merge = false) {
   if (["cities", "areas", "schools"].includes(root)) {
     const existing = await ref.get();
     const old = existing.data() || {};
+    if (root === "schools" && (old.source === "manual-trainer" || data?.source === "manual-trainer")) throw bad("Trainer school belongs to its trainer", 403);
     const assignedCities = user.assignedCityIds || [];
     const assignedAreas = user.assignedAreaIds || [];
     if (root === "cities" && !assignedCities.includes(ref.id)) throw bad("City is not assigned", 403);
@@ -114,6 +115,7 @@ async function assertCanWrite(ref, operation, data, user, merge = false) {
     return;
   }
   if (!ownedCollections.has(root)) throw bad("Record write denied", 403);
+  if (root === "visits" && data?.offlineVisit === true && user.offlineMode === "trainer") throw bad("Marketer offline visits are disabled for this account", 403);
   const existing = await ref.get();
   const identity = { ids: [user.marketerId], emails: [user.email] };
   if (existing.exists && !ownsDocument(existing.data(), identity)) throw bad("Record access denied", 403);

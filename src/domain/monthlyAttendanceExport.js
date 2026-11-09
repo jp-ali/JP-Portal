@@ -19,7 +19,7 @@ export function buildMonthlyAttendanceReport(month, marketers, holidays = [], to
       if (date <= todayKey) {
         totals.elapsed += 1;
         if (row?.status === "leave") status = "leave";
-        else if (row?.startMarked || row?.status === "started" || row?.status === "completed") status = "present";
+        else if (row?.startMarked || row?.status === "present" || row?.status === "started" || row?.status === "completed") status = "present";
         else if (weekday === 0) status = "sunday";
         else if (holiday) status = "gazetted";
         else status = "absent";

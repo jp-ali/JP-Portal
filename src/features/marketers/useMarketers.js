@@ -10,6 +10,7 @@ const [marketerCnic, setMarketerCnic] = useState("");
 const [marketerPass, setMarketerPass] = useState("");
 const [marketerDesignation, setMarketerDesignation] = useState("");
 const [marketerAssignedKms, setMarketerAssignedKms] = useState("");
+const [marketerOfflineMode, setMarketerOfflineMode] = useState("marketer");
 const [cardCity, setCardCity] = useState("");
 const [showCardCity, setShowCardCity] = useState(false);
 const [subordinateMarketerIds, setSubordinateMarketerIds] = useState([]);
@@ -129,6 +130,7 @@ cnic: marketerCnic.trim(),
 password: marketerPass,
 designation: marketerDesignation.trim(),
 assignedKms: assignedKmsValue,
+offlineMode: marketerOfflineMode,
 cardCity: cardCity.trim(),
 showCardCity,
 whatsappGroupName: marketerWhatsappGroupName,
@@ -154,6 +156,7 @@ setMarketerCnic("");
 setMarketerPass("");
 setMarketerDesignation("");
 setMarketerAssignedKms("");
+setMarketerOfflineMode("marketer");
 setCardCity("");
 setShowCardCity(false);
 setSubordinateMarketerIds([]);
@@ -183,6 +186,7 @@ setMarketerCnic(m.cnic || "");
 setMarketerPass("");
 setMarketerDesignation(m.designation || "");
 setMarketerAssignedKms(m.assignedKms ? String(m.assignedKms) : "");
+setMarketerOfflineMode(["marketer", "trainer", "both"].includes(m.offlineMode) ? m.offlineMode : "marketer");
 setCardCity(m.cardCity || "");
 setShowCardCity(m.showCardCity === true);
 setSubordinateMarketerIds(Array.isArray(m.subordinateMarketerIds) ? m.subordinateMarketerIds.filter((id) => id !== m.id) : []);
@@ -264,5 +268,5 @@ alert(`${succeeded} marketer(s) ${action === "archive" ? "moved to Old Marketers
 }
 return succeeded === unique.length;
 };
-return { marketerName, setMarketerName, marketerPhone, setMarketerPhone, marketerEmail, setMarketerEmail, marketerCnic, setMarketerCnic, marketerPass, setMarketerPass, marketerDesignation, setMarketerDesignation, marketerAssignedKms, setMarketerAssignedKms, cardCity, setCardCity, showCardCity, setShowCardCity, subordinateMarketerIds, setSubordinateMarketerIds, subordinatePickerOpen, setSubordinatePickerOpen, subordinateSearch, setSubordinateSearch, marketerWhatsappGroupName, setMarketerWhatsappGroupName, marketerWhatsappGroupLink, setMarketerWhatsappGroupLink, marketersList, setMarketersList, deletedMarketersList, setDeletedMarketersList, editingId, setEditingId, editingReturnToMarketerDetails, setEditingReturnToMarketerDetails, fetchMarketers, fetchMarketersByIds, getAccessibleVisitMarketers, fetchDeletedMarketers, handleSaveMarketer, handleEditMarketer, handleDeleteMarketer, handlePermanentDeleteMarketer, handleRestoreMarketer, handleBulkMarketerAction };
+return { marketerName, setMarketerName, marketerPhone, setMarketerPhone, marketerEmail, setMarketerEmail, marketerCnic, setMarketerCnic, marketerPass, setMarketerPass, marketerDesignation, setMarketerDesignation, marketerAssignedKms, setMarketerAssignedKms, marketerOfflineMode, setMarketerOfflineMode, cardCity, setCardCity, showCardCity, setShowCardCity, subordinateMarketerIds, setSubordinateMarketerIds, subordinatePickerOpen, setSubordinatePickerOpen, subordinateSearch, setSubordinateSearch, marketerWhatsappGroupName, setMarketerWhatsappGroupName, marketerWhatsappGroupLink, setMarketerWhatsappGroupLink, marketersList, setMarketersList, deletedMarketersList, setDeletedMarketersList, editingId, setEditingId, editingReturnToMarketerDetails, setEditingReturnToMarketerDetails, fetchMarketers, fetchMarketersByIds, getAccessibleVisitMarketers, fetchDeletedMarketers, handleSaveMarketer, handleEditMarketer, handleDeleteMarketer, handlePermanentDeleteMarketer, handleRestoreMarketer, handleBulkMarketerAction };
 }

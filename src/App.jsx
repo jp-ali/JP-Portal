@@ -1,8 +1,11 @@
 import React, { Component, lazy, Suspense, useEffect, useRef, useState } from "react";
 import LoginPage from "./pages/LoginPage.jsx";
 import OfflineVisitPortal from "./pages/OfflineVisitPortal.jsx";
+import TrainerOfflineVisitPortal from "./pages/TrainerOfflineVisitPortal.jsx";
 import { listOfflineVisits } from "./services/offlineVisitStore.js";
-import { getSession, login, logout } from "./services/authApi.js";
+import { getSession, login, logout, request } from "./services/authApi.js";
+import { canUseOfflineMode, offlineModeFor } from "./domain/offlineModes.js";
+import { cacheTrainerOfflineCatalog } from "./services/trainerOfflineCatalog.js";
 import { globalStyle, containerStyle, cardStyle, inputStyle, btnPrimary, footerStyle, renderBackgroundStationary, renderResponsiveStyles } from "./ui/portalPresentation.jsx";
 import PortalLoading from "./ui/PortalLoading.jsx";
 
@@ -41,6 +44,7 @@ export default function App() {
   const [offlineMode, setOfflineMode] = useState(false);
   const [offlineDismissed, setOfflineDismissed] = useState(false);
   const [offlineProfile, setOfflineProfile] = useState(cachedMarketer);
+  const [offlineSelection, setOfflineSelection] = useState("marketer");
   const [syncState, setSyncState] = useState({ pending: 0, busy: false, message: "" });
   const syncing = useRef(null);
   const skipSessionRestore = useRef(false);
@@ -48,7 +52,8 @@ export default function App() {
   const refreshPending = async () => {
     const email = String(session.user?.email || "").toLowerCase();
     const drafts = await listOfflineVisits();
-    const pending = drafts.filter((item) => String(item.ownerEmail || "").toLowerCase() === email).length;
+    const accountId = session.user?.trainerId || session.user?.marketerId || "";
+    const pending = drafts.filter((item) => String(item.ownerEmail || "").toLowerCase() === email && canUseOfflineMode(session.user, item.mode === "trainer" ? "trainer" : "marketer") && (item.mode !== "trainer" || item.ownerAccountId === accountId)).length;
     setSyncState((current) => ({ ...current, pending }));
     return pending;
   };
@@ -67,25 +72,41 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (session.user?.role !== "marketer") return;
-    const profile = { email: session.user.email, name: session.user.name || "", marketerId: session.user.marketerId || "", assignedCityIds: session.user.assignedCityIds || [], assignedAreaIds: session.user.assignedAreaIds || [] };
+    if (!["marketer", "trainer"].includes(session.user?.role)) return;
+    const profile = { email: session.user.email, name: session.user.name || "", role: session.user.role, marketerId: session.user.marketerId || "", trainerId: session.user.trainerId || "", offlineMode: offlineModeFor(session.user), assignedCityIds: session.user.assignedCityIds || [], assignedAreaIds: session.user.assignedAreaIds || [] };
     try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch { /* Private browsing may block storage. */ }
     setOfflineProfile(profile);
+    setOfflineSelection(profile.offlineMode === "trainer" ? "trainer" : "marketer");
   }, [session.user]);
 
+  useEffect(() => {
+    if (!online || session.user?.role !== "trainer") return;
+    request("/trainers/locations/cities").then(({ cities }) => cacheTrainerOfflineCatalog(session.user.email, session.user.trainerId, { cities })).catch(() => {});
+  }, [online, session.user?.email, session.user?.role]);
+
   const syncDrafts = async (manual = false) => {
-    if (!online || session.user?.role !== "marketer") return { synced: 0, error: "Connect to the internet and sign in as the same marketer to sync." };
+    if (!online || !["marketer", "trainer"].includes(session.user?.role)) return { synced: 0, error: "Connect to the internet and sign in with the same account to sync." };
     if (syncing.current) return syncing.current;
     syncing.current = (async () => {
       setSyncState((current) => ({ ...current, busy: true, message: "" }));
       try {
         const drafts = await listOfflineVisits();
-        if (!drafts.some((item) => String(item.ownerEmail || "").toLowerCase() === String(session.user.email || "").toLowerCase())) {
+        const accountId = session.user.trainerId || session.user.marketerId || "";
+        const matching = drafts.filter((item) => String(item.ownerEmail || "").toLowerCase() === String(session.user.email || "").toLowerCase() && canUseOfflineMode(session.user, item.mode === "trainer" ? "trainer" : "marketer") && (item.mode !== "trainer" || item.ownerAccountId === accountId));
+        if (!matching.length) {
           if (manual) setSyncState((current) => ({ ...current, message: drafts.length ? `Pending visits belong to ${drafts[0].ownerEmail}. Sign in with that email to sync.` : "No offline visits pending for this account." }));
           return { synced: 0 };
         }
-        const { syncOfflineVisits } = await import("./services/offlineVisitSync.js");
-        const result = await syncOfflineVisits(session.user);
+        let synced = 0;
+        if (matching.some((item) => item.mode !== "trainer")) {
+          const { syncOfflineVisits } = await import("./services/offlineVisitSync.js");
+          synced += (await syncOfflineVisits(session.user)).synced;
+        }
+        if (matching.some((item) => item.mode === "trainer")) {
+          const { syncTrainerOfflineVisits } = await import("./services/trainerOfflineVisitSync.js");
+          synced += (await syncTrainerOfflineVisits(session.user)).synced;
+        }
+        const result = { synced };
         setSyncState((current) => ({ ...current, message: result.synced ? `${result.synced} visit(s) synced.` : "", syncedAt: result.synced ? Date.now() : current.syncedAt }));
         return result;
       }
@@ -165,7 +186,11 @@ export default function App() {
     setSession({ loading: false, user: null });
     if (online && session.user) logout().catch((failure) => console.warn("Offline exit sign out failed:", failure));
   };
-  const offlineActive = offlineMode || (!online && !offlineDismissed && (session.user?.role === "marketer" || offlineProfile));
+  const offlineIdentity = ["marketer", "trainer"].includes(session.user?.role) ? session.user : offlineProfile;
+  const assignedOfflineMode = offlineModeFor(offlineIdentity);
+  const selectedOfflineMode = assignedOfflineMode === "both" ? offlineSelection : assignedOfflineMode;
+  const offlineAvailable = Boolean(offlineIdentity && assignedOfflineMode !== "none");
+  const offlineActive = offlineAvailable && (offlineMode || (!online && !offlineDismissed && (["marketer", "trainer"].includes(session.user?.role) || offlineProfile)));
   useEffect(() => {
     if (!offlineActive) return;
     if (!window.history.state?.jpOfflineVisitGuard) window.history.pushState({ ...window.history.state, jpOfflineVisitGuard: true }, "", window.location.href);
@@ -178,7 +203,9 @@ export default function App() {
   }, [offlineActive, online, session.user]);
 
   if (offlineActive) {
-    return <OfflineVisitPortal user={session.user?.role === "marketer" ? session.user : null} cachedProfile={offlineProfile} online={online} onSignIn={() => setOfflineMode(false)} onResume={() => setOfflineMode(false)} onSync={syncDrafts} onBackToLogin={backFromOffline} />;
+    const switcher = assignedOfflineMode === "both" ? <div className="offline-mode-switch" aria-label="Choose offline mode"><button type="button" className={selectedOfflineMode === "marketer" ? "active" : ""} onClick={() => setOfflineSelection("marketer")}>Marketer visits</button><button type="button" className={selectedOfflineMode === "trainer" ? "active" : ""} onClick={() => setOfflineSelection("trainer")}>Trainer visits</button></div> : null;
+    const props = { user: ["marketer", "trainer"].includes(session.user?.role) ? session.user : null, cachedProfile: offlineProfile, online, onSignIn: () => setOfflineMode(false), onResume: () => setOfflineMode(false), onSync: syncDrafts, onBackToLogin: backFromOffline, switcher };
+    return selectedOfflineMode === "trainer" ? <TrainerOfflineVisitPortal {...props} /> : <OfflineVisitPortal {...props} />;
   }
   if (session.loading) return <PortalLoading />;
   if (session.user) {
@@ -194,6 +221,6 @@ export default function App() {
     handleLogin, identifier, inputStyle, loginPending, password, preloadPortal,
     renderBackgroundStationary, renderResponsiveStyles,
     setIdentifier, setPassword, setShowPassword, showPassword,
-    onWorkOffline: () => { setOfflineDismissed(false); setOfflineMode(true); }, online
+    onWorkOffline: () => { setOfflineDismissed(false); setOfflineMode(true); }, offlineAvailable, online
   }} />;
 }

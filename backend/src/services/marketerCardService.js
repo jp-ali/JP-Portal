@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { portalStore } from "../config/portalStore.js";
+import { findTrainerById } from "./trainerService.js";
 import { PAKISTAN_CITY_CATALOG, makeCityId } from "../../../src/domain/catalog.js";
 
 const image = `data:image/jpeg;base64,${readFileSync(new URL("../../assets/card-blank-template.jpg", import.meta.url)).toString("base64")}`;
@@ -128,6 +129,24 @@ export async function getOrCreateMarketerCard(marketerId) {
     return { ...result, ...additions };
   }
   return result;
+}
+
+export async function getOrCreateTrainerCard(trainerId) {
+  const trainer = await findTrainerById(trainerId);
+  if (!trainer || trainer.deletedAt || trainer.active === false) return null;
+  const ref = portalStore().collection("savedCards").doc(`trainer_${trainerId}`);
+  const snapshot = await ref.get();
+  if (snapshot.exists) {
+    if (snapshot.data().deletedAt) return null;
+    const card = snapshot.data();
+    const values = { ...card.values, name: trainer.name, designation: trainer.designation || "Trainer", phone: trainer.phone || "", email: PUBLISHER_CARD_EMAIL };
+    if (JSON.stringify(values) !== JSON.stringify(card.values)) await ref.update({ values, title: `${trainer.name} Card`, updatedAt: new Date().toISOString() });
+    return { id: ref.id, ...card, values };
+  }
+  const { marketerId: _marketerId, ...card } = defaultMarketerCard("", { name: trainer.name, designation: trainer.designation || "Trainer", phone: trainer.phone || "" });
+  const created = { ...card, trainerId, values: { ...card.values, assignedCity: "" } };
+  await ref.set(created);
+  return { id: ref.id, ...created };
 }
 
 export function defaultAdminCard(now = new Date().toISOString()) {

@@ -11,7 +11,7 @@ const colors = {
 const pdfColors = Object.fromEntries(Object.entries(colors).map(([key, value]) => [key, [Number.parseInt(value.fill.slice(0, 2), 16), Number.parseInt(value.fill.slice(2, 4), 16), Number.parseInt(value.fill.slice(4, 6), 16)]]));
 const statusLetter = { present: "P", absent: "A", leave: "L", sunday: "", gazetted: "G", future: "" };
 const safeName = (value) => String(value || "Marketer").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 50);
-const fileStem = (report) => `Monthly_Attendance_${report.month}_${report.people.length === 1 ? safeName(report.people[0].name) : "All_Marketers"}`;
+const fileStem = (report) => `Monthly_Attendance_${report.month}_${report.people.length === 1 ? safeName(report.people[0].name) : report.audience === "trainer" ? "All_Trainers" : "All_Marketers"}`;
 
 export async function downloadMonthlyAttendanceExcel(report) {
   const XLSX = await ensureExcelReady();
@@ -67,8 +67,8 @@ export async function downloadMonthlyAttendancePDF(report) {
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   const pdf = new jsPDF({ unit: "pt", format: "a4", orientation: "portrait" });
   const width = pdf.internal.pageSize.getWidth();
-  drawHeader(pdf, "MONTHLY ATTENDANCE - TEAM SUMMARY", `${report.monthLabel} | ${report.people.length} marketer(s)`);
-  const head = [["#", "Marketer", "Present", "Sunday", "Holiday", "Leave", "Absent", "Counted"]];
+  drawHeader(pdf, "MONTHLY ATTENDANCE - TEAM SUMMARY", `${report.monthLabel} | ${report.people.length} ${report.audience === "trainer" ? "trainer" : "marketer"}(s)`);
+  const head = [["#", report.audience === "trainer" ? "Trainer" : "Marketer", "Present", "Sunday", "Holiday", "Leave", "Absent", "Counted"]];
   const body = report.people.map((person, index) => [index + 1, person.name, person.totals.present, person.totals.sunday, person.totals.gazetted, person.totals.leave, person.totals.absent, person.totals.counted]);
   autoTable(pdf, {
     startY: 91, head, body, theme: "grid",

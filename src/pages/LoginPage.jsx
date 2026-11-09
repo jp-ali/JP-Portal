@@ -11,7 +11,7 @@ function EyeIcon({ visible }) {
 }
 
 export default function LoginPage({ context }) {
-  const { error, handleLogin, identifier, loginPending, password, preloadPortal, renderBackgroundStationary, setIdentifier, setPassword, setShowPassword, showPassword, onWorkOffline, online } = context;
+  const { error, handleLogin, identifier, loginPending, password, preloadPortal, renderBackgroundStationary, setIdentifier, setPassword, setShowPassword, showPassword, onWorkOffline, offlineAvailable, online } = context;
   useEffect(() => {
     if (!window.matchMedia("(min-width: 1024px)").matches) return;
     if ("requestIdleCallback" in window) {
@@ -37,7 +37,7 @@ export default function LoginPage({ context }) {
           <button className="login-submit" type="submit" disabled={loginPending}>{loginPending ? "Signing In..." : "Sign In"}</button>
           {error && <p className="login-error" role="alert">{error}</p>}
         </form>
-        <button className="login-offline" type="button" onClick={onWorkOffline}>Use offline</button>
+        {offlineAvailable && <button className="login-offline" type="button" onClick={onWorkOffline}>Use offline</button>}
       </div>
       <p className="login-credit">Developed by Ali Ashfaq</p>
     </main>

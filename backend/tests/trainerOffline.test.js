@@ -1,0 +1,80 @@
+import { after, before, test } from "node:test";
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import { app } from "../src/app.js";
+import { portalStore } from "../src/config/portalStore.js";
+import { closePostgresPool } from "../src/config/postgres.js";
+import { createJwtSession } from "../src/services/jwtSession.js";
+
+let server, base;
+const cleanup = [];
+const headers = (token) => ({ "content-type": "application/json", cookie: `school_visit_session=${token}` });
+const png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aQe0AAAAASUVORK5CYII=";
+before(async () => {
+  process.env.SESSION_SECRET = "trainer-offline-test-secret-is-long-enough";
+  server = app.listen(0);
+  await new Promise((resolve) => server.once("listening", resolve));
+  base = `http://127.0.0.1:${server.address().port}`;
+});
+after(async () => {
+  for (const [collection, id] of cleanup.reverse()) await portalStore().collection(collection).doc(id).delete();
+  await new Promise((resolve) => server.close(resolve));
+  await closePostgresPool();
+});
+
+test("offline trainer visits require assigned mode and sync once", async () => {
+  const marketerId = randomUUID(), cityId = randomUUID(), schoolId = randomUUID(), offlineId = `offline-${randomUUID()}`;
+  const email = `offline-${marketerId}@example.test`;
+  await portalStore().collection("marketers").doc(marketerId).set({ name: "Dual User", email, offlineMode: "marketer" });
+  cleanup.push(["marketers", marketerId]);
+  await portalStore().collection("cities").doc(cityId).set({ name: "Test City" });
+  cleanup.push(["cities", cityId]);
+  await portalStore().collection("schools").doc(schoolId).set({ name: "Test School", cityId });
+  cleanup.push(["schools", schoolId]);
+  const token = await createJwtSession({ sub: marketerId, role: "marketer" });
+  const payload = { offlineId, capturedAt: new Date().toISOString(), cityId, cityName: "Test City", schoolId, schoolName: "Test School", principalName: "Principal", phone: "1234567890", image: png };
+  const send = () => fetch(`${base}/api/trainers/offline-visits`, { method: "POST", headers: headers(token), body: JSON.stringify(payload) });
+  assert.equal((await send()).status, 403);
+  await portalStore().collection("marketers").doc(marketerId).update({ offlineMode: "both" });
+  const first = await send();
+  assert.equal(first.status, 201);
+  const visit = (await first.json()).visit;
+  cleanup.push(["trainer_visits", offlineId], ["trainer_school_details", `marketer_${marketerId}_${schoolId}`]);
+  assert.equal(visit.trainerId, `marketer_${marketerId}`);
+  assert.equal(visit.offlineVisit, true);
+  assert.equal((await send()).status, 200);
+  assert.equal((await portalStore().collection("trainer_visits").doc(offlineId).get()).exists, true);
+  await portalStore().collection("marketers").doc(marketerId).update({ offlineMode: "trainer" });
+  assert.equal((await send()).status, 200);
+  const trainerId = randomUUID(), trainerEmail = `trainer-offline-${trainerId}@example.test`;
+  await portalStore().collection("trainers").doc(trainerId).set({ name: "Trainer User", email: trainerEmail, active: true });
+  cleanup.push(["trainers", trainerId]);
+  const trainerToken = await createJwtSession({ sub: trainerId, role: "trainer" });
+  const trainerOfflineId = `offline-${randomUUID()}`;
+  const trainerVisit = await fetch(`${base}/api/trainers/offline-visits`, { method: "POST", headers: headers(trainerToken), body: JSON.stringify({ ...payload, offlineId: trainerOfflineId }) });
+  assert.equal(trainerVisit.status, 201);
+  cleanup.push(["trainer_visits", trainerOfflineId], ["trainer_school_details", `${trainerId}_${schoolId}`]);
+  assert.equal((await trainerVisit.json()).visit.trainerId, trainerId);
+  assert.equal((await fetch(`${base}/api/trainers/offline-visits`, { method: "POST", headers: headers(trainerToken), body: JSON.stringify(payload) })).status, 409);
+  const uncachedId = `offline-${randomUUID()}`;
+  const uncached = await fetch(`${base}/api/trainers/offline-visits`, { method: "POST", headers: headers(trainerToken), body: JSON.stringify({ ...payload, offlineId: uncachedId, cityId: "", schoolId: "", cityName: `New City ${uncachedId}`, schoolName: `New School ${uncachedId}` }) });
+  assert.equal(uncached.status, 201);
+  const newVisit = (await uncached.json()).visit;
+  cleanup.push(["trainer_visits", uncachedId], ["trainer_school_details", `${trainerId}_${newVisit.schoolId}`], ["schools", newVisit.schoolId], ["cities", newVisit.cityId]);
+  assert.equal(newVisit.schoolName, `New School ${uncachedId}`);
+  await portalStore().collection("marketers").doc(marketerId).update({ offlineMode: "marketer" });
+  assert.equal((await send()).status, 403);
+});
+
+test("admin can assign and edit marketer offline mode", async () => {
+  const adminToken = await createJwtSession({ sub: "admin", role: "admin" });
+  const email = `offline-mode-${randomUUID()}@example.test`;
+  const create = await fetch(`${base}/api/marketers`, { method: "POST", headers: headers(adminToken), body: JSON.stringify({ name: "Mode User", email, phone: "1234567890", password: "test-password-123", offlineMode: "both" }) });
+  assert.equal(create.status, 201);
+  const marketer = (await create.json()).marketer;
+  cleanup.push(["marketers", marketer.id], ["savedCards", marketer.id]);
+  assert.equal(marketer.offlineMode, "both");
+  const update = await fetch(`${base}/api/marketers/${marketer.id}`, { method: "PATCH", headers: headers(adminToken), body: JSON.stringify({ offlineMode: "trainer" }) });
+  assert.equal(update.status, 200);
+  assert.equal((await update.json()).marketer.offlineMode, "trainer");
+});

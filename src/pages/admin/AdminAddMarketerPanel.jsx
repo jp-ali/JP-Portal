@@ -19,7 +19,7 @@ export default function AdminAddMarketerPanel() {
     c.setEditingId(null);
     c.setEditingReturnToMarketerDetails(false);
     c.setMarketerName(""); c.setMarketerPhone(""); c.setMarketerEmail(""); c.setMarketerCnic(""); c.setMarketerPass("");
-    c.setMarketerDesignation(""); c.setMarketerAssignedKms("");
+    c.setMarketerDesignation(""); c.setMarketerAssignedKms(""); c.setMarketerOfflineMode("marketer");
     c.setCardCity(""); c.setShowCardCity(false);
     c.setSubordinateMarketerIds([]); c.setSubordinatePickerOpen(false); c.setSubordinateSearch("");
     c.setMarketerWhatsappGroupName(""); c.setMarketerWhatsappGroupLink("");
@@ -62,6 +62,10 @@ export default function AdminAddMarketerPanel() {
         {field("●", "City on Card", <div className="marketer-form-card-city"><input type="checkbox" aria-label="Show city on card" title="Show city on card" checked={c.showCardCity} onChange={(event) => c.setShowCardCity(event.target.checked)} /><input type="text" aria-label="City to show on card" value={c.cardCity} onChange={(event) => c.setCardCity(event.target.value)} placeholder="Type city name" maxLength={160} /></div>)}
         {field("▣", "Designation *", <><input aria-label="Designation" type="text" list="marketer-designations" value={c.marketerDesignation} onChange={(e) => c.setMarketerDesignation(e.target.value)} required placeholder="Designation" /><datalist id="marketer-designations"><option value="Regional Manager"/><option value="Senior Sales Manager"/><option value="Sales Officer"/><option value="Marketing Coordinator"/></datalist></>)}
         {field("◉", "Assigned KM / Litre *", <input aria-label="Assigned kilometres per litre" type="number" min="0.1" step="0.1" value={c.marketerAssignedKms} onChange={(e) => c.setMarketerAssignedKms(e.target.value)} required placeholder="e.g. 14" />)}
+      </div></section>
+
+      <section className="marketer-form-section"><h3><span>📱</span> Offline Modes</h3><p className="marketer-form-hint">Choose one mode for offline visits. Both allows switching between Marketer and Trainer forms.</p><div className="marketer-offline-modes">
+        {[["marketer", "Marketer"], ["trainer", "Trainer"], ["both", "Both"]].map(([mode, label]) => <div className="marketer-offline-mode" key={mode}><span>{label}</span><button type="button" role="switch" aria-label={`${label} offline mode`} aria-checked={c.marketerOfflineMode === mode} className={`portal-hide-controls-switch ${c.marketerOfflineMode === mode ? "is-on" : ""}`} onClick={() => c.setMarketerOfflineMode(mode)}><span /></button></div>)}
       </div></section>
 
       <section className="marketer-form-section"><h3><span>♙</span> {editing ? "Change Password" : "Set Password"}</h3><p className="marketer-form-hint">{editing ? "Leave the new password blank to keep the current password." : "Use at least 8 characters and share the password after saving."}</p><div className="marketer-form-grid marketer-form-password-grid">

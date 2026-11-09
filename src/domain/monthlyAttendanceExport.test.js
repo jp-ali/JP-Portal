@@ -21,3 +21,16 @@ test("monthly export keeps one row per marketer and counts present, Sunday and h
   assert.equal(person.days[15].status, "future");
   assert.deepEqual(person.totals, { present: 2, absent: 9, leave: 2, sunday: 1, gazetted: 1, counted: 4, elapsed: 15 });
 });
+
+test("trainer monthly export counts check-ins and excludes leave from credited days", () => {
+  const report = buildMonthlyAttendanceReport("2026-11", [{
+    id: "t1", name: "Trainer", designation: "Trainer", days: [
+      { date: "2026-11-02", status: "present", startMarked: true, startTime: "09:00 AM" },
+      { date: "2026-11-03", status: "leave" }
+    ]
+  }], [{ date: "2026-11-04", name: "Holiday" }], new Date(2026, 10, 5));
+  assert.equal(report.people[0].days[1].status, "present");
+  assert.equal(report.people[0].days[2].status, "leave");
+  assert.equal(report.people[0].days[3].status, "gazetted");
+  assert.equal(report.people[0].totals.counted, 3);
+});

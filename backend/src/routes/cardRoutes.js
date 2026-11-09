@@ -3,12 +3,17 @@ import { portalStore } from "../config/portalStore.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { validateCardTemplate } from "./cardTemplateRoutes.js";
 import { convertCardsToCdr } from "../services/cardCdrExport.js";
-import { alignLegacyCardFields, correctCardAddress, defaultAdminCard, getOrCreateMarketerCard, lockMarketerCard, PUBLISHER_CARD_EMAIL } from "../services/marketerCardService.js";
+import { alignLegacyCardFields, correctCardAddress, defaultAdminCard, getOrCreateMarketerCard, getOrCreateTrainerCard, lockMarketerCard, PUBLISHER_CARD_EMAIL } from "../services/marketerCardService.js";
 
 export const cardRoutes = Router();
 cardRoutes.get("/me", requireAuth, async (request, response, next) => {
   if (request.user.role !== "marketer") return response.status(403).json({ error: "Marketer access required" });
   try { response.json({ card: await getOrCreateMarketerCard(request.user.marketerId) }); }
+  catch (error) { next(error); }
+});
+cardRoutes.get("/trainer/me", requireAuth, async (request, response, next) => {
+  if (request.user.role !== "trainer") return response.status(403).json({ error: "Trainer access required" });
+  try { response.json({ card: await getOrCreateTrainerCard(request.user.trainerId) }); }
   catch (error) { next(error); }
 });
 cardRoutes.get("/admin-card", requireAuth, async (_request, response, next) => {

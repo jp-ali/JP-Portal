@@ -166,6 +166,7 @@ setMarketerCnic("");
 setMarketerPass("");
 setMarketerDesignation("");
 setMarketerAssignedKms("");
+context.setMarketerOfflineMode("marketer");
 setSubordinateMarketerIds([]);
 setSubordinatePickerOpen(false);
 setSubordinateSearch("");

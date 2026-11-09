@@ -16,3 +16,10 @@ test("two marketers can add the same school name in one area without colliding",
   assert.notEqual(first, makeMarketerSchoolId("area-1", "City School", "sara@example.test"));
   assert.notEqual(first, makeMarketerSchoolId("area-2", "City School", "ali@example.test"));
 });
+
+test("trainer schools are hidden from marketers and other trainers", () => {
+  const school = { source: "manual-trainer", addedByTrainerId: "trainer-1" };
+  assert.equal(canSeeSchool(school, { role: "trainer", trainerId: "trainer-1" }), true);
+  assert.equal(canSeeSchool(school, { role: "trainer", trainerId: "trainer-2" }), false);
+  assert.equal(canSeeSchool(school, { role: "marketer" }), false);
+});

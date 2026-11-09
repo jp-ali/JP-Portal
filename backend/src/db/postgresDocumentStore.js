@@ -127,6 +127,16 @@ async function applyOperation(client, { operation, ref, data, options }) {
   const next = applyDocumentPatch(merge && oldPayload ? decodeDocumentValue(oldPayload) : null, data, merge);
   const encoded = encodeDocumentValue(next);
   const collectionPath = parts(ref.path).slice(0, -1).join("/");
+  if (operation === "create") {
+    const inserted = await client.query(`
+      INSERT INTO portal_documents (path, collection_path, document_id, payload)
+      VALUES ($1, $2, $3, $4::jsonb)
+      ON CONFLICT (path) DO NOTHING
+      RETURNING path
+    `, [ref.path, collectionPath, ref.id, JSON.stringify(encoded)]);
+    if (!inserted.rowCount) throw Object.assign(new Error("Document already exists"), { code: 6 });
+    return;
+  }
   await client.query(`
     INSERT INTO portal_documents (path, collection_path, document_id, payload)
     VALUES ($1, $2, $3, $4::jsonb)

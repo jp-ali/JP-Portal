@@ -32,12 +32,14 @@ test("malformed JSON returns a controlled error", async () => {
 });
 
 test("configured local frontend origin can submit through the Vite proxy", async () => {
-  process.env.DEV_FRONTEND_ORIGIN = "http://localhost:5173";
+  process.env.DEV_FRONTEND_ORIGIN = "http://localhost:5173, http://preview.example:5175";
   const response = await fetch(`${baseUrl}/api/auth/logout`, {
     method: "POST",
-    headers: { origin: "http://localhost:5173" }
+    headers: { origin: "http://preview.example:5175" }
   });
   assert.equal(response.status, 204);
+  const localhost = await fetch(`${baseUrl}/api/auth/logout`, { method: "POST", headers: { origin: "http://localhost:5173" } });
+  assert.equal(localhost.status, 204);
 });
 
 test("unconfigured origins are rejected", async () => {

@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { request } from "../services/authApi.js";
 import { buildMonthlyAttendanceReport } from "../domain/monthlyAttendanceExport.js";
 import { downloadMonthlyAttendanceExcel, downloadMonthlyAttendancePDF } from "../services/monthlyAttendanceExports.js";
-import { usePortalContext } from "../context/PortalContext.jsx";
+import { PortalContext } from "../context/PortalContext.jsx";
 import "../styles/monthlyAttendance.css";
 
 const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -11,8 +11,15 @@ const localMonth = () => {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 };
 
-export default function MonthlyAttendance({ role, marketers = [], currentUser = null, onBack }) {
-  const { renderExpandedReportChrome, renderReportExpandButton, reportViewClass } = usePortalContext();
+export default function MonthlyAttendance({ role, marketers = [], currentUser = null, onBack, audience = "marketer" }) {
+  const portal = useContext(PortalContext);
+  const trainer = audience === "trainer";
+  const peopleLabel = trainer ? "trainer" : "marketer";
+  const base = trainer ? "/trainers/attendance" : "/data/attendance";
+  const [expanded, setExpanded] = useState(false);
+  const reportViewClass = portal?.reportViewClass || (() => expanded ? "admin-report-expanded" : "");
+  const renderExpandedReportChrome = portal?.renderExpandedReportChrome || (() => expanded ? <div className="report-expanded-toolbar"><button type="button" className="report-expanded-back" onClick={() => setExpanded(false)} aria-label="Exit expanded report">←</button><div className="report-expanded-exports"><button type="button" onClick={() => setRefresh((value) => value + 1)}>↻</button><button type="button" onClick={() => download("excel", exportScope)}>Excel</button><button type="button" onClick={() => download("pdf", exportScope)}>PDF</button></div></div> : null);
+  const renderReportExpandButton = portal?.renderReportExpandButton || (() => <button type="button" className="report-expand-btn" onClick={() => setExpanded(true)} aria-label="Expand monthly attendance">⛶</button>);
   const [month, setMonth] = useState(localMonth);
   const [marketerId, setMarketerId] = useState("");
   const [days, setDays] = useState([]);
@@ -36,17 +43,17 @@ export default function MonthlyAttendance({ role, marketers = [], currentUser = 
     setExportError("");
     try {
       const [holidayResult, attendanceResult] = await Promise.all([
-        request(`/data/attendance/holidays?month=${month}`, { timeoutMs: 60000 }),
+        request(`${base}/holidays?month=${month}`, { timeoutMs: 60000 }),
         admin && scope === "all"
-          ? request(`/data/attendance/monthly-all?month=${month}`, { timeoutMs: 60000 })
-          : request(`/data/attendance/monthly?${new URLSearchParams({ month, ...(admin ? { marketerId } : {}) })}`, { timeoutMs: 60000 })
+          ? request(`${base}/monthly-all?month=${month}`, { timeoutMs: 60000 })
+          : request(`${base}/monthly?${new URLSearchParams({ month, ...(admin ? { [trainer ? "trainerId" : "marketerId"]: marketerId } : {}) })}`, { timeoutMs: 60000 })
       ]);
-      const people = admin && scope === "all" ? attendanceResult.marketers || [] : [{
+      const people = admin && scope === "all" ? attendanceResult[trainer ? "trainers" : "marketers"] || [] : [{
         ...(admin ? marketers.find((item) => item.id === marketerId) : currentUser),
         days: attendanceResult.days || []
       }];
-      if (!people.length) throw new Error("No marketers available for this export.");
-      const report = buildMonthlyAttendanceReport(month, people, holidayResult.holidays || []);
+      if (!people.length) throw new Error(`No ${peopleLabel}s available for this export.`);
+      const report = { ...buildMonthlyAttendanceReport(month, people, holidayResult.holidays || []), audience };
       if (format === "excel") await downloadMonthlyAttendanceExcel(report);
       else await downloadMonthlyAttendancePDF(report);
     } catch (cause) { setExportError(cause.message || "Download failed. Please try again."); }
@@ -59,7 +66,7 @@ export default function MonthlyAttendance({ role, marketers = [], currentUser = 
     setHolidayError("");
     setHolidayLoading(true);
     setHolidays([]);
-    request(`/data/attendance/holidays?month=${month}`).then((result) => {
+    request(`${base}/holidays?month=${month}`).then((result) => {
       if (active) setHolidays(result.holidays || []);
     }).catch((cause) => {
       if (active) setHolidayError(cause.message);
@@ -67,7 +74,7 @@ export default function MonthlyAttendance({ role, marketers = [], currentUser = 
       if (active) setHolidayLoading(false);
     });
     return () => { active = false; };
-  }, [month, refresh]);
+  }, [base, month, refresh]);
 
   const saveHoliday = async (event) => {
     event.preventDefault();
@@ -75,7 +82,7 @@ export default function MonthlyAttendance({ role, marketers = [], currentUser = 
     setHolidaySaving(true);
     setHolidayError("");
     try {
-      await request("/data/attendance/holidays", { method: "PUT", body: JSON.stringify({ date: holidayDate, name: holidayName.trim() }) });
+      await request(`${base}/holidays`, { method: "PUT", body: JSON.stringify({ date: holidayDate, name: holidayName.trim() }) });
       setHolidayName("");
       setRefresh((value) => value + 1);
     } catch (cause) { setHolidayError(cause.message); }
@@ -86,7 +93,7 @@ export default function MonthlyAttendance({ role, marketers = [], currentUser = 
     setHolidaySaving(true);
     setHolidayError("");
     try {
-      await request(`/data/attendance/holidays/${date}`, { method: "DELETE" });
+      await request(`${base}/holidays/${date}`, { method: "DELETE" });
       setRefresh((value) => value + 1);
     } catch (cause) { setHolidayError(cause.message); }
     finally { setHolidaySaving(false); }
@@ -99,8 +106,8 @@ export default function MonthlyAttendance({ role, marketers = [], currentUser = 
     setError("");
     setDays([]);
     const params = new URLSearchParams({ month });
-    if (admin) params.set("marketerId", marketerId);
-    request(`/data/attendance/monthly?${params}`).then((result) => {
+    if (admin) params.set(trainer ? "trainerId" : "marketerId", marketerId);
+    request(`${base}/monthly?${params}`).then((result) => {
       if (active) setDays(result.days || []);
     }).catch((cause) => {
       if (active) setError(cause.message);
@@ -108,7 +115,7 @@ export default function MonthlyAttendance({ role, marketers = [], currentUser = 
       if (active) setLoading(false);
     });
     return () => { active = false; };
-  }, [admin, marketerId, month, refresh]);
+  }, [admin, base, marketerId, month, refresh, trainer]);
 
   const calendar = useMemo(() => {
     const [year, monthNumber] = month.split("-").map(Number);
@@ -125,7 +132,7 @@ export default function MonthlyAttendance({ role, marketers = [], currentUser = 
       const sunday = new Date(year, monthNumber - 1, day).getDay() === 0;
       const gazetted = holidayDates.has(date);
       const row = rows.get(date);
-      const status = row?.status === "leave" ? "leave" : row?.startMarked || row?.status === "completed" || row?.status === "started" ? "present" : sunday ? "sunday" : gazetted ? "gazetted" : date <= todayKey ? "absent" : "future";
+      const status = row?.status === "leave" ? "leave" : row?.startMarked || row?.status === "present" || row?.status === "completed" || row?.status === "started" ? "present" : sunday ? "sunday" : gazetted ? "gazetted" : date <= todayKey ? "absent" : "future";
       if (!sunday && !gazetted && date <= todayKey) {
         totals.working += 1;
         if (status === "present") totals.present += 1;
@@ -155,7 +162,7 @@ export default function MonthlyAttendance({ role, marketers = [], currentUser = 
     <div className="monthly-attendance-box">
       <h2>Monthly Attendance</h2>
       <div className="monthly-attendance-controls">
-        {admin && <label>Marketer<select value={marketerId} onChange={(event) => setMarketerId(event.target.value)}><option value="">Select marketer</option>{marketers.map((marketer) => <option key={marketer.id} value={marketer.id}>{marketer.name || marketer.email}</option>)}</select></label>}
+        {admin && <label>{trainer ? "Trainer" : "Marketer"}<select value={marketerId} onChange={(event) => setMarketerId(event.target.value)}><option value="">Select {peopleLabel}</option>{marketers.map((marketer) => <option key={marketer.id} value={marketer.id}>{marketer.name || marketer.email}</option>)}</select></label>}
         <label>Month<input type="month" value={month} onChange={(event) => { if (event.target.value) setMonth(event.target.value); }} /></label>
         <button type="button" className="monthly-attendance-refresh white-refresh-btn" title="Refresh monthly attendance" aria-label="Refresh monthly attendance" onClick={() => setRefresh((value) => value + 1)} disabled={loading || holidayLoading}>↻</button>
       </div>
@@ -169,7 +176,7 @@ export default function MonthlyAttendance({ role, marketers = [], currentUser = 
         {holidayError && <p className="monthly-attendance-error" role="alert">{holidayError}</p>}
         <div className="monthly-attendance-holiday-list">{holidays.length ? holidays.map((holiday) => <span key={holiday.date}>{holiday.date} · {holiday.name}<button type="button" onClick={() => deleteHoliday(holiday.date)} disabled={holidaySaving} aria-label={`Remove ${holiday.name}`}>×</button></span>) : <small>No gazetted holidays added for this month.</small>}</div>
       </details>}
-      {admin && !marketerId ? <p className="monthly-attendance-empty">Select a marketer to view monthly attendance.</p> : error || holidayError ? <p className="monthly-attendance-error" role="alert">{error || holidayError}</p> : loading || holidayLoading ? <p className="monthly-attendance-empty">Loading attendance…</p> : <>
+      {admin && !marketerId ? <p className="monthly-attendance-empty">Select a {peopleLabel} to view monthly attendance.</p> : error || holidayError ? <p className="monthly-attendance-error" role="alert">{error || holidayError}</p> : loading || holidayLoading ? <p className="monthly-attendance-empty">Loading attendance…</p> : <>
         <div className="monthly-attendance-summary">
           {[["Working", calendar.totals.working], ["Present", calendar.totals.present], ["Absent", calendar.totals.absent], ["Leave", calendar.totals.leave], ["Attendance", `${calendar.percent}%`]].map(([label, value]) => <div key={label} className={`monthly-attendance-stat monthly-attendance-stat--${label.toLowerCase()}`}><strong>{value}</strong><span>{label}</span></div>)}
         </div>

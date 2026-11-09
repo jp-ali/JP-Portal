@@ -26,7 +26,7 @@ app.use((request, response, next) => {
         const parsedOrigin = new URL(origin);
         const sameHost = parsedOrigin.host === host;
         const localFrontend = process.env.NODE_ENV !== "production"
-          && origin === process.env.DEV_FRONTEND_ORIGIN;
+          && String(process.env.DEV_FRONTEND_ORIGIN || "").split(",").map((value) => value.trim()).includes(origin);
         if (!sameHost && !localFrontend) {
           return response.status(403).json({ error: "Cross-origin request rejected" });
         }

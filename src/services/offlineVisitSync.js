@@ -4,11 +4,12 @@ import { makeAreaId, makeCityId, normalizeEntityName } from "../domain/catalog.j
 import { makeMarketerSchoolId } from "../domain/schoolOwnership.js";
 import { listOfflineVisits, removeOfflineVisit } from "./offlineVisitStore.js";
 import { makeSchoolVisitDetails } from "../domain/schoolVisitDetails.js";
+import { canUseOfflineMode } from "../domain/offlineModes.js";
 
 export async function syncOfflineVisits(user) {
-  if (user?.role !== "marketer" || !navigator.onLine) return { synced: 0, pending: 0 };
+  if (user?.role !== "marketer" || !canUseOfflineMode(user, "marketer") || !navigator.onLine) return { synced: 0, pending: 0 };
   const email = String(user.email || "").trim().toLowerCase();
-  const drafts = (await listOfflineVisits()).filter((item) => String(item.ownerEmail || "").trim().toLowerCase() === email);
+  const drafts = (await listOfflineVisits()).filter((item) => item.mode !== "trainer" && String(item.ownerEmail || "").trim().toLowerCase() === email);
   let synced = 0;
   for (const draft of drafts) {
     const capturedAt = new Date(draft.capturedAt || draft.savedAt);

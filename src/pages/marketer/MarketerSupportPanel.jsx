@@ -1,11 +1,14 @@
-import { usePortalContext } from "../../context/PortalContext.jsx";
-import React from "react";
+import { PortalContext } from "../../context/PortalContext.jsx";
+import React, { useContext } from "react";
 import MarketerCardPanel from "./MarketerCardPanel.jsx";
 
-export default function MarketerSupportPanel() {
-  const { cardStyle, setMarketerview, user } = usePortalContext();
+export default function MarketerSupportPanel({ account, onBack, style }) {
+  const portal = useContext(PortalContext);
+  const cardStyle = style || portal?.cardStyle;
+  const user = account || portal?.user;
+  const back = onBack || (() => portal?.setMarketerview("home"));
   return (<div>
-            <button onClick={() => setMarketerview("home")} style={{ marginBottom: "14px", padding: "8px 14px", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }}>← Back to Menu</button>
+            <button onClick={back} style={{ marginBottom: "14px", padding: "8px 14px", background: "linear-gradient(135deg,#6f0b24,#86132f)", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", cursor: "pointer", fontSize: "13px" }}>← Back to Menu</button>
             <div style={cardStyle}>
               <h3 style={{ marginTop: 0, color: "#3b2329", fontSize: "18px", marginBottom: "6px" }}>🎧 Customer Support / Help Center</h3>
               <p style={{ color: "#78686d", fontSize: "13px", marginBottom: "20px" }}>You can contact for assistance using any of the options below:</p>
@@ -15,7 +18,7 @@ export default function MarketerSupportPanel() {
                   <div><h4 style={{ margin: "0 0 4px 0", fontSize: "16px" }}>Direct Call</h4><p style={{ margin: 0, fontSize: "12px", color: "#78686d" }}>Call admin directly on SIM</p></div>
                 </a>
                 <a 
-href={`sms:+923068482000?body=${encodeURIComponent(`Assalam u Alaikum! ${user?.name || "Marketer"} here`)}`} 
+href={`sms:+923068482000?body=${encodeURIComponent(`Assalam u Alaikum! ${user?.name || "Team member"} here`)}`}
 style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.96)", padding: "16px", borderRadius: "14px", border: "1px solid rgba(127,16,43,.24)", textDecoration: "none", color: "#3b2329" }}
 >
                   <div style={{ fontSize: "28px", background: "#8c1733", padding: "10px 14px", borderRadius: "10px" }}>💬</div>
@@ -35,7 +38,7 @@ style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(2
                   </div>
                 </a>
                 <a 
-href={`https://wa.me/923068482000?text=${encodeURIComponent(`Assalam u Alaikum! ${user?.name || "Marketer"} here`)}`} 
+href={`https://wa.me/923068482000?text=${encodeURIComponent(`Assalam u Alaikum! ${user?.name || "Team member"} here`)}`}
 target="_blank" 
 rel="noopener noreferrer" 
 style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(255,255,255,0.96)", padding: "16px", borderRadius: "14px", border: "1px solid rgba(34, 197, 94, 0.3)", textDecoration: "none", color: "#3b2329" }}
@@ -47,7 +50,7 @@ style={{ display: "flex", alignItems: "center", gap: "16px", background: "rgba(2
                   </div>
                 </a>
               </div>
-              <div style={{ marginTop: "20px" }}><MarketerCardPanel endpoint="/cards/admin-card" title="Admin Card" embedded /></div>
+              <div style={{ marginTop: "20px" }}><MarketerCardPanel account={user} endpoint="/cards/admin-card" title="Admin Card" embedded /></div>
             </div>
           </div>);
 }

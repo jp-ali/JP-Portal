@@ -24,13 +24,18 @@ import React, { lazy, Suspense, useState, useRef, useEffect, useLayoutEffect } f
 import { db } from "./services/dataGateway.js";
 import { request } from "./services/authApi.js";
 import { cacheOfflineVisitCatalog } from "./services/offlineVisitCatalog.js";
+import { readTrainerPortalPreference, saveTrainerPortalPreference } from "./services/trainerPortalPreference.js";
 import { collection, deleteDoc, doc, getDocs } from "./services/dataGateway.js";
 const AdminPortal = lazy(() => import("./pages/AdminPortal.jsx"));
 const MarketerPortal = lazy(() => import("./pages/MarketerPortal.jsx"));
 const TrainerPortal = lazy(() => import("./pages/TrainerPortal.jsx"));
 export default function PortalApp({ initialUser, onLogout, onSync, syncState, online }) {
 const [user, setUser] = useState(initialUser);
-const [trainerMode, setTrainerMode] = useState(false);
+const [trainerMode, setTrainerMode] = useState(() => readTrainerPortalPreference(initialUser));
+const switchPortalMode = (trainer) => {
+  saveTrainerPortalPreference(user, trainer);
+  setTrainerMode(trainer);
+};
 const [adminView, setAdminView] = useState("home");
 const [adminSidebarOpen, setAdminSidebarOpen] = useState(false);
 const [marketerSidebarOpen, setMarketerSidebarOpen] = useState(false);
@@ -225,7 +230,7 @@ const applySchoolVisitDetails = (school) => {
   setVisitStrength(details.strength);
 };
 const { assignedCityIds, setAssignedCityIds, assignedAreaIds, setAssignedAreaIds, assignedSchoolIds, setAssignedSchoolIds, assignmentCityFocusId, setAssignmentCityFocusId, adminCitySearch, setAdminCitySearch, adminAreaSearch, setAdminAreaSearch, adminSchoolSearch, setAdminSchoolSearch, newCityName, setNewCityName, newAreaName, setNewAreaName, newSchoolName, setNewSchoolName, adminCityAssignOpen, setAdminCityAssignOpen, adminAreaAssignOpen, setAdminAreaAssignOpen, editingVisitSchoolId, setEditingVisitSchoolId, editingVisitSchoolName, setEditingVisitSchoolName, handleAddVisitSchool, isOwnManualSchool, startEditVisitSchool, cancelEditVisitSchool, saveEditedVisitSchool, removeOwnVisitSchool, resetMarketerAssignmentForm, resetVisitAssignmentForm, getValidMarketerAssignments, toggleCityAssignment, toggleAreaAssignment, toggleSchoolAssignment, handleAddCity, handleAddArea, handleAddSchool, refreshLoggedInMarketerAssignments } = useLocationAssignments({ user, setUser, assignmentAreaFocusId, setAssignmentAreaFocusId, citiesList, areasList, schoolsList, fetchAreasForCity, fetchSchoolsForArea, mergeCitiesIntoState, readCachedAreasForCity, readCachedSchoolsForArea, syncAreasForCityFromOpenStreetMap, setAreaSyncMessage, setSchoolSyncMessage, visitAreaId, visitCityId, visitSchoolIds, setVisitAreaId, setVisitCityId, setVisitSchoolIds, setSchoolName, setVisitAddSchoolOpen, setVisitAreaPickerOpen, setVisitAreaSearch, setVisitCityPickerOpen, setVisitCitySearch, setVisitSchoolLoadError, setVisitSchoolManagerOpen, setVisitSchoolPickerOpen, setVisitSchoolSearch, setVisitSession, applySchoolVisitDetails });
-const { marketerName, setMarketerName, marketerPhone, setMarketerPhone, marketerEmail, setMarketerCnic, marketerCnic, setMarketerEmail, marketerPass, setMarketerPass, marketerDesignation, setMarketerDesignation, marketerAssignedKms, setMarketerAssignedKms, cardCity, setCardCity, showCardCity, setShowCardCity, subordinateMarketerIds, setSubordinateMarketerIds, subordinatePickerOpen, setSubordinatePickerOpen, subordinateSearch, setSubordinateSearch, marketerWhatsappGroupName, setMarketerWhatsappGroupName, marketerWhatsappGroupLink, setMarketerWhatsappGroupLink, marketersList, setMarketersList, deletedMarketersList, setDeletedMarketersList, editingId, setEditingId, editingReturnToMarketerDetails, setEditingReturnToMarketerDetails, fetchMarketers, fetchMarketersByIds, getAccessibleVisitMarketers, fetchDeletedMarketers, handleSaveMarketer, handleEditMarketer, handleDeleteMarketer, handlePermanentDeleteMarketer, handleRestoreMarketer, handleBulkMarketerAction } = useMarketers({ user, fetchCitiesByIds, fetchAreasForCities, fetchLocationCatalog, getValidMarketerAssignments, resetMarketerAssignmentForm, setAdminView, setAssignedAreaIds, setAssignedCityIds, setAssignedSchoolIds, setAssignmentAreaFocusId, setAssignmentCityFocusId, setAdminCityAssignOpen, setAdminAreaAssignOpen, setAdminAreaSearch, setAdminCitySearch, setAdminSchoolSearch, setNewAreaName, setNewCityName, setNewSchoolName });
+const { marketerName, setMarketerName, marketerPhone, setMarketerPhone, marketerEmail, setMarketerCnic, marketerCnic, setMarketerEmail, marketerPass, setMarketerPass, marketerDesignation, setMarketerDesignation, marketerAssignedKms, setMarketerAssignedKms, marketerOfflineMode, setMarketerOfflineMode, cardCity, setCardCity, showCardCity, setShowCardCity, subordinateMarketerIds, setSubordinateMarketerIds, subordinatePickerOpen, setSubordinatePickerOpen, subordinateSearch, setSubordinateSearch, marketerWhatsappGroupName, setMarketerWhatsappGroupName, marketerWhatsappGroupLink, setMarketerWhatsappGroupLink, marketersList, setMarketersList, deletedMarketersList, setDeletedMarketersList, editingId, setEditingId, editingReturnToMarketerDetails, setEditingReturnToMarketerDetails, fetchMarketers, fetchMarketersByIds, getAccessibleVisitMarketers, fetchDeletedMarketers, handleSaveMarketer, handleEditMarketer, handleDeleteMarketer, handlePermanentDeleteMarketer, handleRestoreMarketer, handleBulkMarketerAction } = useMarketers({ user, fetchCitiesByIds, fetchAreasForCities, fetchLocationCatalog, getValidMarketerAssignments, resetMarketerAssignmentForm, setAdminView, setAssignedAreaIds, setAssignedCityIds, setAssignedSchoolIds, setAssignmentAreaFocusId, setAssignmentCityFocusId, setAdminCityAssignOpen, setAdminAreaAssignOpen, setAdminAreaSearch, setAdminCitySearch, setAdminSchoolSearch, setNewAreaName, setNewCityName, setNewSchoolName });
 useEffect(() => { if (user?.role === "admin") fetchMarketers(); }, [user?.role]);
 useEffect(() => { cacheOfflineVisitCatalog(user, citiesList, areasList, schoolsList); }, [user?.email, user?.assignedCityIds, user?.assignedAreaIds, citiesList, areasList, schoolsList]);
 useEffect(() => {
@@ -358,6 +363,7 @@ useEffect(() => {
     return true;
   };
   const onKeyDown = (event) => {
+    if (trainerMode) return;
     if (event.key !== "Escape") { homeEscapeCountRef.current = { count: 0, lastAt: 0 }; return; }
     if (event.repeat) return;
     if (document.querySelector("[data-confirm-dialog]")) return;
@@ -377,6 +383,7 @@ useEffect(() => {
     }
   };
   const onBrowserBack = () => {
+    if (trainerMode) return;
     window.history.pushState({ ...window.history.state, jpPortalGuard: browserGuardRef.current }, "", window.location.href);
     if (document.querySelector("[data-confirm-dialog]")) return;
     homeEscapeCountRef.current = { count: 0, lastAt: 0 };
@@ -385,7 +392,7 @@ useEffect(() => {
   window.addEventListener("keydown", onKeyDown, true);
   window.addEventListener("popstate", onBrowserBack);
   return () => { window.removeEventListener("keydown", onKeyDown, true); window.removeEventListener("popstate", onBrowserBack); };
-}, [editingVisit, fullScreenImage, expandedReportKey, adminSidebarOpen, marketerSidebarOpen, user?.role, adminView, marketerView, setFullScreenImage, setFullScreenMediaRecord, stopAttendanceCamera, stopCamera, onLogout]);
+}, [editingVisit, fullScreenImage, expandedReportKey, adminSidebarOpen, marketerSidebarOpen, trainerMode, user?.role, adminView, marketerView, setFullScreenImage, setFullScreenMediaRecord, stopAttendanceCamera, stopCamera, onLogout]);
 const { actionPlanDate, setActionPlanDate, actionPlanAreaText, setActionPlanAreaText, actionPlanPurpose, setActionPlanPurpose, actionPlanSubmitting, actionPlanSuccess, actionPlanShareMessage, shareActionPlan, adminActionPlanFromDate, setAdminActionPlanFromDate, adminActionPlanToDate, setAdminActionPlanToDate, adminActionPlanMarketerIds, setAdminActionPlanMarketerIds, buildActionPlanMessage, fetchActionPlans, getFilteredActionPlans, downloadActionPlanExcel, downloadActionPlanPDF, openActionPlanForm, handleSendActionPlan, handleDeleteActionPlan } = useActionPlans({ user, setUser, setMarketerview, marketersList, getTodayInputDate, formatTime12, groupRowsByMarketerAndDate, fetchTodayAttendance, getAttendanceDocId });
 const { expenseReportFromDate, setExpenseReportFromDate, expenseReportToDate, setExpenseReportToDate, expenseReportLoading, getMarketerExpensePetrol, adminExpenseFromDate, setAdminExpenseFromDate, adminExpenseToDate, setAdminExpenseToDate, adminExpenseMarketerIds, setAdminExpenseMarketerIds, adminExpenseRows, setAdminExpenseRows, adminExpenseLoading, fetchMarketerExpenseReport, openExpenseReport, getFilteredExpenseReportRows, downloadExpenseReportExcel, downloadExpenseReportPDF, fetchAdminExpenseReport, openAdminExpenseReport, getFilteredAdminExpenseRows, getAdminExpenseValues, getAdminExpenseMarketerName, downloadAdminExpenseExcel, downloadAdminExpensePDF } = useExpenseReports({ user, setMarketerview, setAdminView, marketersList, fetchMarketers, getDateKey, formatActionPlanDate, formatTime12, groupRowsByMarketerAndDate });
 const { renderVisitReportTable, renderSampleReportTable, renderActionPlanReportTable, renderVerificationReportTable, renderAttendanceReportTable } = createReportTables({ formatActionPlanDate, formatTime12, getAttendanceAssignedKms, getAttendancePetrolExpense, getAttendanceTotalKms, getAttendanceTotalOtherExpense, getTodayInputDate, groupRowsByMarketerAndDate, handleDeleteActionPlan, inputStyle, saveAttendanceAssignedKms, saveVerificationRemark, setFullScreenImage, setReports, verificationRemarkOptions, verificationSavingId });
@@ -481,9 +488,9 @@ return (
 </div>
 );
 };
-if (user.role === "admin" && trainerMode) return <Suspense fallback={<PortalLoading />}><TrainerPortal user={user} onLogout={onLogout} onBack={() => setTrainerMode(false)} /></Suspense>;
+if (user.role === "admin" && trainerMode) return <Suspense fallback={<PortalLoading />}><TrainerPortal user={user} onLogout={onLogout} onBack={() => switchPortalMode(false)} /></Suspense>;
 if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminPortal context={{
-    onSwitchToTrainer: () => setTrainerMode(true),
+    onSwitchToTrainer: () => switchPortalMode(true),
     setUser,
     activeMedia,
     adminActionPlanFromDate,
@@ -606,6 +613,7 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     inputStyle,
     isDateInRange,
     marketerAssignedKms,
+    marketerOfflineMode,
     cardCity,
     showCardCity,
     marketerDesignation,
@@ -698,6 +706,7 @@ if (user.role === "admin") return <Suspense fallback={<PortalLoading />}><AdminP
     setFullScreenImage,
     setFullScreenMediaRecord,
     setMarketerAssignedKms,
+    setMarketerOfflineMode,
     setCardCity,
     setShowCardCity,
     setMarketerDesignation,

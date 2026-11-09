@@ -21,7 +21,7 @@ export default function MarketerMultiSelect({ marketers, selected, onChange, inp
           const checked = selected.includes(value);
           return <label key={m.id || value} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "7px 6px", borderRadius: "7px", cursor: "pointer", background: checked ? "#fff2f5" : "transparent", color: "#35262a", fontSize: "11.5px" }}>
             <input type="checkbox" checked={checked} onChange={() => onChange(checked ? selected.filter((item) => item !== value) : single ? [value] : [...selected, value])} />
-            <span>{m.name || m.email || "Marketer"}</span>
+            <span>{m.name || m.email || itemLabel}</span>
           </label>;
         })}
         {!choices.length && <p style={{ margin: "8px", color: "#78686d", fontSize: "11px" }}>No {itemLabel.toLowerCase()}s available.</p>}
