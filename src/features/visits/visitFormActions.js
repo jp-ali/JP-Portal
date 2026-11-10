@@ -5,6 +5,7 @@ import { makeSchoolVisitDetails } from "../../domain/schoolVisitDetails.js";
 import { getSession } from "../../services/authApi";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
 import { getRequiredVisitPosition, visitLocationStamp } from "../../services/requiredVisitLocation.js";
+import { drawVisitPhotoStamp } from "../../services/visitPhotos.js";
 import { attachCameraPreview, cameraStartMessage, CameraPlaybackRequiredError, hasCameraFrame } from "../../services/cameraPreview.js";
 
 export function createVisitFormActions({ form, user, setUser, setMarketerview, fetchTodayAttendance, areasList, citiesList, schoolsList, isUsableSchoolRecord, resetVisitAssignmentForm, fetchMarketerReports, fetchMarketerSamples, fetchCitiesByIds, fetchAreasForCities, fetchSchoolsForArea, mergeSchoolsIntoState, formatTime12, refreshLoggedInMarketerAssignments, setEditingVisitSchoolId, setEditingVisitSchoolName, setNewSchoolName, setSchoolSyncMessage, applySchoolVisitDetails }) {
@@ -218,46 +219,7 @@ try {
 }
 };
 const drawStampAndSave = (canvas, ctx, locText, dayName, dateStr, timeStr) => {
-const locationText = String(locText);
-const paddingLeft = 20;
-const fontSize = Math.max(16, canvas.width * 0.022);
-const lineHeight = Math.max(24, canvas.width * 0.025);
-const maxChars = Math.max(42, Math.floor(canvas.width / (fontSize * 0.58)));
-const words = locationText.split(/\s+/);
-const locationLines = [];
-let current = "";
-words.forEach(word => {
-const test = current ? `${current} ${word}` : word;
-if (test.length > maxChars && current) {
-locationLines.push(current);
-current = word;
-} else {
-current = test;
-}
-});
-if (current) locationLines.push(current);
-const shownLocationLines = locationLines.slice(0, 6);
-if (locationLines.length > 6) shownLocationLines[5] += " ...";
-const boxHeight = 102 + (shownLocationLines.length * lineHeight);
-ctx.fillStyle = "rgba(0, 0, 0, 0.72)";
-ctx.fillRect(0, canvas.height - boxHeight, canvas.width, boxHeight);
-ctx.fillStyle = "#ffffff";
-ctx.font = `bold ${fontSize}px sans-serif`;
-ctx.textBaseline = "top";
-let startY = canvas.height - boxHeight + 15;
-ctx.fillText(`📅 Day & Date: ${dayName}, ${dateStr}`, paddingLeft, startY);
-startY += lineHeight;
-ctx.fillText(`⏰ Time: ${timeStr}`, paddingLeft, startY);
-startY += lineHeight;
-ctx.fillText("📍 Current Location:", paddingLeft, startY);
-startY += lineHeight;
-shownLocationLines.forEach(line => {
-ctx.font = `600 ${Math.max(14, fontSize * 0.86)}px sans-serif`;
-ctx.fillText(line, paddingLeft + 18, startY);
-startY += lineHeight * 0.92;
-});
-ctx.font = `${Math.max(12, fontSize * 0.55)}px sans-serif`;
-ctx.fillText("Address © OpenStreetMap contributors", paddingLeft, canvas.height - 18);
+drawVisitPhotoStamp(canvas, ctx, { dateText: `${dayName}, ${dateStr}`, timeText: timeStr, locationText: locText });
 const dataUrl = compressCanvasToTargetDataUrl(canvas, 100 * 1024, 900, 0.50);
 setImageFile(dataUrl);
 stopCamera();
