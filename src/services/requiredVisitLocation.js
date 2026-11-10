@@ -36,7 +36,6 @@ export function getRequiredVisitPosition(geolocation = globalThis.navigator?.geo
 }
 
 export async function visitLocationStamp(position, lookup = globalThis.fetch) {
-  const gps = gpsStamp(position);
   const failure = "Could not load the location address. Keep Location on, check your internet and retry the photo.";
   if (!lookup) throw new Error(failure);
   const controller = new AbortController();
@@ -49,7 +48,7 @@ export async function visitLocationStamp(position, lookup = globalThis.fetch) {
     const data = await response.json();
     const address = formatAddressForStamp(data.address || {}) || (typeof data.displayName === "string" ? data.displayName.trim() : "");
     if (!address) throw new Error(failure);
-    return `${address}\n${gps}`;
+    return address;
   } catch {
     throw new Error(failure);
   } finally {

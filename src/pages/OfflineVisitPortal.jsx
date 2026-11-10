@@ -2,6 +2,7 @@ import { confirmAction } from "../ui/confirmDialog.js";
 import React, { useEffect, useRef, useState } from "react";
 import { compressCanvasToTargetDataUrl } from "../services/imageCompression.js";
 import { getRequiredVisitPosition, gpsStamp } from "../services/requiredVisitLocation.js";
+import { drawVisitPhotoStamp, formatVisitPhotoTimestamp } from "../services/visitPhotos.js";
 import { listOfflineVisits, removeOfflineVisit, saveOfflineVisit } from "../services/offlineVisitStore.js";
 import { readOfflineVisitCatalog } from "../services/offlineVisitCatalog.js";
 import { canSeeSchool, makeMarketerSchoolId } from "../domain/schoolOwnership.js";
@@ -31,19 +32,7 @@ async function readPhoto(file) {
         const context = canvas.getContext("2d");
         context.drawImage(picture, 0, 0, canvas.width, canvas.height);
         const capturedAt = new Date();
-        const lines = [
-          `Day & Date: ${capturedAt.toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", weekday: "long", day: "2-digit", month: "short", year: "numeric" })}`,
-          `Time: ${capturedAt.toLocaleTimeString("en-PK", { timeZone: "Asia/Karachi", hour: "2-digit", minute: "2-digit", hour12: true })}`,
-          location
-        ];
-        const font = Math.max(15, Math.round(canvas.width * .022));
-        const lineHeight = Math.max(24, Math.round(canvas.width * .028));
-        context.fillStyle = "rgba(0,0,0,.75)";
-        context.fillRect(0, canvas.height - lines.length * lineHeight - 20, canvas.width, lines.length * lineHeight + 20);
-        context.font = `600 ${font}px sans-serif`;
-        context.fillStyle = "white";
-        context.textBaseline = "top";
-        lines.forEach((line, index) => context.fillText(line, 12, canvas.height - lines.length * lineHeight - 10 + index * lineHeight, canvas.width - 24));
+        drawVisitPhotoStamp(canvas, context, { ...formatVisitPhotoTimestamp(capturedAt), locationText: location, attribution: "" });
         resolve(compressCanvasToTargetDataUrl(canvas, 140 * 1024, 1100, 0.7));
       } catch (error) { reject(error); }
       finally { URL.revokeObjectURL(url); }

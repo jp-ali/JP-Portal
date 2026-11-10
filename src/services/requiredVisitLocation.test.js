@@ -28,7 +28,7 @@ test("online photos get a readable address through the authenticated same-origin
     assert.equal(options.credentials, "same-origin");
     return { ok: true, json: async () => ({ address: { road: "Agha Shahi Avenue", suburb: "G-9/4", city: "Islamabad", country: "Pakistan" } }) };
   });
-  assert.equal(stamp, "Agha Shahi Avenue, G-9/4, Islamabad, Pakistan\nGPS: 33.68440, 73.04790");
+  assert.equal(stamp, "Street #Agha Shahi Avenue, Block G-9/4,\nIslamabad, Pakistan");
 });
 
 test("online photos do not silently save numbers or an invented country when address lookup fails", async () => {
@@ -36,7 +36,7 @@ test("online photos do not silently save numbers or an invented country when add
   await assert.rejects(visitLocationStamp(point, () => Promise.reject(new Error("offline"))), /location address/);
   await assert.rejects(visitLocationStamp(point, async () => ({ ok: false })), /location address/);
   await assert.rejects(visitLocationStamp(point, async () => ({ ok: true, json: async () => ({ address: {} }) })), /location address/);
-  assert.equal(await visitLocationStamp(point, async () => ({ ok: true, json: async () => ({ displayName: "G-9, Islamabad" }) })), "G-9, Islamabad\nGPS: 33.68440, 73.04790");
+  assert.equal(await visitLocationStamp(point, async () => ({ ok: true, json: async () => ({ displayName: "G-9, Islamabad" }) })), "G-9, Islamabad");
 });
 
 test("approximate or stale fixes cannot stamp a school photo", async () => {

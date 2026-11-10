@@ -5,7 +5,7 @@ import { makeSchoolVisitDetails } from "../../domain/schoolVisitDetails.js";
 import { getSession } from "../../services/authApi";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
 import { getRequiredVisitPosition, visitLocationStamp } from "../../services/requiredVisitLocation.js";
-import { drawVisitPhotoStamp } from "../../services/visitPhotos.js";
+import { drawVisitPhotoStamp, formatVisitPhotoTimestamp } from "../../services/visitPhotos.js";
 import { attachCameraPreview, cameraStartMessage, CameraPlaybackRequiredError, hasCameraFrame } from "../../services/cameraPreview.js";
 
 export function createVisitFormActions({ form, user, setUser, setMarketerview, fetchTodayAttendance, areasList, citiesList, schoolsList, isUsableSchoolRecord, resetVisitAssignmentForm, fetchMarketerReports, fetchMarketerSamples, fetchCitiesByIds, fetchAreasForCities, fetchSchoolsForArea, mergeSchoolsIntoState, formatTime12, refreshLoggedInMarketerAssignments, setEditingVisitSchoolId, setEditingVisitSchoolName, setNewSchoolName, setSchoolSyncMessage, applySchoolVisitDetails }) {
@@ -175,13 +175,10 @@ await stampVisitCanvas(canvas, ctx, position);
 };
 const stampVisitCanvas = async (canvas, ctx, verifiedPosition) => {
 const now = new Date();
-const optionsDay = { weekday: 'long' };
-const dayName = now.toLocaleDateString('en-US', optionsDay);
-const dateStr = now.toLocaleDateString();
-const timeStr = formatTime12(now);
+const { dateText, timeText } = formatVisitPhotoTimestamp(now);
 const position = verifiedPosition || await getRequiredVisitPosition();
 const location = await visitLocationStamp(position);
-drawStampAndSave(canvas, ctx, location, dayName, dateStr, timeStr);
+drawStampAndSave(canvas, ctx, location, dateText, timeText);
 };
 const capturePhotoFromFile = async (event) => {
 const file = event.target.files?.[0];
@@ -218,8 +215,8 @@ try {
   console.warn("Phone camera photo unavailable:", err);
 }
 };
-const drawStampAndSave = (canvas, ctx, locText, dayName, dateStr, timeStr) => {
-drawVisitPhotoStamp(canvas, ctx, { dateText: `${dayName}, ${dateStr}`, timeText: timeStr, locationText: locText });
+const drawStampAndSave = (canvas, ctx, locText, dateText, timeText) => {
+drawVisitPhotoStamp(canvas, ctx, { dateText, timeText, locationText: locText });
 const dataUrl = compressCanvasToTargetDataUrl(canvas, 100 * 1024, 900, 0.50);
 setImageFile(dataUrl);
 stopCamera();
