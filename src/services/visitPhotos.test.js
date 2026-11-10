@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createCanvas } from "@napi-rs/canvas";
-import { drawVisitPhotoStamp, formatAddressForStamp, formatVisitPhotoTimestamp } from "./visitPhotos.js";
+import { drawDateTimePhotoStamp, drawVisitPhotoStamp, formatAddressForStamp, formatVisitPhotoTimestamp } from "./visitPhotos.js";
 
 test("photo addresses use actual place names without inventing street numbers or a country", () => {
   assert.equal(formatAddressForStamp({}), "");
@@ -12,6 +12,28 @@ test("photo addresses use actual place names without inventing street numbers or
 
 test("date and time follow the supplied photo format in Pakistan time", () => {
   assert.deepEqual(formatVisitPhotoTimestamp(new Date("2026-11-05T17:42:00Z")), { dateText: "Thursday, 05/11/2026", timeText: "10:42 PM" });
+});
+
+test("attendance photo stamps contain only day/date and time without accessing location", () => {
+  const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  Object.defineProperty(globalThis, "navigator", { configurable: true, get() { throw new Error("Attendance must not request location"); } });
+  try {
+    for (const [width, height] of [[560, 420], [720, 1280], [1600, 900]]) {
+      const canvas = createCanvas(width, height);
+      const context = canvas.getContext("2d");
+      const text = [];
+      context.fillText = (value, x, y) => {
+        assert.ok(x + context.measureText(value).width < width);
+        assert.ok(y >= 0 && y + Number(context.font.match(/([\d.]+)px/)[1]) < height);
+        text.push(value);
+      };
+      drawDateTimePhotoStamp(canvas, context, new Date("2026-11-05T17:42:00Z"));
+      assert.deepEqual(text, ["Day & Date: Thursday, 05/11/2026", "Time: 10:42 PM"]);
+    }
+  } finally {
+    if (originalNavigator) Object.defineProperty(globalThis, "navigator", originalNavigator);
+    else delete globalThis.navigator;
+  }
 });
 
 test("the reference photo format shows the complete address without clipping at phone camera resolutions", () => {

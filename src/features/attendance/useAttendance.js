@@ -5,6 +5,7 @@ import { db } from "../../services/dataGateway.js";
 import { formatActionPlanDate } from "../../domain/dates.js";
 import { compressCanvasToTargetDataUrl } from "../../services/imageCompression.js";
 import { attachCameraPreview } from "../../services/cameraPreview.js";
+import { drawDateTimePhotoStamp } from "../../services/visitPhotos.js";
 import { mergedReportSheet } from "../../services/mergedReportSheet.js";
 import { ensureExcelReady } from "../../services/excelLoader.js";
 import { PDF_BANNER, PDF_TABLE_HEAD, PDF_TABLE_SUBHEAD, PDF_FOOTER, pdfTextFill, pdfTextWidth, pdfCenteredTextTop } from "../../services/pdfTheme.js";
@@ -28,6 +29,8 @@ const [attendanceCameraTarget, setAttendanceCameraTarget] = useState("");
 const [attendanceCameraActive, setAttendanceCameraActive] = useState(false);
 const attendanceVideoRef = useRef(null);
 const attendanceStreamRef = useRef(null);
+const attendancePhotoRequestRef = useRef(0);
+const [attendancePhotoBusy, setAttendancePhotoBusy] = useState(false);
 const [attendanceSubmitting, setAttendanceSubmitting] = useState(false);
 const [todayAttendance, setTodayAttendance] = useState(null);
 const [attendanceRecords, setAttendanceRecords] = useState([]);
@@ -43,6 +46,10 @@ const [selectedAttendanceMediaIds, setSelectedAttendanceMediaIds] = useState([])
 const [attendanceMediaMarketer, setAttendanceMediaMarketer] = useState(null);
 const attendanceCache = useRef({ rows: null, loadedAt: 0, pending: null });
 const todayCache = useRef({ key: "", row: null, loadedAt: 0, pending: null });
+useEffect(() => () => {
+  attendancePhotoRequestRef.current += 1;
+  attendanceStreamRef.current?.getTracks().forEach((track) => track.stop());
+}, []);
 useEffect(() => {
 const dateKey = adminAttendanceToDate || getTodayInputDate();
 const saved = attendancePetrolRates[dateKey];
@@ -391,6 +398,8 @@ alert("Camera could not start. Please check browser camera permission: " + err.m
 }
 };
 const stopAttendanceCamera = () => {
+attendancePhotoRequestRef.current += 1;
+setAttendancePhotoBusy(false);
 if (attendanceVideoRef.current) attendanceVideoRef.current.srcObject = null;
 if (attendanceStreamRef.current) {
 attendanceStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -407,28 +416,9 @@ else if (target === "transport") setAttendanceTransportExpensePhoto(dataUrl);
 else if (target === "food") setAttendanceFoodExpensePhoto(dataUrl);
 else if (target === "night") setAttendanceNightStayExpensePhoto(dataUrl);
 };
-const stampAttendancePhoto = (canvas, target) => {
+const stampAttendancePhoto = (canvas, target, capturedAt = new Date()) => {
 const ctx = canvas.getContext("2d");
-const now = new Date();
-const labelMap = {
-start: "START TIME / DAY IN READING",
-end: "END TIME / DAY OUT READING",
-other: "OTHER EXPENSE",
-transport: "TRANSPORT EXPENSE",
-food: "FOOD EXPENSE",
-night: "NIGHT STAY EXPENSE"
-};
-const fontSize = Math.max(17, Math.round(canvas.width * 0.021));
-const boxHeight = Math.max(110, fontSize * 4.5);
-ctx.fillStyle = "rgba(0,0,0,.72)";
-ctx.fillRect(0, canvas.height - boxHeight, canvas.width, boxHeight);
-ctx.fillStyle = "#fff";
-ctx.font = `bold ${fontSize}px sans-serif`;
-ctx.textBaseline = "top";
-ctx.fillText(labelMap[target] || "ATTENDANCE", 20, canvas.height - boxHeight + 14);
-ctx.font = `600 ${Math.max(15, fontSize * .85)}px sans-serif`;
-ctx.fillText(`${now.toLocaleDateString("en-GB")}  ${formatTime12(now)}`, 20, canvas.height - boxHeight + 14 + fontSize * 1.5);
-ctx.fillText(user?.name || user?.email || "Marketer", 20, canvas.height - boxHeight + 14 + fontSize * 2.8);
+drawDateTimePhotoStamp(canvas, ctx, capturedAt);
 const dataUrl = compressCanvasToTargetDataUrl(canvas, 65 * 1024, 560, 0.48);
 setAttendancePhotoForTarget(target, dataUrl);
 stopAttendanceCamera();
@@ -455,6 +445,9 @@ const captureAttendancePhotoFromFile = async (target, event) => {
 const file = event.target.files?.[0];
 event.target.value = "";
 if (!file) return;
+const requestId = ++attendancePhotoRequestRef.current;
+const capturedAt = new Date();
+setAttendancePhotoBusy(true);
 let imageUrl;
 try {
   let imageBlob = file;
@@ -475,15 +468,19 @@ try {
   canvas.width = Math.max(1, Math.round(picture.naturalWidth * scale));
   canvas.height = Math.max(1, Math.round(picture.naturalHeight * scale));
   canvas.getContext("2d").drawImage(picture, 0, 0, canvas.width, canvas.height);
-  stampAttendancePhoto(canvas, target);
+  if (requestId !== attendancePhotoRequestRef.current) return;
+  stampAttendancePhoto(canvas, target, capturedAt);
 } catch (error) {
+  if (requestId !== attendancePhotoRequestRef.current) return;
   console.warn("Phone camera photo unavailable:", error);
   alert("Photo could not be opened. Please take it again.");
 } finally {
   if (imageUrl) URL.revokeObjectURL(imageUrl);
+  if (requestId === attendancePhotoRequestRef.current) setAttendancePhotoBusy(false);
 }
 };
 const submitAttendanceStart = async () => {
+if (attendancePhotoBusy || attendanceSubmitting) return;
 if (!attendanceStartReading.trim()) {
 alert("Please enter Day In / Start reading.");
 return;
@@ -537,6 +534,7 @@ setAttendanceSubmitting(false);
 }
 };
 const submitAttendanceEnd = async () => {
+if (attendancePhotoBusy || attendanceSubmitting) return;
 const latest = await fetchTodayAttendance(true);
 if (!latest?.startMarked) {
 alert("Please mark Start Time first.");
@@ -734,5 +732,5 @@ pages.forEach((pg,idx)=>{pg.content.push(rectCmd(LEFT,197,RIGHT-LEFT,10,.45,PDF_
 const objects=[],addObject=(body)=>{objects.push(body);return objects.length;},f1=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"),f2=addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>"),contentIds=[],pageIds=[];pages.forEach(pg=>{const stream=pg.content.join("\n")+"\n";contentIds.push(addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`));pageIds.push(0);});const pagesId=addObject("");pages.forEach((pg,i)=>{pageIds[i]=addObject(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${PAGE_W.toFixed(2)} ${PAGE_H.toFixed(2)}] /Resources << /Font << /F1 ${f1} 0 R /F2 ${f2} 0 R >> >> /Contents ${contentIds[i]} 0 R >>`);});objects[pagesId-1]=`<< /Type /Pages /Kids [${pageIds.map(id=>`${id} 0 R`).join(" ")}] /Count ${pages.length} >>`;const catalogId=addObject(`<< /Type /Catalog /Pages ${pagesId} 0 R >>`);let pdf="%PDF-1.4\n%\xE2\xE3\xCF\xD3\n",offsets=[0];objects.forEach((obj,i)=>{offsets[i+1]=pdf.length;pdf+=`${i+1} 0 obj\n${obj}\nendobj\n`;});const xref=pdf.length;pdf+=`xref\n0 ${objects.length+1}\n0000000000 65535 f \n`;for(let i=1;i<=objects.length;i++)pdf+=`${String(offsets[i]).padStart(10,"0")} 00000 n \n`;pdf+=`trailer\n<< /Size ${objects.length+1} /Root ${catalogId} 0 R >>\nstartxref\n${xref}\n%%EOF`;const bytes=new Uint8Array(pdf.length);for(let i=0;i<pdf.length;i++)bytes[i]=pdf.charCodeAt(i)&0xff;const blob=new Blob([bytes],{type:"application/pdf"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`Attendance_Report_${new Date().toISOString().slice(0,10)}.pdf`;a.style.display="none";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
 } catch(err){console.error("Attendance PDF error:",err);alert("Attendance PDF could not be downloaded.");}
 };
-return { attendanceType, setAttendanceType, attendanceStartReading, setAttendanceStartReading, attendanceEndReading, setAttendanceEndReading, attendanceLeaveReason, setAttendanceLeaveReason, attendanceOtherExpense, setAttendanceOtherExpense, attendanceTransportExpense, setAttendanceTransportExpense, attendanceFoodExpense, setAttendanceFoodExpense, attendanceNightStayExpense, setAttendanceNightStayExpense, attendanceStartPhoto, setAttendanceStartPhoto, attendanceEndPhoto, setAttendanceEndPhoto, attendanceOtherExpensePhoto, setAttendanceOtherExpensePhoto, attendanceTransportExpensePhoto, setAttendanceTransportExpensePhoto, attendanceFoodExpensePhoto, setAttendanceFoodExpensePhoto, attendanceNightStayExpensePhoto, setAttendanceNightStayExpensePhoto, attendanceCameraTarget, setAttendanceCameraTarget, attendanceCameraActive, setAttendanceCameraActive, attendanceSubmitting, setAttendanceSubmitting, todayAttendance, setTodayAttendance, attendanceRecords, setAttendanceRecords, adminAttendanceFromDate, setAdminAttendanceFromDate, adminAttendanceToDate, setAdminAttendanceToDate, adminAttendanceSearch, setAdminAttendanceSearch, adminAttendanceMarketerFilter, setAdminAttendanceMarketerFilter, attendancePetrolRates, setAttendancePetrolRates, adminAttendancePetrolRate, setAdminAttendancePetrolRate, attendanceMediaFromDate, setAttendanceMediaFromDate, attendanceMediaToDate, setAttendanceMediaToDate, selectedAttendanceMediaIds, setSelectedAttendanceMediaIds, attendanceMediaMarketer, setAttendanceMediaMarketer, attendanceVideoRef, getAttendanceDocId, fetchTodayAttendance, fetchAttendanceRecords, getFilteredAttendance, getFilteredAttendanceMedia, softDeleteAttendanceMedia, deleteSelectedAttendanceMedia, getAttendanceTotalKms, getAttendancePetrolRate, getAttendanceAssignedKms, getAttendancePetrolExpense, getAttendanceTotalOtherExpense, saveAttendancePetrolRate, saveAttendanceAssignedKms, startAttendanceCamera, stopAttendanceCamera, captureAttendancePhoto, captureAttendancePhotoFromFile, submitAttendanceStart, submitAttendanceEnd, submitAttendanceLeave, openAttendanceForm, downloadAttendanceExcel, downloadAttendancePDF };
+return { attendanceType, setAttendanceType, attendanceStartReading, setAttendanceStartReading, attendanceEndReading, setAttendanceEndReading, attendanceLeaveReason, setAttendanceLeaveReason, attendanceOtherExpense, setAttendanceOtherExpense, attendanceTransportExpense, setAttendanceTransportExpense, attendanceFoodExpense, setAttendanceFoodExpense, attendanceNightStayExpense, setAttendanceNightStayExpense, attendanceStartPhoto, setAttendanceStartPhoto, attendanceEndPhoto, setAttendanceEndPhoto, attendanceOtherExpensePhoto, setAttendanceOtherExpensePhoto, attendanceTransportExpensePhoto, setAttendanceTransportExpensePhoto, attendanceFoodExpensePhoto, setAttendanceFoodExpensePhoto, attendanceNightStayExpensePhoto, setAttendanceNightStayExpensePhoto, attendanceCameraTarget, setAttendanceCameraTarget, attendanceCameraActive, setAttendanceCameraActive, attendancePhotoBusy, attendanceSubmitting, setAttendanceSubmitting, todayAttendance, setTodayAttendance, attendanceRecords, setAttendanceRecords, adminAttendanceFromDate, setAdminAttendanceFromDate, adminAttendanceToDate, setAdminAttendanceToDate, adminAttendanceSearch, setAdminAttendanceSearch, adminAttendanceMarketerFilter, setAdminAttendanceMarketerFilter, attendancePetrolRates, setAttendancePetrolRates, adminAttendancePetrolRate, setAdminAttendancePetrolRate, attendanceMediaFromDate, setAttendanceMediaFromDate, attendanceMediaToDate, setAttendanceMediaToDate, selectedAttendanceMediaIds, setSelectedAttendanceMediaIds, attendanceMediaMarketer, setAttendanceMediaMarketer, attendanceVideoRef, getAttendanceDocId, fetchTodayAttendance, fetchAttendanceRecords, getFilteredAttendance, getFilteredAttendanceMedia, softDeleteAttendanceMedia, deleteSelectedAttendanceMedia, getAttendanceTotalKms, getAttendancePetrolRate, getAttendanceAssignedKms, getAttendancePetrolExpense, getAttendanceTotalOtherExpense, saveAttendancePetrolRate, saveAttendanceAssignedKms, startAttendanceCamera, stopAttendanceCamera, captureAttendancePhoto, captureAttendancePhotoFromFile, submitAttendanceStart, submitAttendanceEnd, submitAttendanceLeave, openAttendanceForm, downloadAttendanceExcel, downloadAttendancePDF };
 }

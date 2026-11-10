@@ -46,6 +46,25 @@ function drawStampIcon(context, kind, x, y, size) {
   context.restore();
 }
 
+export function drawDateTimePhotoStamp(canvas, context, capturedAt = new Date()) {
+  const { dateText, timeText } = formatVisitPhotoTimestamp(capturedAt);
+  const padding = Math.max(10, canvas.width * .022);
+  const font = Math.max(14, canvas.width * .030);
+  const lineHeight = font * 1.43;
+  const height = 15 + 2 * lineHeight + 10;
+  let y = canvas.height - height + 15;
+  context.fillStyle = "rgba(0,0,0,.72)";
+  context.fillRect(0, canvas.height - height, canvas.width, height);
+  context.fillStyle = "#ffffff";
+  context.textBaseline = "top";
+  context.font = `600 ${font}px sans-serif`;
+  for (const [icon, text] of [["calendar", `Day & Date: ${dateText}`], ["clock", `Time: ${timeText}`]]) {
+    drawStampIcon(context, icon, padding, y + font * .05, font);
+    context.fillText(text, padding + font * 1.4, y);
+    y += lineHeight;
+  }
+}
+
 export function drawVisitPhotoStamp(canvas, context, { dateText, timeText, locationText, attribution = "© OpenStreetMap contributors" }) {
   const padding = Math.max(10, canvas.width * .022);
   let font = Math.max(14, canvas.width * .030);
