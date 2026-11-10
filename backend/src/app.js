@@ -11,6 +11,7 @@ import { cardRoutes } from "./routes/cardRoutes.js";
 import { newsRoutes } from "./routes/newsRoutes.js";
 import { dataRoutes } from "./routes/dataRoutes.js";
 import { trainerRoutes } from "./routes/trainerRoutes.js";
+import { visitLocationRoutes } from "./routes/visitLocationRoutes.js";
 
 export const app = express();
 
@@ -44,6 +45,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/marketers", marketerRoutes);
 app.use("/api/trainers", trainerRoutes);
 app.use("/api/visits", visitRoutes);
+app.use("/api/visit-location", visitLocationRoutes);
 app.use("/api/custom-reports", customReportRoutes);
 app.use("/api/card-template", cardTemplateRoutes);
 app.use("/api/cards", cardRoutes);

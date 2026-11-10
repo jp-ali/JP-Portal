@@ -120,10 +120,10 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
     if (id === requestRef.current) { stopCamera(); setCameraError(cameraStartMessage(lastError)); console.warn("Trainer camera unavailable:", lastError); }
     return null;
   };
-  const stampPhoto = async (canvas) => {
+  const stampPhoto = async (canvas, verifiedPosition) => {
     const context = canvas.getContext("2d");
     const now = new Date();
-    const location = await visitLocationStamp(await getRequiredVisitPosition());
+    const location = await visitLocationStamp(verifiedPosition || await getRequiredVisitPosition());
     const font = Math.max(16, Math.round(canvas.width * .022));
     const lineHeight = Math.max(24, Math.round(canvas.width * .025));
     context.font = `600 ${font}px sans-serif`;
@@ -132,12 +132,14 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
     for (const word of words) { const next = line ? `${line} ${word}` : word; if (context.measureText(next).width > canvas.width - 40 && line) { lines.push(line); line = word; } else line = next; }
     if (line) lines.push(line);
     const shown = lines.slice(0, 6);
-    const height = 78 + shown.length * lineHeight;
+    const height = 102 + shown.length * lineHeight;
     context.fillStyle = "rgba(0,0,0,.72)"; context.fillRect(0, canvas.height - height, canvas.width, height);
     context.fillStyle = "white"; context.textBaseline = "top";
     const date = now.toLocaleDateString("en-PK", { timeZone: "Asia/Karachi", weekday: "long", day: "2-digit", month: "short", year: "numeric" });
     const time = now.toLocaleTimeString("en-PK", { timeZone: "Asia/Karachi", hour: "2-digit", minute: "2-digit", hour12: true });
     [`Day & Date: ${date}`, `Time: ${time}`, "Current Location:", ...shown].forEach((text, index) => context.fillText(text, 20, canvas.height - height + 12 + index * lineHeight));
+    context.font = `${Math.max(12, font * .55)}px sans-serif`;
+    context.fillText("Address © OpenStreetMap contributors", 20, canvas.height - 18);
     set("image", checkTrainerCompressedPhoto(compressCanvasToTargetDataUrl(canvas, TRAINER_VISIT_PHOTO_KB * 1024, 900, .5), TRAINER_VISIT_PHOTO_KB, "Visit"));
     stopCamera(); setCameraError("");
   };
@@ -148,7 +150,12 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
     if (!hasCameraFrame(video, streamRef.current)) video = await startCamera();
     if (!hasCameraFrame(video, streamRef.current)) return;
     setCameraBusy(true);
-    try { const canvas = document.createElement("canvas"); canvas.width = video.videoWidth; canvas.height = video.videoHeight; const context = canvas.getContext("2d"); context.drawImage(video, 0, 0); await stampPhoto(canvas); }
+    try {
+      const position = await getRequiredVisitPosition();
+      if (!hasCameraFrame(video, streamRef.current)) throw new Error("Camera preview stopped. Reopen the camera and retry the photo.");
+      const canvas = document.createElement("canvas"); canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+      const context = canvas.getContext("2d"); context.drawImage(video, 0, 0); await stampPhoto(canvas, position);
+    }
     catch (cause) { stopCamera(); setCameraError(cause.message || "Camera frame stopped. Try again or use the phone camera."); console.warn(cause); }
   };
   const captureFile = async (event) => {

@@ -158,25 +158,27 @@ if (!hasCameraFrame(video, streamRef.current)) {
 }
 setCameraBusy(true);
 try {
+const position = await getRequiredVisitPosition();
+if (!hasCameraFrame(video, streamRef.current)) throw new Error("Camera preview stopped. Reopen the camera and retry the photo.");
 const canvas = document.createElement("canvas");
 canvas.width = video.videoWidth;
 canvas.height = video.videoHeight;
 const ctx = canvas.getContext("2d");
 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-await stampVisitCanvas(canvas, ctx);
+await stampVisitCanvas(canvas, ctx, position);
 } catch (err) {
   stopCamera();
   setCameraIssue(err.message || "Camera frame stopped. Try again or use your phone camera below.");
   console.warn("Could not capture camera frame:", err);
 }
 };
-const stampVisitCanvas = async (canvas, ctx) => {
+const stampVisitCanvas = async (canvas, ctx, verifiedPosition) => {
 const now = new Date();
 const optionsDay = { weekday: 'long' };
 const dayName = now.toLocaleDateString('en-US', optionsDay);
 const dateStr = now.toLocaleDateString();
 const timeStr = formatTime12(now);
-const position = await getRequiredVisitPosition();
+const position = verifiedPosition || await getRequiredVisitPosition();
 const location = await visitLocationStamp(position);
 drawStampAndSave(canvas, ctx, location, dayName, dateStr, timeStr);
 };
@@ -236,7 +238,7 @@ current = test;
 if (current) locationLines.push(current);
 const shownLocationLines = locationLines.slice(0, 6);
 if (locationLines.length > 6) shownLocationLines[5] += " ...";
-const boxHeight = 82 + (shownLocationLines.length * lineHeight);
+const boxHeight = 102 + (shownLocationLines.length * lineHeight);
 ctx.fillStyle = "rgba(0, 0, 0, 0.72)";
 ctx.fillRect(0, canvas.height - boxHeight, canvas.width, boxHeight);
 ctx.fillStyle = "#ffffff";
@@ -254,6 +256,8 @@ ctx.font = `600 ${Math.max(14, fontSize * 0.86)}px sans-serif`;
 ctx.fillText(line, paddingLeft + 18, startY);
 startY += lineHeight * 0.92;
 });
+ctx.font = `${Math.max(12, fontSize * 0.55)}px sans-serif`;
+ctx.fillText("Address © OpenStreetMap contributors", paddingLeft, canvas.height - 18);
 const dataUrl = compressCanvasToTargetDataUrl(canvas, 100 * 1024, 900, 0.50);
 setImageFile(dataUrl);
 stopCamera();
