@@ -1,11 +1,12 @@
 import { usePortalContext } from "../../context/PortalContext.jsx";
 import React from "react";
 import NumberOrCustomField from "../../ui/NumberOrCustomField.jsx";
+import { prefersPhoneCamera } from "../../services/visitCameraMode.js";
 
 export default function MarketerAddVisitPanel() {
   const { areasList, btnPrimary, cancelEditVisitSchool, capturePhoto, cardStyle, citiesList, editingVisitSchoolId, editingVisitSchoolName, fetchAreasForCity, fetchSchoolsForArea, handleAddVisitSchool, handleSubmitVisit, imageFile, inputStyle, isCameraActive, isOwnManualSchool, isUsableSchoolRecord, loading, newSchoolName, notes, phone, principalName, purpose, readCachedAreasForCity, removeOwnVisitSchool, retakePhoto, saveEditedVisitSchool, schoolsList, selectVisitArea, setEditingVisitSchoolId, setEditingVisitSchoolName, setFullScreenImage, setMarketerview, setNewSchoolName, setNotes, setPhone, setPrincipalName, setPurpose, setSchoolName, setVisitAddSchoolOpen, setVisitAreaId, setVisitAreaPickerOpen, setVisitAreaSearch, setVisitCityId, setVisitCityPickerOpen, setVisitCitySearch, setVisitSchoolIds, setVisitSchoolLoadError, setVisitSchoolManagerOpen, setVisitSchoolPickerOpen, setVisitSchoolSearch, setVisitSchoolsLoading, setVisitSession, startCamera, startEditVisitSchool, stopCamera, successMsg, syncAreasForCityFromOpenStreetMap, toggleVisitSchool, user, videoRef, visitAddSchoolOpen, visitAreaId, visitAreaPickerOpen, visitAreaSearch, visitCityId, visitCityPickerOpen, visitCitySearch, visitSchoolIds, visitSchoolLoadError, visitSchoolManagerOpen, visitSchoolPickerOpen, visitSchoolSearch, visitSchoolsLoading, visitSession, visitBranches, setVisitBranches, visitStrength, setVisitStrength } = usePortalContext();
   const { cameraBusy, cameraIssue, capturePhotoFromFile } = usePortalContext();
-  const cameraPreviewAvailable = Boolean(navigator.mediaDevices?.getUserMedia);
+  const cameraPreviewAvailable = !prefersPhoneCamera() && Boolean(navigator.mediaDevices?.getUserMedia);
   const releasePreviewForPhoneCamera = () => {
     const video = videoRef.current;
     video?.srcObject?.getTracks().forEach((track) => track.stop());
@@ -447,7 +448,7 @@ style={{ ...inputStyle, padding: "10px 12px", fontSize: "13px" }}
                 </div>
                 <div style={{ background: "rgba(255,255,255,0.96)", padding: "16px", borderRadius: "14px", border: "1px solid rgba(143,21,50,.24)", textAlign: "center" }}>
                   <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "14px", color: "#3b2329" }}>📷 School Photo (Detailed Address, Date, Day & Time Stamped):</label>
-                  <small style={{ display: "block", marginBottom: "10px", color: "#7a4052" }}>Location access is required. Turn on Location Services and allow this site to use your location before taking a photo.</small>
+                  <small style={{ display: "block", marginBottom: "10px", color: "#7a4052" }}>Location and Precise Location are required. The photo is accepted only after checking a fresh location and its address.</small>
                   {!isCameraActive && !imageFile && !cameraIssue && (cameraPreviewAvailable ? (
 <button 
 type="button"
@@ -474,7 +475,7 @@ width: "100%"
   fontWeight: 600, fontSize: "15px", cursor: "pointer",
   boxShadow: "0 4px 12px rgba(143,21,50,.22)"
 }))}
-                  {cameraBusy && !isCameraActive && !imageFile && <p role="status" style={{ color: "#86132f", fontSize: "13px" }}>Checking location permission, then opening camera...</p>}
+                  {cameraBusy && !isCameraActive && !imageFile && <p role="status" style={{ color: "#86132f", fontSize: "13px" }}>Checking location. Please wait...</p>}
                   {isCameraActive && (
 <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center" }}>
                       <video 
@@ -520,18 +521,18 @@ alt="Preview"
 onClick={() => setFullScreenImage(imageFile)}
 style={{ width: "120px", height: "120px", objectFit: "cover", borderRadius: "10px", cursor: "pointer", border: "1px solid rgba(255,255,255,0.15)" }} 
 />
-                        <button
+                        {cameraPreviewAvailable ? <button
 type="button"
 onClick={retakePhoto}
 style={{ padding: "10px 20px", background: "linear-gradient(135deg, #941a39 0%, #86132f 100%)", color: "white", border: "none", borderRadius: "10px", fontWeight: "600", cursor: "pointer", fontSize: "14px", boxShadow: "0 4px 12px rgba(143,21,50,.30)", width: "100%" }}
 >
                           🔄 Retake Photo
-                        </button>
+                        </button> : phoneCameraButton("🔄 Retake Photo", { padding: "10px 20px", background: "linear-gradient(135deg, #941a39 0%, #86132f 100%)", color: "white", borderRadius: "10px", fontWeight: 600, cursor: "pointer", width: "100%", boxSizing: "border-box" })}
                       </div>
                     </div>
 )}
                 </div>
-                <button type="submit" disabled={loading} style={{ ...btnPrimary, background: "linear-gradient(135deg, #8f1532 0%, #941a39 100%)", boxShadow: "0 6px 20px rgba(143,21,50,.28)", marginTop: "4px" }}>
+                <button type="submit" disabled={loading || cameraBusy} style={{ ...btnPrimary, background: "linear-gradient(135deg, #8f1532 0%, #941a39 100%)", boxShadow: "0 6px 20px rgba(143,21,50,.28)", marginTop: "4px" }}>
                   {loading ? "Submitting Report..." : "Submit Visit Report"}
                 </button>
               </form>

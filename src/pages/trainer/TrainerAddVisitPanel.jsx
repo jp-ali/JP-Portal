@@ -9,6 +9,7 @@ import { drawVisitPhotoStamp, formatVisitPhotoTimestamp } from "../../services/v
 import { attachCameraPreview, cameraStartMessage, CameraPlaybackRequiredError, hasCameraFrame } from "../../services/cameraPreview.js";
 import { btnPrimary, cardStyle, inputStyle } from "../../ui/portalPresentation.jsx";
 import { cacheTrainerOfflineCatalog } from "../../services/trainerOfflineCatalog.js";
+import { prefersPhoneCamera } from "../../services/visitCameraMode.js";
 
 const initial = { cityId: "", schoolId: "", principalName: "", phone: "", notes: "", image: "" };
 
@@ -32,6 +33,7 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const requestRef = useRef(0);
+  const cameraPreviewAvailable = !prefersPhoneCamera() && Boolean(navigator.mediaDevices?.getUserMedia);
   const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
   const loadCities = async () => { const result = await request("/trainers/locations/cities"); setCities(result.cities || []); cacheTrainerOfflineCatalog(email, trainerId, { cities: result.cities || [] }); };
@@ -219,15 +221,15 @@ export default function TrainerAddVisitPanel({ onBack, email, trainerId }) {
       <label>Visit Notes / Remarks<textarea style={inputStyle} rows="3" value={form.notes} onChange={(event) => set("notes", event.target.value)} placeholder="Write visit summary or remarks" /></label>
       <section className="trainer-visit-photo">
         <h3>📷 School Photo (Detailed Address, Date, Day & Time Stamped)</h3>
-        <small className="trainer-photo-limit">Location access is required. Turn on Location Services and allow this site to use your location.</small>
+        <small className="trainer-photo-limit">Location and Precise Location are required. The photo is accepted only after checking a fresh location and its address.</small>
         <small className="trainer-photo-limit">Photo upload automatically compresses to {TRAINER_VISIT_PHOTO_KB} KB or less.</small>
-        {!previewActive && !form.image && !cameraError && (navigator.mediaDevices?.getUserMedia
+        {!previewActive && !form.image && !cameraError && (cameraPreviewAvailable
           ? <button type="button" className="trainer-open-camera" onClick={startCamera} disabled={cameraBusy}>📸 Open Camera & Take Photo</button>
-          : <label className="trainer-phone-camera trainer-open-camera">📸 Open Phone Camera & Take Photo<input type="file" accept="image/*" capture="environment" onClick={releasePreviewForPhoneCamera} onChange={captureFile} disabled={cameraBusy} /></label>)}
-        {cameraBusy && !previewActive && !form.image && <p role="status">Checking location permission, then opening camera...</p>}
+          : <label className="trainer-phone-camera trainer-open-camera">{cameraBusy ? "Processing photo..." : "📸 Open Phone Camera & Take Photo"}<input type="file" accept="image/*" capture="environment" onClick={releasePreviewForPhoneCamera} onChange={captureFile} disabled={cameraBusy} /></label>)}
+        {cameraBusy && !previewActive && !form.image && <p role="status">Checking location. Please wait...</p>}
         {previewActive && <><video ref={videoRef} autoPlay playsInline muted /><div className="trainer-camera-actions"><button type="button" disabled={cameraBusy} onClick={cameraError ? startCamera : capture}>{cameraBusy ? "Opening camera..." : cameraError ? "▶ Start preview" : "🟢 Capture Snap"}</button><button type="button" onClick={stopCamera}>❌ Cancel</button></div></>}
-        {cameraError && !form.image && <div className="trainer-camera-error"><p role="status">{cameraError}</p>{navigator.mediaDevices?.getUserMedia && <button type="button" onClick={startCamera} disabled={cameraBusy}>{previewActive ? "Start preview" : "Retry preview"}</button>}<label className="trainer-phone-camera">Use phone camera<input type="file" accept="image/*" capture="environment" onClick={releasePreviewForPhoneCamera} onChange={captureFile} disabled={cameraBusy} /></label></div>}
-        {form.image && !previewActive && <><p className="trainer-photo-success">✅ Photo captured & stamped successfully!</p><button type="button" className="trainer-photo-preview-button" onClick={() => setPhotoOpen(true)}><img src={form.image} alt="School photo preview" /></button><button type="button" onClick={() => { set("image", ""); startCamera(); }}>🔄 Retake Photo</button></>}
+        {cameraError && !form.image && <div className="trainer-camera-error"><p role="status">{cameraError}</p>{cameraPreviewAvailable && <button type="button" onClick={startCamera} disabled={cameraBusy}>{previewActive ? "Start preview" : "Retry preview"}</button>}<label className="trainer-phone-camera">{cameraBusy ? "Processing photo..." : "Use phone camera"}<input type="file" accept="image/*" capture="environment" onClick={releasePreviewForPhoneCamera} onChange={captureFile} disabled={cameraBusy} /></label></div>}
+        {form.image && !previewActive && <><p className="trainer-photo-success">✅ Photo captured & stamped successfully!</p><button type="button" className="trainer-photo-preview-button" onClick={() => setPhotoOpen(true)}><img src={form.image} alt="School photo preview" /></button>{cameraPreviewAvailable ? <button type="button" onClick={() => { set("image", ""); startCamera(); }}>🔄 Retake Photo</button> : <label className="trainer-phone-camera trainer-open-camera">{cameraBusy ? "Processing photo..." : "🔄 Retake Photo"}<input type="file" accept="image/*" capture="environment" onClick={releasePreviewForPhoneCamera} onChange={captureFile} disabled={cameraBusy} /></label>}</>}
       </section>
       <button type="submit" style={btnPrimary} disabled={loading || cameraBusy}>{loading ? "Submitting Report..." : "Submit Visit Report"}</button>
     </form>
