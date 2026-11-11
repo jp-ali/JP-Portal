@@ -1,3 +1,5 @@
+import { companyStorage } from './services/companyBranding.js';
+import { featureEnabled } from './services/companyBranding.js';
 import React, { Component, lazy, Suspense, useEffect, useRef, useState } from "react";
 import LoginPage from "./pages/LoginPage.jsx";
 import OfflineVisitPortal from "./pages/OfflineVisitPortal.jsx";
@@ -19,7 +21,7 @@ const PortalApp = lazy(loadPortalApp);
 const TrainerPortal = lazy(() => import("./pages/TrainerPortal.jsx"));
 const PROFILE_KEY = "jp-offline-marketer-profile";
 function cachedMarketer() {
-  try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || "null"); }
+  try { return JSON.parse(companyStorage.getItem(PROFILE_KEY) || "null"); }
   catch { return null; }
 }
 
@@ -74,7 +76,7 @@ export default function App() {
   useEffect(() => {
     if (!["marketer", "trainer"].includes(session.user?.role)) return;
     const profile = { email: session.user.email, name: session.user.name || "", role: session.user.role, marketerId: session.user.marketerId || "", trainerId: session.user.trainerId || "", offlineMode: offlineModeFor(session.user), assignedCityIds: session.user.assignedCityIds || [], assignedAreaIds: session.user.assignedAreaIds || [] };
-    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch { /* Private browsing may block storage. */ }
+    try { companyStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch { /* Private browsing may block storage. */ }
     setOfflineProfile(profile);
     setOfflineSelection(profile.offlineMode === "trainer" ? "trainer" : "marketer");
   }, [session.user]);
@@ -176,7 +178,7 @@ export default function App() {
     setPassword("");
     setOfflineMode(false);
     setOfflineProfile(null);
-    try { localStorage.removeItem(PROFILE_KEY); } catch { /* Ignore blocked storage. */ }
+    try { companyStorage.removeItem(PROFILE_KEY); } catch { /* Ignore blocked storage. */ }
   };
 
   const backFromOffline = () => {
@@ -189,7 +191,7 @@ export default function App() {
   const offlineIdentity = ["marketer", "trainer"].includes(session.user?.role) ? session.user : offlineProfile;
   const assignedOfflineMode = offlineModeFor(offlineIdentity);
   const selectedOfflineMode = assignedOfflineMode === "both" ? offlineSelection : assignedOfflineMode;
-  const offlineAvailable = Boolean(offlineIdentity && assignedOfflineMode !== "none");
+  const offlineAvailable = Boolean(featureEnabled('offlineVisits') && featureEnabled('visits') && offlineIdentity && assignedOfflineMode !== "none");
   const offlineActive = offlineAvailable && (offlineMode || (!online && !offlineDismissed && (["marketer", "trainer"].includes(session.user?.role) || offlineProfile)));
   useEffect(() => {
     if (!offlineActive) return;

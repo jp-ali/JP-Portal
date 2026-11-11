@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { currentCompany } from '../services/companyContext.js';
 import { portalStore } from "../config/portalStore.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { validateCardTemplate } from "./cardTemplateRoutes.js";
@@ -39,7 +40,7 @@ cardRoutes.use(requireAuth, requireAdmin);
 const cards = () => portalStore().collection("savedCards");
 const summary = (snapshot) => {
   const { image, ...data } = snapshot.data();
-  return { id: snapshot.id, ...data, values: { ...data.values, email: data.marketerId ? PUBLISHER_CARD_EMAIL : data.values?.email, address: correctCardAddress(data.values?.address) } };
+  return { id: snapshot.id, ...data, values: { ...data.values, email: data.marketerId ? currentCompany().supportEmail : data.values?.email, address: correctCardAddress(data.values?.address) } };
 };
 
 export function validateCard(body) {
@@ -50,7 +51,7 @@ export function validateCard(body) {
   for (const field of template.fields) {
     const value = values[field.id] ?? "";
     if (typeof value !== "string" || value.length > 500) throw new Error(`Invalid ${field.label} text.`);
-    cleaned[field.id] = field.id === "address" ? correctCardAddress(value) : field.id === "email" && body?.template?.marketerId ? PUBLISHER_CARD_EMAIL : value;
+    cleaned[field.id] = field.id === "address" ? correctCardAddress(value) : field.id === "email" && body?.template?.marketerId ? currentCompany().supportEmail : value;
   }
   const title = String(values.depotName || values.name || "Untitled card").trim().slice(0, 100);
   return { ...template, values: cleaned, title };

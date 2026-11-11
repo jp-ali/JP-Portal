@@ -1,3 +1,5 @@
+import { assertExportsAllowed } from './companyBranding.js';
+import { companyName } from './companyBranding.js';
 import { ensureExcelReady } from "./excelLoader.js";
 import { mergedReportSheet } from "./mergedReportSheet.js";
 
@@ -36,7 +38,7 @@ export async function exportNewsPDF(title, rows) {
       pdf.setTextColor(255, 255, 255);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(17);
-      pdf.text("JAVED PUBLISHERS", width / 2, 26, { align: "center" });
+      pdf.text(companyName().toUpperCase(), width / 2, 26, { align: "center" });
       pdf.setFontSize(11);
       pdf.text(title, width / 2, 47, { align: "center" });
       pdf.setFont("helvetica", "normal");

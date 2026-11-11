@@ -1,3 +1,6 @@
+import CompanySettings from '../ui/CompanySettings.jsx';
+import CompanyBrand from '../ui/CompanyBrand.jsx';
+import { companyName, allowedCompanyItem, featureEnabled } from '../services/companyBranding.js';
 import { PortalContext } from "../context/PortalContext.jsx";
 import { visitTimeForDisplay } from "../domain/visitTime.js";
 import AdminHomePanel from "./admin/AdminHomePanel.jsx";
@@ -56,6 +59,7 @@ function AdminPortalContent({ context }) {
   const { adminCss, adminSidebarOpen, adminView, containerStyle, fetchActionPlans, fetchAllReports, fetchAllSamples, fetchAttendanceRecords, fetchCatalogues, fetchDeletedMarketers, fetchDeletedMedia, fetchLocationCatalog, fetchMarketers, footerStyle, formatTime12, fullScreenImage, fullScreenMediaRecord, getTodayInputDate, globalStyle, handleLogout, marketerEmail, mediaView, openAdminExpenseReport, openVerificationCalls, pdfExportData, pdfTemplateRef, portalSkeletonLoading, renderBackgroundStationary, renderBrandingStrip, renderLogoutArrowIcon, renderMarketerPersonIcon, renderRedSkeleton, renderResponsiveStyles, reports, resetMarketerAssignmentForm, restoreMedia, setAdminActionPlanFromDate, setAdminActionPlanMarketerIds, setAdminActionPlanToDate, setAdminAttendanceFromDate, setAdminAttendanceSearch, setAdminAttendanceToDate, setAdminSampleFromDate, setAdminSampleMarketersFilter, setAdminSampleToDate, setAdminSidebarOpen, setAdminView, setAllVisitsFromDate, setAllVisitsToDate, setCatalogueSearch, setEditingId, setEditingReturnToMarketerDetails, setFullScreenImage, setFullScreenMediaRecord, setMarketerAssignedKms, setMarketerDesignation, setMarketerEmail, setMarketerName, setMarketerPass, setMarketerPhone, setMarketerWhatsappGroupLink, setMarketerWhatsappGroupName, setMediaMarketer, setMediaView, setSelectedAdminAllBoxKey, setSelectedAdminMarketerBox, setSelectedAdminSampleMarketerBox, setSelectedAdminSampleSchoolBox, setSelectedDeletedMediaIds, setSelectedMarketerDetailBox, setSelectedMarketersFilter, setSelectedMediaIds, setSubordinateMarketerIds, setSubordinatePickerOpen, setSubordinateSearch, softDeleteMedia } = context;
 
 const openAdminSidebarSection = (key) => {
+if (key === "company-settings") { setAdminView(key); setAdminSidebarOpen(false); return; }
 setAdminSidebarOpen(false);
 if (key === "home") {
 setAdminView("home");
@@ -208,6 +212,7 @@ setMediaView("deleted");
 }
 };
 const adminSidebarItems = [
+{ key: "company-settings", label: "Company Settings", icon: "⚙", active: adminView === "company-settings" },
 { key: "home", icon: "🏠", label: "Home", active: adminView === "home" },
 { key: "attendance", icon: "🕘", label: "Attendance", active: adminView === "attendance" || adminView === "attendance-media" },
 { key: "action-plans", icon: "🗓️", label: "Action Plan", active: adminView === "action-plans" },
@@ -244,14 +249,14 @@ title="Open Admin Menu"
         <div className={`admin-sidebar-backdrop ${adminSidebarOpen ? "open" : ""}`} onClick={() => setAdminSidebarOpen(false)} aria-hidden="true" />
         <aside className={`admin-desktop-sidebar ${adminSidebarOpen ? "open" : ""}`}>
           <div className="admin-desktop-sidebar-head">
-            <div className="portal-sidebar-brand"><span className="portal-sidebar-logo">JP<span>.</span></span><strong>JAVED PUBLISHERS</strong></div>
+            <CompanyBrand />
             <div className="admin-sidebar-head-actions">
               <button type="button" className="admin-desktop-sidebar-close" onClick={() => setAdminSidebarOpen(false)} title="Close menu" aria-label="Close menu"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m14 5-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
               <button type="button" className="admin-sidebar-logout" onClick={() => { setAdminSidebarOpen(false); handleLogout(); }} title="Logout" aria-label="Logout">{renderLogoutArrowIcon(18)}</button>
             </div>
           </div>
           <nav className="admin-desktop-sidebar-nav">
-            {adminSidebarItems.map((item) => (
+            {adminSidebarItems.filter(allowedCompanyItem).map((item) => (
 <button
 type="button"
 key={item.key}
@@ -263,13 +268,14 @@ onClick={() => openAdminSidebarSection(item.key)}
               </button>
 ))}
           </nav>
-          <div className="portal-sidebar-footer"><div className="portal-sidebar-profile"><span className="portal-sidebar-avatar">{context.user?.profilePhoto ? <img src={context.user.profilePhoto} alt="" /> : "A"}</span><span><strong>Admin</strong><small>Javed Publishers</small></span></div><button type="button" onClick={context.onSwitchToTrainer}>Switch to Trainer</button><button type="button" onClick={handleLogout}>{renderLogoutArrowIcon(16)} Logout</button></div>
+          <div className="portal-sidebar-footer"><div className="portal-sidebar-profile"><span className="portal-sidebar-avatar">{context.user?.profilePhoto ? <img src={context.user.profilePhoto} alt="" /> : "A"}</span><span><strong>Admin</strong><small>{companyName()}</small></span></div><button type="button" onClick={context.onSwitchToTrainer} disabled={!featureEnabled("trainer")}>Switch to Trainer</button><button type="button" onClick={handleLogout}>{renderLogoutArrowIcon(16)} Logout</button></div>
         </aside>
         <div className={`app-responsive admin-desktop-content ${adminSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
           {renderResponsiveStyles()}
-          <PortalTopBar role="admin" name="Admin" items={adminSidebarItems} onNavigate={openAdminSidebarSection} onMenu={() => setAdminSidebarOpen(true)} onLogout={handleLogout} profilePhoto={context.user?.profilePhoto} onProfilePhotoChange={(photo) => context.setUser((current) => ({ ...current, profilePhoto: photo }))} onExpandProfilePhoto={setFullScreenImage} />
+          <PortalTopBar role="admin" name="Admin" items={adminSidebarItems.filter(allowedCompanyItem)} onNavigate={openAdminSidebarSection} onMenu={() => setAdminSidebarOpen(true)} onLogout={handleLogout} profilePhoto={context.user?.profilePhoto} onProfilePhotoChange={(photo) => context.setUser((current) => ({ ...current, profilePhoto: photo }))} onExpandProfilePhoto={setFullScreenImage} />
           {!(["delete-marketer", "old-marketers", "news", "news-add", "news-expense", "news-old", "news-deleted"].includes(adminView)) && <DesktopSectionBanner view={adminView} role="admin" accountId={context.user?.id || context.user?.email || "admin"} title={adminView === "media" && mediaView === "deleted" ? "Recently Deleted" : undefined} />}
           {portalSkeletonLoading && renderRedSkeleton()}
+          {adminView === "company-settings" && <CompanySettings onBack={() => setAdminView("home")} />}
           {adminView === "home" && (
 <AdminHomePanel />
 )}

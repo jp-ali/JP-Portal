@@ -2,6 +2,7 @@ import { findMarketerById, findMarketerByIdentifier } from "../models/marketerMo
 import { portalStore } from "../config/portalStore.js";
 import { verifyPassword } from "./passwordVerifier.js";
 import { findTrainerById, findTrainerByIdentifier } from "./trainerService.js";
+import { currentCompanyId, companyContext } from './companyContext.js';
 
 const adminPhotoRef = () => portalStore().collection("admin_profiles").doc("primary");
 
@@ -40,13 +41,14 @@ export function marketerProfile(record) {
 }
 
 export async function authenticate(identifier, password, repository = { findMarketerByIdentifier }) {
-  const email = process.env.ADMIN_EMAIL || "admin@portal.com";
+  const admin = companyContext.getStore()?.admin;
+  const email = admin?.email || (currentCompanyId() === 'javed' ? process.env.ADMIN_EMAIL || "admin@portal.com" : '');
   const normalizedIdentifier = identifier.trim();
   if (normalizedIdentifier.toLowerCase() === email.toLowerCase()) {
-    const hash = process.env.ADMIN_PASSWORD_HASH;
+    const hash = admin?.hash || (currentCompanyId() === 'javed' ? process.env.ADMIN_PASSWORD_HASH : null);
     if (!hash) throw new Error("ADMIN_PASSWORD_HASH is not configured");
     if (!(await verifyPassword(password, hash))) return null;
-    return { claims: { sub: "admin", role: "admin" }, profile: { email, name: process.env.ADMIN_NAME || "Muhammad Ali Ashfaq", role: "admin" } };
+    return { claims: { sub: "admin", role: "admin" }, profile: { email, name: admin?.email ? admin.name : process.env.ADMIN_NAME || "Muhammad Ali Ashfaq", role: "admin" } };
   }
   const marketer = await repository.findMarketerByIdentifier(normalizedIdentifier)
     || (normalizedIdentifier.includes("@") && normalizedIdentifier !== normalizedIdentifier.toLowerCase()
@@ -63,7 +65,8 @@ export async function authenticate(identifier, password, repository = { findMark
 export async function profileFromClaims(claims) {
   if (claims.role === "admin") {
     if (claims.sub !== "admin") return null;
-    return { email: process.env.ADMIN_EMAIL || "admin@portal.com", name: process.env.ADMIN_NAME || "Muhammad Ali Ashfaq", role: "admin" };
+    const admin = companyContext.getStore()?.admin;
+    return { email: admin?.email || process.env.ADMIN_EMAIL || "admin@portal.com", name: admin?.email ? admin.name : process.env.ADMIN_NAME || "Muhammad Ali Ashfaq", role: "admin" };
   }
   if (claims.role === "trainer") {
     const trainer = await findTrainerById(claims.sub);

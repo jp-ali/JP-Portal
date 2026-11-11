@@ -1,4 +1,5 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+import { companySlugFromPath } from './companyBranding.js';
 
 export async function request(path, options = {}) {
   const { timeoutMs = 20000, ...fetchOptions } = options;
@@ -9,8 +10,8 @@ export async function request(path, options = {}) {
   try {
     response = await fetch(`${API_BASE}${path}`, {
       credentials: "same-origin",
-      headers: { "content-type": "application/json" },
       ...fetchOptions,
+      headers: { "content-type": "application/json", ...(companySlugFromPath() && !path.startsWith('/owner/') ? { 'x-company-slug': companySlugFromPath() } : {}), ...fetchOptions.headers },
       signal: controller.signal
     });
   } catch (error) {

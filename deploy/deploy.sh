@@ -10,8 +10,15 @@ test -f portal.env || { echo 'Missing /opt/jp-portal/portal.env' >&2; exit 1; }
 export APP_IMAGE="$image"
 
 previous="$(docker compose -f compose.yaml ps -q app | xargs -r docker inspect --format '{{.Config.Image}}' 2>/dev/null || true)"
+schema_transition=false
 rollback() {
   if [[ -n "$previous" ]]; then
+    if [[ "$schema_transition" == true ]] && [[ "$(docker compose -f compose.yaml exec -T db psql -U portal -d portal -Atc "SELECT count(*) FROM schema_migrations WHERE name='004_white_label.sql'" 2>/dev/null || echo 0)" == 1 ]]; then
+      docker compose -f compose.yaml run --rm --no-deps app node backend/scripts/whiteLabelCompatibility.js enable || {
+        echo 'Legacy rollback refused because another company exists; inspect the deployment.' >&2
+        return
+      }
+    fi
     echo "Deployment failed; restoring app image $previous" >&2
     export APP_IMAGE="$previous"
     docker compose -f compose.yaml up -d --no-deps app || true
@@ -26,7 +33,12 @@ docker compose -f compose.yaml up -d --wait db
 # A fresh dump is retained on the VM before every migration. Copy backups off the VM too.
 mkdir -p backups
 docker compose -f compose.yaml exec -T db pg_dump -U portal -d portal -Fc > "backups/predeploy-$(date -u +%Y%m%dT%H%M%SZ).dump"
+if [[ "$(docker compose -f compose.yaml exec -T db psql -U portal -d portal -Atc "SELECT count(*) FROM schema_migrations WHERE name='004_white_label.sql'" 2>/dev/null || echo 0)" != 1 ]]; then
+  schema_transition=true
+  docker compose -f compose.yaml stop app
+fi
 docker compose -f compose.yaml run --rm --no-deps app node backend/src/db/migrate.js
+docker compose -f compose.yaml run --rm --no-deps app node backend/scripts/whiteLabelCompatibility.js disable
 docker compose -f compose.yaml up -d --no-deps app
 
 for attempt in {1..30}; do

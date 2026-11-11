@@ -1,3 +1,4 @@
+import { companyName } from '../../services/companyBranding.js';
 import { confirmAction } from "../../ui/confirmDialog.js";
 import React, { useEffect, useMemo, useState } from "react";
 import { request } from "../../services/authApi.js";
@@ -62,7 +63,7 @@ export default function AdminSavedCardsPanel({ onEdit, onNew, onBack }) {
     <div className="saved-cards-section-title"><h3>{showOld ? "Old Cards" : "Your Cards"}</h3><span>{selected.length} selected · {visible.length} shown</span></div><p className="card-designer-tip">Send the ZIP as a WhatsApp Document. Extract the SVG inside to edit it in CorelDRAW.</p>
     {error && <p className="card-designer-error" role="alert">{error}</p>}{message && <p className="card-designer-success" role="status">{message}</p>}{busy && <p>Working…</p>}
     {visible.length ? <div className="saved-cards-grid">{visible.map((card) => {
-      const publisherHeader = String(card.values?.depotName || "").trim().toUpperCase() === "JAVED PUBLISHERS";
+      const publisherHeader = String(card.values?.depotName || "").trim().toUpperCase() === companyName().toUpperCase();
       return <label key={card.id} className={`saved-card-tile ${selectedIds.includes(card.id) ? "selected" : ""}`}><input className="saved-card-check" type="checkbox" checked={selectedIds.includes(card.id)} onChange={() => { toggleSelected(card.id); setMenu(""); }} aria-label={`Select ${card.title}`} /><span className="saved-card-art"><strong>{publisherHeader ? card.values?.name || card.title : card.values?.depotName || card.title}</strong><span>{publisherHeader ? card.values?.designation || "Card design" : card.values?.name || card.values?.designation || "Card design"}</span><small>{card.values?.phone || ""}</small><i /></span><span className="saved-card-meta"><strong>{card.title}</strong><small>{card.values?.email || card.values?.website || ""}</small><small>Updated {card.updatedAt ? new Date(card.updatedAt).toLocaleDateString() : "today"}</small></span></label>;
     })}</div> : <div className="saved-cards-empty">{search ? "No cards match your search." : showOld ? "No removed cards." : "No saved cards yet. Create your first card."}</div>}
   </section>;

@@ -1,3 +1,5 @@
+import { assertExportsAllowed } from './companyBranding.js';
+import { companyName } from './companyBranding.js';
 import { ensureExcelReady } from "./excelLoader.js";
 
 const labels = { details: "Trainer Details", attendance: "Trainer Attendance", weekly: "Weekly Action Plan", daily: "Daily Action Plan", "today-visits": "Today's Trainer Visits", visits: "All Trainer Visits", "today-expenses": "Today's Trainer Expenses", expenses: "All Trainer Expenses", "my-expenses": "My Expenses" };
@@ -55,10 +57,11 @@ export function trainerWeeklyPDFTable(plans) {
 }
 
 export async function downloadTrainerExcel(kind, rows, options) {
+  assertExportsAllowed();
   const XLSX = await ensureExcelReady();
   if (!XLSX) throw new Error("Excel exporter could not load.");
   const { title, headers, rows: body } = trainerReportTable(kind, rows, options);
-  const sheet = XLSX.utils.aoa_to_sheet([[title.toUpperCase()], [`JAVED PUBLISHERS  |  ${body.length} records`], headers, ...body]);
+  const sheet = XLSX.utils.aoa_to_sheet([[title.toUpperCase()], [`${companyName().toUpperCase()}  |  ${body.length} records`], headers, ...body]);
   sheet["!merges"] = [0, 1].map((r) => ({ s: { r, c: 0 }, e: { r, c: headers.length - 1 } }));
   sheet["!cols"] = headers.map((header) => ({ wch: header === "Purpose" || header === "Remarks" ? 48 : header === "Email" ? 30 : header === "Name" || header === "Trainer" || header === "School Name" ? 24 : 18 }));
   sheet["!autofilter"] = { ref: `A3:${XLSX.utils.encode_col(headers.length - 1)}${Math.max(3, body.length + 3)}` };
@@ -73,6 +76,7 @@ export async function downloadTrainerExcel(kind, rows, options) {
 }
 
 export async function downloadTrainerPDF(kind, rows, options) {
+  assertExportsAllowed();
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   const weekly = kind === "weekly" ? trainerWeeklyPDFTable(rows) : null;
   const { title, headers, rows: reportRows } = weekly || trainerReportTable(kind, rows, options);
@@ -105,7 +109,7 @@ export async function downloadTrainerPDF(kind, rows, options) {
     pdf.rect(24, 14, pageWidth - 48, 68, "F");
     pdf.setTextColor(255, 255, 255);
     pdf.setFont("helvetica", "bold"); pdf.setFontSize(18);
-    pdf.text("JAVED PUBLISHERS", pageWidth / 2, 39, { align: "center" });
+    pdf.text(companyName().toUpperCase(), pageWidth / 2, 39, { align: "center" });
     pdf.setFontSize(11.5); pdf.text(`${title.toUpperCase()} REPORT`, pageWidth / 2, 56, { align: "center" });
     pdf.setFont("helvetica", "normal"); pdf.setFontSize(7);
     pdf.text(`Report Date: ${new Date().toLocaleDateString("en-GB")}`, 30, 72);

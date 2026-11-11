@@ -62,9 +62,9 @@ trainerRoutes.get("/dashboard-summary", run(async (request, response) => {
   if (!["admin", "trainer"].includes(request.user.role)) return fail(response, "Trainer access required", 403);
   const date = today();
   const [attendance, daily, visits] = await Promise.all([
-    portalStore().collection("trainer_attendance").where("date", "==", date).select("trainerId", "status", "checkInAt").get(),
-    portalStore().collection("trainer_daily_plans").where("date", "==", date).select("trainerId").get(),
-    portalStore().collection("trainer_visits").where("date", "==", date).select("trainerId").get()
+    request.company.features.attendance ? portalStore().collection("trainer_attendance").where("date", "==", date).select("trainerId", "status", "checkInAt").get() : { docs: [] },
+    request.company.features.dailyPlans ? portalStore().collection("trainer_daily_plans").where("date", "==", date).select("trainerId").get() : { docs: [] },
+    request.company.features.visits ? portalStore().collection("trainer_visits").where("date", "==", date).select("trainerId").get() : { docs: [] }
   ]);
   const trainerId = request.user.role === "trainer" ? request.user.trainerId : null;
   const belongs = (item) => !trainerId || item.trainerId === trainerId;

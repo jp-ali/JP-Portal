@@ -1,3 +1,4 @@
+import { companyName } from './companyBranding.js';
 // One layout for the portal's spreadsheet reports: centered report banner,
 // clear headings, and merged repeated person/date values in consecutive rows.
 export function mergedReportSheet(XLSX, data, title) {
@@ -5,7 +6,7 @@ export function mergedReportSheet(XLSX, data, title) {
   const last = Math.max(0, keys.length - 1);
   const sheet = XLSX.utils.aoa_to_sheet([
     [title],
-    [`JAVED PUBLISHERS  |  ${data.length} records`],
+    [`${companyName().toUpperCase()}  |  ${data.length} records`],
     keys,
     ...data.map((row) => keys.map((key) => row[key] ?? ""))
   ]);

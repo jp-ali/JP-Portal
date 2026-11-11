@@ -1,3 +1,4 @@
+import { companyName, getCompany } from '../services/companyBranding.js';
 import React from "react";
 import responsiveCss from "../styles/responsive.css?raw";
 import backgroundCss from "../styles/background.css?raw";
@@ -122,7 +123,7 @@ textTransform: "uppercase",
 fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
 textShadow: "0 2px 8px rgba(0,0,0,.28)"
 }}>
-          Javed Publishers
+          {companyName()}
         </h1>
       </div>
     </div>
@@ -161,11 +162,7 @@ export const renderBackgroundStationary = () => (
       <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap" rel="stylesheet" />
       <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&display=swap" rel="stylesheet" />
       <style>{backgroundCss}</style>
-      <div className="floating-word fw1">maxford</div><div className="floating-word fw2">vintage</div>
-      <div className="floating-word fw3">canon</div><div className="floating-word fw4">Marshall</div>
-      <div className="floating-word fw5">stemford</div><div className="floating-word fw6">maxford</div>
-      <div className="floating-word fw7">vintage</div><div className="floating-word fw8">canon</div>
-      <div className="floating-word fw9">Marshall</div><div className="floating-word fw10">stemford</div>
+      {Array.from({ length: 10 }, (_, index) => <div key={index} className={`floating-word fw${index + 1}`}>{getCompany().books[index % getCompany().books.length] || companyName()}</div>)}
       <div className="bg-stationary" style={{position:"absolute",left:"3px",top:"24%",fontSize:"30px",opacity:.32,animation:"wordFloatA 4.5s ease-in-out infinite",pointerEvents:"none"}}>📚</div>
       <div className="bg-stationary" style={{position:"absolute",right:"2px",top:"46%",fontSize:"28px",opacity:.32,animation:"wordFloatB 4.2s ease-in-out infinite",pointerEvents:"none"}}>✏️</div>
       <div className="bg-stationary" style={{position:"absolute",left:"3px",top:"64%",fontSize:"28px",opacity:.32,animation:"wordFloatB 5s ease-in-out infinite",pointerEvents:"none"}}>📖</div>

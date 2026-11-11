@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { postgresPool } from "../config/postgres.js";
+import { currentCompanyId, currentCompany, assertCollectionFeature } from "../services/companyContext.js";
 import { applyDocumentPatch, decodeDocumentValue, encodeDocumentValue, Timestamp } from "./documentValues.js";
 
 const id = () => randomBytes(15).toString("base64url");
@@ -115,10 +116,13 @@ class WriteBatch {
 }
 
 async function applyOperation(client, { operation, ref, data, options }) {
-  const { rows } = await client.query("SELECT payload FROM portal_documents WHERE path = $1 FOR UPDATE", [ref.path]);
+  assertCollectionFeature(ref.path);
+  if (data?.offlineVisit === true && currentCompany().features.offlineVisits === false) throw Object.assign(new Error('Offline visits are disabled for your company'), { status: 403 });
+  const companyId = currentCompanyId();
+  const { rows } = await client.query("SELECT payload FROM portal_documents WHERE path = $1 AND company_id = $2 FOR UPDATE", [ref.path, companyId]);
   const oldPayload = rows[0]?.payload;
   if (operation === "delete") {
-    await client.query("DELETE FROM portal_documents WHERE path = $1", [ref.path]);
+    await client.query("DELETE FROM portal_documents WHERE path = $1 AND company_id = $2", [ref.path, companyId]);
     return;
   }
   if (operation === "create" && oldPayload) throw Object.assign(new Error("Document already exists"), { code: 6 });
@@ -129,20 +133,20 @@ async function applyOperation(client, { operation, ref, data, options }) {
   const collectionPath = parts(ref.path).slice(0, -1).join("/");
   if (operation === "create") {
     const inserted = await client.query(`
-      INSERT INTO portal_documents (path, collection_path, document_id, payload)
-      VALUES ($1, $2, $3, $4::jsonb)
-      ON CONFLICT (path) DO NOTHING
+      INSERT INTO portal_documents (path, collection_path, document_id, payload, company_id)
+      VALUES ($1, $2, $3, $4::jsonb, $5)
+      ON CONFLICT (company_id, path) DO NOTHING
       RETURNING path
-    `, [ref.path, collectionPath, ref.id, JSON.stringify(encoded)]);
+    `, [ref.path, collectionPath, ref.id, JSON.stringify(encoded), companyId]);
     if (!inserted.rowCount) throw Object.assign(new Error("Document already exists"), { code: 6 });
     return;
   }
   await client.query(`
-    INSERT INTO portal_documents (path, collection_path, document_id, payload)
-    VALUES ($1, $2, $3, $4::jsonb)
-    ON CONFLICT (path) DO UPDATE SET payload = EXCLUDED.payload,
+    INSERT INTO portal_documents (path, collection_path, document_id, payload, company_id)
+    VALUES ($1, $2, $3, $4::jsonb, $5)
+    ON CONFLICT (company_id, path) DO UPDATE SET payload = EXCLUDED.payload,
       revision = portal_documents.revision + 1, updated_at = now()
-  `, [ref.path, collectionPath, ref.id, JSON.stringify(encoded)]);
+  `, [ref.path, collectionPath, ref.id, JSON.stringify(encoded), companyId]);
 }
 
 export class PostgresDocumentStore {
@@ -151,18 +155,21 @@ export class PostgresDocumentStore {
   doc(path) { return new DocumentReference(this, path); }
   batch() { return new WriteBatch(this); }
   async getDocument(ref, client = this.pool) {
-    const { rows } = await client.query("SELECT payload FROM portal_documents WHERE path = $1", [ref.path]);
+    assertCollectionFeature(ref.path);
+    const { rows } = await client.query("SELECT payload FROM portal_documents WHERE path = $1 AND company_id = $2", [ref.path, currentCompanyId()]);
     return new DocumentSnapshot(ref, rows[0]?.payload ?? null);
   }
   async getAll(...refs) {
     if (!refs.length) return [];
-    const { rows } = await this.pool.query("SELECT path, payload FROM portal_documents WHERE path = ANY($1::text[])", [refs.map((ref) => ref.path)]);
+    refs.forEach(ref => assertCollectionFeature(ref.path));
+    const { rows } = await this.pool.query("SELECT path, payload FROM portal_documents WHERE path = ANY($1::text[]) AND company_id = $2", [refs.map((ref) => ref.path), currentCompanyId()]);
     const found = new Map(rows.map((row) => [row.path, row.payload]));
     return refs.map((ref) => new DocumentSnapshot(ref, found.get(ref.path) ?? null));
   }
   querySql(query, count = false) {
-    const args = [query.path];
-    const clauses = ["collection_path = $1", ...whereSql(query.conditions, args)];
+    assertCollectionFeature(query.path);
+    const args = [query.path, currentCompanyId()];
+    const clauses = ["collection_path = $1", "company_id = $2", ...whereSql(query.conditions, args)];
     const base = `FROM portal_documents WHERE ${clauses.join(" AND ")}`;
     if (count) return { sql: `SELECT count(*)::integer AS count ${base}`, args };
     const projection = query.selected?.length

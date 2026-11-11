@@ -1,3 +1,4 @@
+import { companyStorage } from '../../services/companyBranding.js';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, where, writeBatch } from "../../services/dataGateway.js";
 import { db } from "../../services/dataGateway.js";
@@ -24,7 +25,7 @@ const mergeSchoolsIntoState = (areaId, areaSchools) => {
 const clean = (areaSchools || []).filter((school) => isUsableSchoolRecord(school) && canSeeSchool(school, user))
 .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
 areaSchoolsMemoryCacheRef.current.set(areaId, clean);
-try { localStorage.setItem(`javed_portal_schools_${areaId}`, JSON.stringify(clean)); } catch (_) {}
+try { companyStorage.setItem(`javed_portal_schools_${areaId}`, JSON.stringify(clean)); } catch (_) {}
 setSchoolsList(prev => {
 const keepAreaIds = new Set([visitAreaId, assignmentAreaFocusId, areaId].filter(Boolean));
 const keepOtherAreas = prev.filter((school) => school.areaId !== areaId && keepAreaIds.has(school.areaId));
@@ -36,7 +37,7 @@ const readCachedSchoolsForArea = (areaId) => {
 const memory = areaSchoolsMemoryCacheRef.current.get(areaId);
 if (Array.isArray(memory) && memory.length) return memory.filter((school) => canSeeSchool(school, user));
 try {
-const parsed = JSON.parse(localStorage.getItem(`javed_portal_schools_${areaId}`) || "[]");
+const parsed = JSON.parse(companyStorage.getItem(`javed_portal_schools_${areaId}`) || "[]");
 if (Array.isArray(parsed) && parsed.length) return mergeSchoolsIntoState(areaId, parsed);
 } catch (_) {}
 return [];
@@ -45,7 +46,7 @@ const mergeAreasIntoState = (cityId, cityAreas) => {
 const clean = (cityAreas || [])
 .filter((a) => a?.id && a?.cityId === cityId)
 .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
-try { localStorage.setItem(`javed_portal_areas_${cityId}`, JSON.stringify(clean)); } catch (_) {}
+try { companyStorage.setItem(`javed_portal_areas_${cityId}`, JSON.stringify(clean)); } catch (_) {}
 setAreasList((prev) => {
 const keepOtherCities = prev.filter((a) => a.cityId !== cityId);
 return [...keepOtherCities, ...clean];
@@ -57,7 +58,7 @@ if (!cityId) return [];
 const inState = areasList.filter((a) => a.cityId === cityId);
 if (inState.length) return inState;
 try {
-const parsed = JSON.parse(localStorage.getItem(`javed_portal_areas_${cityId}`) || "[]");
+const parsed = JSON.parse(companyStorage.getItem(`javed_portal_areas_${cityId}`) || "[]");
 if (Array.isArray(parsed) && parsed.length) return mergeAreasIntoState(cityId, parsed);
 } catch (_) {}
 return [];
@@ -117,7 +118,7 @@ const fetchLocationCatalog = async () => {
 const baseCities = getLightBaseCities();
 let cachedManual = [];
 try {
-cachedManual = JSON.parse(localStorage.getItem("javed_portal_manual_cities_v1") || "[]");
+cachedManual = JSON.parse(companyStorage.getItem("javed_portal_manual_cities_v1") || "[]");
 if (!Array.isArray(cachedManual)) cachedManual = [];
 } catch (_) { cachedManual = []; }
 const instantMap = new Map(baseCities.map((c) => [c.id, c]));
@@ -129,7 +130,7 @@ const manualSnap = await getDocs(query(collection(db, "cities"), where("source",
 const manualCities = manualSnap.docs
 .map((d) => ({ id: d.id, ...d.data() }))
 .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
-try { localStorage.setItem("javed_portal_manual_cities_v1", JSON.stringify(manualCities)); } catch (_) {}
+try { companyStorage.setItem("javed_portal_manual_cities_v1", JSON.stringify(manualCities)); } catch (_) {}
 const map = new Map(baseCities.map((c) => [c.id, c]));
 manualCities.forEach((c) => map.set(c.id, { ...map.get(c.id), ...c }));
 const cities = [...map.values()].sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));

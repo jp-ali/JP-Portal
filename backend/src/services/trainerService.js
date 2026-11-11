@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { portalStore } from "../config/portalStore.js";
 import { findMarketerByIdentifier } from "../models/marketerModel.js";
+import { currentCompany, companyContext } from './companyContext.js';
 
 const trainers = () => portalStore().collection("trainers");
 const bad = (message) => Object.assign(new Error(message), { status: 400 });
@@ -69,7 +70,8 @@ export async function saveTrainer(input, id = null) {
     if (trainer && trainer.id !== id) throw bad("Email or phone already belongs to a trainer");
     if (await findMarketerByIdentifier(identifier)) throw bad("Email or phone already belongs to a marketer");
   }
-  if (email === String(process.env.ADMIN_EMAIL || "admin@portal.com").toLowerCase()) throw bad("Email belongs to admin");
+  const adminEmail = companyContext.getStore()?.admin?.email || (currentCompany().id === 'javed' ? process.env.ADMIN_EMAIL || 'admin@portal.com' : '');
+  if (email === adminEmail.toLowerCase()) throw bad("Email belongs to admin");
   const record = {
     name, email, phone, designation, offlineMode, active: input.active === undefined ? previous?.active !== false : input.active === true,
     profilePhoto: previous?.profilePhoto || null,

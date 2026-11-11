@@ -1,4 +1,5 @@
 import webPush from "web-push";
+import { currentCompany } from './companyContext.js';
 
 export const pushReady = () => Boolean(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
 
@@ -29,7 +30,7 @@ export async function sendNewsPush(db, recipients, news) {
   const preview = Array.from(fullMessage);
   const payload = JSON.stringify({
     title: news.title, body: preview.length > 180 ? `${preview.slice(0, 180).join("")}…` : fullMessage,
-    newsId: news.id
+    newsId: news.id, companyName: currentCompany().name, companySlug: currentCompany().slug
   });
   let delivered = 0;
   for (let start = 0; start < targets.length; start += 25) {

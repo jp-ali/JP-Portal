@@ -1,3 +1,4 @@
+import { companyStorage } from '../../services/companyBranding.js';
 import { confirmAction, showNotice as alert } from "../../ui/confirmDialog.js";
 import { useState } from "react";
 import { deleteDoc, doc, serverTimestamp, setDoc } from "../../services/dataGateway.js";
@@ -253,10 +254,10 @@ createdAt: serverTimestamp()
 }, { merge: true });
 mergeCitiesIntoState([cityRecord]);
 try {
-const current = JSON.parse(localStorage.getItem("javed_portal_manual_cities_v1") || "[]");
+const current = JSON.parse(companyStorage.getItem("javed_portal_manual_cities_v1") || "[]");
 const map = new Map((Array.isArray(current) ? current : []).map((c) => [c.id, c]));
 map.set(id, cityRecord);
-localStorage.setItem("javed_portal_manual_cities_v1", JSON.stringify([...map.values()]));
+companyStorage.setItem("javed_portal_manual_cities_v1", JSON.stringify([...map.values()]));
 } catch (_) {}
 setAssignedCityIds(prev => prev.includes(id) ? prev : [...prev, id]);
 setAssignmentCityFocusId(id);

@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import { request } from "../../services/authApi.js";
 import { cardRenderEntries, defaultCardFields, defaultCardValues, downloadCardCdr, downloadCardPdf, downloadCardSvg, downloadCardShareZip, prepareCardImage } from "../../services/cardDesigner.js";
 import defaultCardArt from "../../assets/card-blank-template.png";
+import companyCardArt from '../../assets/company-card-template.jpg';
+import { getCompany } from '../../services/companyBranding.js';
 import "../../styles/cardDesigner.css";
 
 const newTemplate = () => ({ image: "", imageWidth: 1658, imageHeight: 951, widthMm: 85.6, fields: defaultCardFields.map((field) => ({ ...field })) });
@@ -38,7 +40,7 @@ export default function AdminCardDesignerPanel({ cardId = "", onSaved, onOpenSav
           const { card } = await request(`/cards/${encodeURIComponent(cardId)}`);
           if (active) { setLinkedMarketer(Boolean(card.marketerId)); install({ image: card.image, imageWidth: card.imageWidth, imageHeight: card.imageHeight, widthMm: card.widthMm, fields: card.fields, marketerId: card.marketerId || "" }, card.values, card.id); }
         } else {
-          const blob = await fetch(defaultCardArt).then((response) => response.blob());
+          const blob = await fetch(getCompany().id === 'javed' ? defaultCardArt : companyCardArt).then((response) => response.blob());
           const image = await prepareCardImage(blob);
           if (active) { setLinkedMarketer(false); install({ ...newTemplate(), ...image }, { ...defaultCardValues }); }
         }

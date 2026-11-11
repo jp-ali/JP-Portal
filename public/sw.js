@@ -65,7 +65,7 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data?.json() || {}; } catch { data = {}; }
-  const title = String(data.title || "Javed Publishers News").slice(0, 120);
+  const title = String(data.title || `${data.companyName || 'Portal'} News`).slice(0, 120);
   const body = String(data.body || "Open your expense report.").slice(0, 300);
   const newsId = typeof data.newsId === "string" && /^[a-zA-Z0-9_-]{1,100}$/.test(data.newsId) ? data.newsId : "";
   event.waitUntil(Promise.all([self.registration.showNotification(title, {
@@ -73,7 +73,7 @@ self.addEventListener("push", (event) => {
     icon: `${BASE}icons/icon-192.png`,
     badge: `${BASE}icons/icon-192.png`,
     tag: newsId ? `jp-news-${newsId}` : "jp-news",
-    data: { url: `${BASE}?news=${encodeURIComponent(newsId)}` }
+    data: { url: data.companySlug && /^[a-z][a-z0-9-]{1,47}$/.test(data.companySlug) ? `/company/${data.companySlug}/?news=${encodeURIComponent(newsId)}` : `${BASE}?news=${encodeURIComponent(newsId)}` }
   }), self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
     clients.forEach((client) => client.postMessage({ type: "NEWS_RECEIVED", newsId }));
   })]));

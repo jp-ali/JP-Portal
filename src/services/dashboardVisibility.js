@@ -1,15 +1,16 @@
+import { companyStorage } from './companyBranding.js';
 import { useEffect, useState } from "react";
 
 const storageKey = (role, accountId) => `jp-portal-hidden-v1:${role}:${String(accountId || role).toLowerCase()}`;
 const controlsKey = (role, accountId) => `jp-portal-hide-controls-v1:${role}:${String(accountId || role).toLowerCase()}`;
 const controlsEvent = "jp-portal-hide-controls-change";
 const readControls = (key) => {
-  try { return localStorage.getItem(key) !== "off"; } catch { return true; }
+  try { return companyStorage.getItem(key) !== "off"; } catch { return true; }
 };
 
 function readHidden(key) {
   try {
-    const saved = JSON.parse(localStorage.getItem(key) || "[]");
+    const saved = JSON.parse(companyStorage.getItem(key) || "[]");
     return Array.isArray(saved) ? saved.filter((item) => item && typeof item.key === "string" && typeof item.title === "string") : [];
   } catch { return []; }
 }
@@ -31,13 +32,13 @@ export function useDashboardVisibility(role, accountId) {
   const setHideControlsVisible = (visible) => {
     const next = Boolean(visible);
     setHideControlsVisibleState(next);
-    try { localStorage.setItem(eyeKey, next ? "on" : "off"); } catch { /* Keep this session usable. */ }
+    try { companyStorage.setItem(eyeKey, next ? "on" : "off"); } catch { /* Keep this session usable. */ }
     window.dispatchEvent(new CustomEvent(controlsEvent, { detail: { key: eyeKey, visible: next } }));
   };
   const update = (next) => {
     setHidden((current) => {
       const updated = next(current);
-      try { localStorage.setItem(key, JSON.stringify(updated)); } catch { /* Keep the current session usable. */ }
+      try { companyStorage.setItem(key, JSON.stringify(updated)); } catch { /* Keep the current session usable. */ }
       return updated;
     });
   };

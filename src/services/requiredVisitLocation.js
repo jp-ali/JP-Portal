@@ -1,4 +1,5 @@
 import { formatAddressForStamp } from "./visitPhotos.js";
+import { companySlugFromPath } from './companyBranding.js';
 
 const API_BASE = import.meta.env?.VITE_API_BASE_URL || "/api";
 export const MAX_VISIT_LOCATION_ACCURACY_METERS = 150;
@@ -42,7 +43,8 @@ export async function visitLocationStamp(position, lookup = globalThis.fetch) {
   const timeout = setTimeout(() => controller.abort(), 19000);
   try {
     const response = await lookup(`${API_BASE}/visit-location/reverse?lat=${position.latitude}&lon=${position.longitude}`, {
-      signal: controller.signal, credentials: "same-origin", cache: "no-store"
+      signal: controller.signal, credentials: "same-origin", cache: "no-store",
+      headers: companySlugFromPath() ? { 'x-company-slug': companySlugFromPath() } : {}
     });
     if (!response.ok) throw new Error(failure);
     const data = await response.json();

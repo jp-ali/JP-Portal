@@ -9,8 +9,9 @@ export async function login(request, response, next) {
     }
     const result = await authenticate(identifier.trim(), password);
     if (!result) return response.status(401).json({ error: "Invalid email/phone or password" });
+    if (result.profile.role === 'trainer' && request.company.features.trainer === false || result.profile.role === 'marketer' && request.company.features.marketer === false) return response.status(403).json({ error: 'This portal is disabled for your company' });
     setSessionCookie(response, await createJwtSession(result.claims));
-    return response.json({ user: result.profile });
+    return response.json({ user: { ...result.profile, companyId: request.company.id } });
   } catch (error) {
     next(error);
   }

@@ -1,3 +1,4 @@
+import { companyName, companyInitials } from '../services/companyBranding.js';
 import React, { useEffect, useRef, useState } from "react";
 import { confirmAction } from "../ui/confirmDialog.js";
 import { compressCanvasToTargetDataUrl } from "../services/imageCompression.js";
@@ -100,7 +101,7 @@ export default function TrainerOfflineVisitPortal({ user, cachedProfile, online,
     try { await removeOfflineVisit(id); await refresh(); } catch (error) { setMessage(error.message); }
   };
   return <div className="offline-portal trainer-offline-portal"><style>{offlineCss}</style>
-    <header className="offline-header"><div className="offline-logo">JP.</div><div><strong>JAVED PUBLISHERS</strong><small>Trainer Visit Portal</small></div><span className="offline-badge">{online ? "Draft mode" : "Offline"}</span></header>
+    <header className="offline-header"><div className="offline-logo">{companyInitials()}</div><div><strong>{companyName().toUpperCase()}</strong><small>Trainer Visit Portal</small></div><span className="offline-badge">{online ? "Draft mode" : "Offline"}</span></header>
     <main className="offline-main">{switcher}<button className="offline-back" type="button" onClick={onBackToLogin}>← Back to Login</button>
       <div className="offline-welcome"><div><span>Welcome, {profile?.name || email}</span><h1>Trainer offline visits</h1><p>Only Add Visit is available offline. Your drafts stay on this device until sync.</p></div>{online && <button type="button" className="offline-secondary" onClick={user ? onResume : onSignIn}>{user ? "Open portal" : "Sign in to sync"}</button>}</div>
       <section className="offline-card"><div className="offline-section-heading"><div><h2>Add Visit</h2><p>Enter school details and attach a photo.</p></div><span>{drafts.length} pending</span></div>

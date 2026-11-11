@@ -1,3 +1,4 @@
+import { companyName, companyInitials, companyStorage } from '../services/companyBranding.js';
 import { confirmAction } from "../ui/confirmDialog.js";
 import React, { useEffect, useRef, useState } from "react";
 import { compressCanvasToTargetDataUrl } from "../services/imageCompression.js";
@@ -14,7 +15,7 @@ const emptyForm = { cityId: "", cityName: "", areaId: "", areaName: "", schoolId
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const purposes = ["FirstVisit", "Sampling", "FollowUp", "Sample Return", "Final Visit", "PR Packages", "After Sale Services", "Training", "Courtesy Visit", "Books Delivery", "Recovery", "Complimentary Visit", "Books Return"];
 const readStoredRows = (key) => {
-  try { const rows = JSON.parse(localStorage.getItem(key) || "[]"); return Array.isArray(rows) ? rows : []; }
+  try { const rows = JSON.parse(companyStorage.getItem(key) || "[]"); return Array.isArray(rows) ? rows : []; }
   catch { return []; }
 };
 
@@ -124,7 +125,7 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
           || { id: schoolId, name: form.schoolName.trim(), areaId: form.areaId, cityId: form.cityId, source: "manual-marketer", addedByMarketerEmail: ownerEmail };
         const visitDetails = makeSchoolVisitDetails(form);
         try {
-          localStorage.setItem(key, JSON.stringify([...previous.filter((item) => item.id !== schoolId), { ...school, visitDetails }]));
+          companyStorage.setItem(key, JSON.stringify([...previous.filter((item) => item.id !== schoolId), { ...school, visitDetails }]));
         } catch (error) { console.warn("Could not cache school details for offline visits:", error); }
       }
       setForm(emptyForm); setSchoolCustom(false); setFormResetKey((value) => value + 1); setPhoto("");
@@ -149,7 +150,7 @@ export default function OfflineVisitPortal({ user, cachedProfile, online, onSign
 
   return <div className="offline-portal">
     <style>{offlineCss}</style>
-    <header className="offline-header"><div className="offline-logo">JP.</div><div><strong>JAVED PUBLISHERS</strong><small>School Visit Portal</small></div><span className="offline-badge">{online ? "Draft mode" : "Offline"}</span></header>
+    <header className="offline-header"><div className="offline-logo">{companyInitials()}</div><div><strong>{companyName().toUpperCase()}</strong><small>School Visit Portal</small></div><span className="offline-badge">{online ? "Draft mode" : "Offline"}</span></header>
     <main className="offline-main">{switcher}
       <button className="offline-back" type="button" onClick={onBackToLogin}>← Back to Login</button>
       {!profile ? <section className="offline-card offline-identity">

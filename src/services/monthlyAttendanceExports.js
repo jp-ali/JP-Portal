@@ -1,3 +1,5 @@
+import { assertExportsAllowed } from './companyBranding.js';
+import { companyName } from './companyBranding.js';
 import { ensureExcelReady } from "./excelLoader.js";
 
 const colors = {
@@ -14,6 +16,7 @@ const safeName = (value) => String(value || "Marketer").replace(/[^a-z0-9_-]+/gi
 const fileStem = (report) => `Monthly_Attendance_${report.month}_${report.people.length === 1 ? safeName(report.people[0].name) : report.audience === "trainer" ? "All_Trainers" : "All_Marketers"}`;
 
 export async function downloadMonthlyAttendanceExcel(report) {
+  assertExportsAllowed();
   const XLSX = await ensureExcelReady();
   if (!XLSX) throw new Error("Excel exporter could not load.");
   const dates = Array.from({ length: report.dayCount }, (_, index) => `${index + 1}/${report.monthLabel.slice(0, 3)}`);
@@ -48,7 +51,7 @@ function drawHeader(pdf, title, subtitle) {
   const width = pdf.internal.pageSize.getWidth();
   pdf.setFillColor(122, 15, 43); pdf.rect(0, 0, width, 68, "F");
   pdf.setTextColor(255, 255, 255); pdf.setFont("helvetica", "bold"); pdf.setFontSize(17);
-  pdf.text("JAVED PUBLISHERS", 24, 28);
+  pdf.text(companyName().toUpperCase(), 24, 28);
   pdf.setFontSize(11); pdf.text(title, 24, 49);
   pdf.setFont("helvetica", "normal"); pdf.setFontSize(9); pdf.text(subtitle, width - 24, 49, { align: "right" });
   pdf.setTextColor(50, 42, 45);
@@ -64,6 +67,7 @@ function drawFooter(pdf) {
 }
 
 export async function downloadMonthlyAttendancePDF(report) {
+  assertExportsAllowed();
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   const pdf = new jsPDF({ unit: "pt", format: "a4", orientation: "portrait" });
   const width = pdf.internal.pageSize.getWidth();

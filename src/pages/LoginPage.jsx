@@ -1,3 +1,4 @@
+import { companyName, getCompany } from '../services/companyBranding.js';
 import React, { useEffect } from "react";
 import loginReferencePanel from "../assets/login-reference-panel.webp";
 import loginCss from "../styles/login.css?raw";
@@ -11,6 +12,7 @@ function EyeIcon({ visible }) {
 }
 
 export default function LoginPage({ context }) {
+  const company = getCompany();
   const { error, handleLogin, identifier, loginPending, password, preloadPortal, renderBackgroundStationary, setIdentifier, setPassword, setShowPassword, showPassword, onWorkOffline, offlineAvailable, online } = context;
   useEffect(() => {
     if (!window.matchMedia("(min-width: 1024px)").matches) return;
@@ -25,12 +27,12 @@ export default function LoginPage({ context }) {
   return <div className="login-screen">
     <style>{loginCss}</style>
     <div className="login-mobile-decor" aria-hidden="true">{renderBackgroundStationary()}</div>
-    <section className="login-art-panel" aria-label="Javed Publishers">
-      <img className="login-reference-art" src={loginReferencePanel} alt="Knowledge Today, A Brighter Tomorrow — Javed Publishers imprints and books" loading="lazy" decoding="async" />
+    <section className="login-art-panel" aria-label={companyName()}>
+      {company.banner || company.id === "javed" ? <img className="login-reference-art" src={company.banner || loginReferencePanel} alt={`${companyName()} books and series`} loading="lazy" decoding="async" /> : <div className="company-login-placeholder"><h2>{companyName()}</h2><p>School Visit & Field Team Portal</p></div>}
     </section>
     <main className="login-form-panel">
       <div className="login-card">
-        <div className="login-brand"><div className="login-bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><h1>JAVED PUBLISHERS</h1><p>School Visit Portal</p></div>
+        <div className="login-brand">{company.logo && <img src={company.logo} alt="" style={{ height: 44, maxWidth: 140, objectFit: "contain" }} />}<div className="login-bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><h1>{companyName().toUpperCase()}</h1><p>School Visit Portal</p></div>
         <form onSubmit={handleLogin}>
           <div className="login-field"><label htmlFor="login-identifier">Email or Phone Number</label><div className="login-input-wrap"><input id="login-identifier" name="identifier" type="text" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="username" placeholder="admin@portal.com" value={identifier} onChange={(event) => setIdentifier(event.target.value)} required /><span className="login-input-icon"><PersonIcon /></span></div></div>
           <div className="login-field"><label htmlFor="login-password">Password</label><div className="login-input-wrap"><input id="login-password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Enter your password" value={password} onChange={(event) => setPassword(event.target.value)} required /><button className="login-eye" type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"}><EyeIcon visible={showPassword} /></button></div></div>

@@ -3,6 +3,7 @@ import { FieldValue } from "../config/portalStore.js";
 import { portalStore } from "../config/portalStore.js";
 import { publicMarketer } from "../models/marketerModel.js";
 import { defaultMarketerCard, syncMarketerCard } from "./marketerCardService.js";
+import { currentCompany, companyContext } from './companyContext.js';
 
 const fields = ["name", "phone", "email", "cnic", "designation", "assignedKms", "offlineMode", "cardCity", "showCardCity", "whatsappGroupName", "whatsappGroupLink", "assignedCityIds", "assignedAreaIds", "assignedSchoolIds", "subordinateMarketerIds"];
 const arrayFields = new Set(["assignedCityIds", "assignedAreaIds", "assignedSchoolIds", "subordinateMarketerIds"]);
@@ -32,6 +33,8 @@ function validate(input, creating) {
   }
   if (creating && (!data.name || !data.email || !data.phone || !input.password)) throw new Error("Name, email, phone and password are required");
   if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) throw new Error("Invalid email");
+  const adminEmail = companyContext.getStore()?.admin?.email || (currentCompany().id === 'javed' ? process.env.ADMIN_EMAIL || 'admin@portal.com' : '');
+  if (data.email && data.email.toLowerCase() === adminEmail.toLowerCase()) throw new Error('Invalid email: this address belongs to the company admin');
   if (data.cnic && !/^\d{5}-?\d{7}-?\d$/.test(data.cnic)) throw new Error("CNIC must contain 13 digits");
   if (creating && data.showCardCity && !data.cardCity) throw new Error("Invalid cardCity: enter a city to show on the card");
   if ("password" in input && input.password !== "") {
@@ -66,12 +69,12 @@ export async function createMarketer(input) {
   delete data.password;
   data.createdAt = FieldValue.serverTimestamp();
   const now = new Date().toISOString();
-  data.cardProvisionedAt = now;
+  if (currentCompany().features.cards !== false) data.cardProvisionedAt = now;
   const db = portalStore();
   const ref = db.collection("marketers").doc();
   const batch = db.batch();
   batch.set(ref, data);
-  batch.set(db.collection("savedCards").doc(ref.id), defaultMarketerCard(ref.id, data, now));
+  if (currentCompany().features.cards !== false) batch.set(db.collection("savedCards").doc(ref.id), defaultMarketerCard(ref.id, data, now));
   await batch.commit();
   return publicMarketer({ id: ref.id, ...data });
 }
@@ -87,7 +90,7 @@ export async function updateMarketer(id, input) {
   if (updated.showCardCity && !updated.cardCity) throw new Error("Invalid cardCity: enter a city to show on the card");
   const batch = db.batch();
   batch.update(ref, data);
-  if (["name", "phone", "email", "designation", "cardCity", "showCardCity"].some((field) => field in data)) {
+  if (currentCompany().features.cards !== false && ["name", "phone", "email", "designation", "cardCity", "showCardCity"].some((field) => field in data)) {
     const cardRef = db.collection("savedCards").doc(id);
     const card = await cardRef.get();
     if (card.exists && !card.data().deletedAt) batch.update(cardRef, syncMarketerCard(card.data(), updated));

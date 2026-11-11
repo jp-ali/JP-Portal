@@ -1,3 +1,4 @@
+import { companyName } from '../../services/companyBranding.js';
 import { showNotice as alert } from "../../ui/confirmDialog.js";
 import { useState } from "react";
 import { collection, getDocs, query, where } from "../../services/dataGateway.js";
@@ -219,7 +220,7 @@ const rangeLabel = `${expenseReportFromDate} to ${expenseReportToDate}`;
 const newPage = () => {
 const c = [];
 c.push(rectCmd(LEFT, 5, RIGHT - LEFT, 24, 0.55, PDF_BANNER));
-c.push(drawText(148.5, 9, "JAVED PUBLISHERS", 18, "center", true));
+c.push(drawText(148.5, 9, companyName().toUpperCase(), 18, "center", true));
 c.push(drawText(148.5, 15.5, "MARKETER EXPENSE REPORT", 11.5, "center", true));
 c.push(drawText(10, 22.5, `Report Date: ${new Date().toLocaleDateString("en-GB")}`, 6.5, "left", false));
 c.push(drawText(148.5, 22.5, `Range: ${rangeLabel}`, 6.5, "center", false));
@@ -495,7 +496,7 @@ const marketerLabel=adminExpenseMarketerIds.length === 1 ? (marketersList.find((
 const newPage=()=>{
 const c=[];
 c.push(rectCmd(LEFT,5,RIGHT-LEFT,24,.55,PDF_BANNER));
-c.push(drawText(148.5,9,"JAVED PUBLISHERS",18,"center",true));
+c.push(drawText(148.5,9,companyName().toUpperCase(),18,"center",true));
 c.push(drawText(148.5,15.5,"ADMIN EXPENSE REPORT",11.5,"center",true));
 c.push(drawText(10,22.5,`Report Date: ${new Date().toLocaleDateString("en-GB")}`,6.5,"left"));
 c.push(drawText(148.5,22.5,`Range: ${rangeLabel}`,6.5,"center"));

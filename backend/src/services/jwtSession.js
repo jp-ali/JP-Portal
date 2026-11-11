@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
 import { postgresPool } from "../config/postgres.js";
+import { currentCompanyId, companyContext } from './companyContext.js';
 
 const cookieName = "school_visit_session";
 const lifetimeSeconds = 12 * 60 * 60;
@@ -12,11 +13,12 @@ function secret() {
 }
 
 export async function createJwtSession(claims, db = postgresPool()) {
-  if (!["admin", "marketer", "trainer"].includes(claims.role) || typeof claims.sub !== "string" || !claims.sub) {
+  if (!["admin", "marketer", "trainer", "owner"].includes(claims.role) || typeof claims.sub !== "string" || !claims.sub) {
     throw new Error("Invalid account claims");
   }
   const tokenId = randomUUID();
-  const token = jwt.sign({ role: claims.role }, secret(), {
+  const companyId = claims.companyId || currentCompanyId();
+  const token = jwt.sign({ role: claims.role, companyId, authVersion: claims.authVersion ?? companyContext.getStore()?.companyAuthVersion ?? 1 }, secret(), {
     algorithm: "HS256",
     subject: claims.sub,
     jwtid: tokenId,
@@ -25,8 +27,8 @@ export async function createJwtSession(claims, db = postgresPool()) {
     expiresIn: lifetimeSeconds
   });
   await db.query(
-    "INSERT INTO portal_sessions(token_id, account_id, role, expires_at) VALUES ($1, $2, $3, now() + interval '12 hours')",
-    [tokenId, claims.sub, claims.role]
+    "INSERT INTO portal_sessions(token_id, account_id, role, company_id, expires_at) VALUES ($1, $2, $3, $4, now() + interval '12 hours')",
+    [tokenId, claims.sub, claims.role, companyId]
   );
   return token;
 }
@@ -41,12 +43,13 @@ export async function verifyJwtSession(token, db = postgresPool()) {
       audience: "school-visit-portal"
     });
   } catch { return null; }
-  if (!["admin", "marketer", "trainer"].includes(claims.role) || !claims.sub || !claims.jti) return null;
+  if (!["admin", "marketer", "trainer", "owner"].includes(claims.role) || !claims.sub || !claims.jti) return null;
+  const companyId = claims.companyId || 'javed';
   const { rows } = await db.query(
-    "SELECT 1 FROM portal_sessions WHERE token_id = $1 AND account_id = $2 AND role = $3 AND revoked_at IS NULL AND expires_at > now()",
-    [claims.jti, claims.sub, claims.role]
+    "SELECT 1 FROM portal_sessions WHERE token_id = $1 AND account_id = $2 AND role = $3 AND company_id = $4 AND revoked_at IS NULL AND expires_at > now()",
+    [claims.jti, claims.sub, claims.role, companyId]
   );
-  return rows.length ? { sub: claims.sub, role: claims.role, jti: claims.jti } : null;
+  return rows.length ? { sub: claims.sub, role: claims.role, jti: claims.jti, companyId, authVersion: claims.authVersion || 1 } : null;
 }
 
 export async function revokeJwtSession(token, db = postgresPool()) {

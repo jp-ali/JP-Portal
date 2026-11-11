@@ -5,6 +5,7 @@ RUN npm ci
 COPY index.html vite.config.js ./
 COPY public ./public
 COPY src ./src
+COPY shared ./shared
 RUN npm run build
 
 FROM node:22-bookworm-slim AS backend-deps
@@ -20,9 +21,12 @@ WORKDIR /app
 COPY --chown=node:node package.json ./package.json
 COPY --from=frontend --chown=node:node /app/dist ./dist
 COPY --chown=node:node src/domain ./src/domain
+COPY --chown=node:node shared ./shared
 COPY --from=backend-deps --chown=node:node /app/backend/node_modules ./backend/node_modules
 COPY --chown=node:node backend/package.json ./backend/package.json
 COPY --chown=node:node backend/src ./backend/src
+COPY --chown=node:node backend/scripts/createOwner.js ./backend/scripts/createOwner.js
+COPY --chown=node:node backend/scripts/whiteLabelCompatibility.js ./backend/scripts/whiteLabelCompatibility.js
 COPY --chown=node:node backend/assets ./backend/assets
 USER node
 EXPOSE 3001

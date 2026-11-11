@@ -1,10 +1,11 @@
+import { tenantStorageKey } from './companyBranding.js';
 const DATABASE = "jp-portal-offline-visits";
 const STORE = "drafts";
 
 function openDatabase() {
   return new Promise((resolve, reject) => {
     if (!globalThis.indexedDB) { reject(new Error("Offline storage is unavailable in this browser.")); return; }
-    const request = indexedDB.open(DATABASE, 1);
+    const request = indexedDB.open(tenantStorageKey(DATABASE), 1);
     request.onupgradeneeded = () => {
       if (!request.result.objectStoreNames.contains(STORE)) request.result.createObjectStore(STORE, { keyPath: "id" });
     };

@@ -1,3 +1,4 @@
+import { currentCompany } from './companyContext.js';
 import PDFDocument from "pdfkit";
 
 const money = (value) => `Rs. ${Number(value || 0).toFixed(2)}`;
@@ -37,7 +38,7 @@ export function createExpenseNewsPdf({ marketer, rows, fromDate, toDate }) {
     const rowHeight = 22;
     const drawPageTitle = () => {
       doc.rect(0, 0, pageWidth, 91).fill(maroon);
-      doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(20).text("JAVED PUBLISHERS", left, 20, { width, align: "center" });
+      doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(20).text(currentCompany().name.toUpperCase(), left, 20, { width, align: "center" });
       doc.fontSize(12).text("EXPENSE REPORT", left, 49, { width, align: "center" });
       doc.fillColor("#333333").font("Helvetica").fontSize(9).text(`Marketer: ${marketer.name || marketer.email || "Marketer"}`, left, 110);
       doc.text(`Date range: ${fromDate} to ${toDate}`, left, 126);

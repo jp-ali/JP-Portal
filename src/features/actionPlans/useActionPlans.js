@@ -1,3 +1,4 @@
+import { companyName } from '../../services/companyBranding.js';
 import { confirmAction, showNotice as alert } from "../../ui/confirmDialog.js";
 import { useRef, useState } from "react";
 import { addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, updateDoc, where, writeBatch } from "../../services/dataGateway.js";
@@ -152,7 +153,7 @@ const rect=(x,top,w,h,stroke=.45,fill=null)=>{const a=[];if(fill)a.push(`${fill[
 const text=(x,top,t,z=7,align="left",bold=false)=>{let xx=x*MM,w=tw(t,z,bold);if(align==="center")xx-=w/2;if(align==="right")xx-=w;return `BT ${bold?"/F2":"/F1"} ${z} Tf ${pdfTextFill(top)} rg 1 0 0 1 ${xx.toFixed(2)} ${(y(top)-z*.80).toFixed(2)} Tm (${esc(t)}) Tj ET`;};
 const wrapped=(x,top,w,h,t,z=5.8,bold=false)=>{const lines=wrap(t,w*MM-4*MM,z),lh=z*1.22,max=Math.max(1,Math.floor((h*MM-2.2*MM)/lh)),vis=lines.slice(0,max);if(lines.length>max&&vis.length)vis[vis.length-1]=`${vis[vis.length-1].slice(0,Math.max(1,vis[vis.length-1].length-4))}...`;const st=top===TOP?pdfCenteredTextTop(top,h,vis.length,z,MM):top+1.7;return vis.map((line,i)=>text(x+w/2,st+i*lh/MM,line,z,"center",bold)).join("\n");};
 const range=`${adminActionPlanFromDate||"All"} to ${adminActionPlanToDate||"All"}`,pages=[];
-const newPage=()=>{const c=[];c.push(rect(L,5,R-L,24,.55,PDF_BANNER),text(148.5,9,"JAVED PUBLISHERS",18,"center",true),text(148.5,15.5,"DAILY ACTION PLAN REPORT",11.5,"center",true),text(10,22.5,`Report Date: ${new Date().toLocaleDateString("en-GB")}`,6.5),text(148.5,22.5,`Total Records: ${rows.length}`,6.5,"center"),text(287,22.5,`Range: ${range}`,6.0,"right"));let x=L;cols.forEach(([h,w])=>{c.push(rect(x,TOP,w,9,.55,PDF_TABLE_HEAD),wrapped(x,TOP,w,9,h,5.8,true));x+=w;});return{content:c,y:TOP+9};};
+const newPage=()=>{const c=[];c.push(rect(L,5,R-L,24,.55,PDF_BANNER),text(148.5,9,companyName().toUpperCase(),18,"center",true),text(148.5,15.5,"DAILY ACTION PLAN REPORT",11.5,"center",true),text(10,22.5,`Report Date: ${new Date().toLocaleDateString("en-GB")}`,6.5),text(148.5,22.5,`Total Records: ${rows.length}`,6.5,"center"),text(287,22.5,`Range: ${range}`,6.0,"right"));let x=L;cols.forEach(([h,w])=>{c.push(rect(x,TOP,w,9,.55,PDF_TABLE_HEAD),wrapped(x,TOP,w,9,h,5.8,true));x+=w;});return{content:c,y:TOP+9};};
 let page=newPage();pages.push(page);
 const drawCell=(x,top,w,h,val,bold=false,size=5.55,fill=null)=>{page.content.push(rect(x,top,w,h,.42,fill),wrapped(x,top,w,h,val,size,bold));};
 const people=groupRowsByMarketerAndDate(rows,{getDateValue:(p)=>p?.date});

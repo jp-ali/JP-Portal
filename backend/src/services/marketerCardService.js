@@ -1,9 +1,11 @@
+import { currentCompany } from './companyContext.js';
 import { readFileSync } from "node:fs";
 import { portalStore } from "../config/portalStore.js";
 import { findTrainerById } from "./trainerService.js";
 import { PAKISTAN_CITY_CATALOG, makeCityId } from "../../../src/domain/catalog.js";
 
 const image = `data:image/jpeg;base64,${readFileSync(new URL("../../assets/card-blank-template.jpg", import.meta.url)).toString("base64")}`;
+const companyImage = `data:image/jpeg;base64,${readFileSync(new URL('../../assets/company-card-template.jpg', import.meta.url)).toString('base64')}`;
 export const PUBLISHER_CARD_EMAIL = "info@javedpublishers.com";
 export const correctCardAddress = (address) => String(address || "").replace(/\bsanint\b/gi, "Sanat");
 const fields = [
@@ -47,20 +49,20 @@ export function alignMarketerHeaderFields(cardFields = []) {
 export function defaultMarketerCard(marketerId, marketer, now = new Date().toISOString()) {
   return {
     marketerId,
-    image,
+    image: currentCompany().id === 'javed' ? image : companyImage,
     imageWidth: 1657,
     imageHeight: 949,
     widthMm: 85.6,
     fields: fields.map((field) => ({ ...field })),
     values: {
-      depotName: "JAVED PUBLISHERS",
+      depotName: currentCompany().name.toUpperCase(),
       name: marketer.name || "Marketer",
       designation: marketer.designation || "Marketing Coordinator",
       assignedCity: marketer.showCardCity === true ? marketer.cardCity || "" : marketer.showCardCity === false ? "" : marketer.assignedCity || "",
       phone: marketer.phone || "",
-      email: PUBLISHER_CARD_EMAIL,
-      website: "javedpublishers.com",
-      address: "Main Outfall Road, Sanat Nagar, Lahore, Punjab"
+      email: currentCompany().supportEmail || "",
+      website: currentCompany().website || "",
+      address: currentCompany().id === "javed" ? "Main Outfall Road, Sanat Nagar, Lahore, Punjab" : ""
     },
     title: `${marketer.name || "Marketer"} Card`,
     createdAt: now,
@@ -76,7 +78,7 @@ export function syncMarketerCard(card, marketer, now = new Date().toISOString())
       ...card.values,
       name: marketer.name || card.values?.name || "Marketer",
       phone: marketer.phone || card.values?.phone || "",
-      email: PUBLISHER_CARD_EMAIL,
+      email: currentCompany().supportEmail || "",
       designation: marketer.designation || card.values?.designation || "Marketing Coordinator",
       assignedCity: marketer.showCardCity === true ? marketer.cardCity || "" : marketer.showCardCity === false ? "" : card.manualCardCity || marketer.assignedCity || ""
     },
@@ -120,7 +122,7 @@ export async function getOrCreateMarketerCard(marketerId) {
   const updatedFields = alignMarketerHeaderFields(alignLegacyCardFields((result.fields || []).map((field) => field.id === "assignedArea" ? { ...field, id: "assignedCity", label: "City" } : field)));
   if (!updatedFields.some((field) => field.id === "assignedCity")) updatedFields.push({ ...fields.find((field) => field.id === "assignedCity") });
   if (JSON.stringify(updatedFields) !== JSON.stringify(result.fields)) additions.fields = updatedFields;
-  const updatedValues = { ...result.values, depotName: "JAVED PUBLISHERS", assignedCity: explicitCityChoice ? city : result.manualCardCity || city, email: PUBLISHER_CARD_EMAIL, address: correctCardAddress(result.values?.address) };
+  const updatedValues = { ...result.values, depotName: currentCompany().name.toUpperCase(), assignedCity: explicitCityChoice ? city : result.manualCardCity || city, email: currentCompany().supportEmail || "", address: correctCardAddress(result.values?.address) };
   delete updatedValues.assignedArea;
   if (JSON.stringify(updatedValues) !== JSON.stringify(result.values)) additions.values = updatedValues;
   if (!cityIdsUnchanged) additions.syncedAssignedCityIds = cityIds;
@@ -139,7 +141,7 @@ export async function getOrCreateTrainerCard(trainerId) {
   if (snapshot.exists) {
     if (snapshot.data().deletedAt) return null;
     const card = snapshot.data();
-    const values = { ...card.values, name: trainer.name, designation: trainer.designation || "Trainer", phone: trainer.phone || "", email: PUBLISHER_CARD_EMAIL };
+    const values = { ...card.values, name: trainer.name, designation: trainer.designation || "Trainer", phone: trainer.phone || "", email: currentCompany().supportEmail || "" };
     if (JSON.stringify(values) !== JSON.stringify(card.values)) await ref.update({ values, title: `${trainer.name} Card`, updatedAt: new Date().toISOString() });
     return { id: ref.id, ...card, values };
   }
@@ -151,13 +153,13 @@ export async function getOrCreateTrainerCard(trainerId) {
 
 export function defaultAdminCard(now = new Date().toISOString()) {
   const { marketerId, ...card } = defaultMarketerCard("", {
-    name: "Muhammad Ali Ashfaq",
+    name: currentCompany().id === "javed" ? "Muhammad Ali Ashfaq" : currentCompany().adminName,
     designation: "Marketing Coordinator",
-    phone: "+92-3068482000",
-    email: PUBLISHER_CARD_EMAIL
+    phone: currentCompany().supportPhone || "",
+    email: currentCompany().supportEmail || ""
   }, now);
   const adminHeader = { depotName: { x: 8.5, y: 24, fontSize: 68, align: "left", bold: false }, name: { x: 8.5, y: 33, fontSize: 58, align: "left", bold: false }, designation: { x: 8.5, y: 41 }, assignedCity: { x: 8.5, y: 47 } };
-  return { ...card, title: "Admin Card", fields: card.fields.map((field) => ({ ...field, ...adminHeader[field.id] })), values: { ...card.values, depotName: "Muhammad Ali Ashfaq", name: "", assignedCity: "" } };
+  return { ...card, title: "Admin Card", fields: card.fields.map((field) => ({ ...field, ...adminHeader[field.id] })), values: { ...card.values, depotName: currentCompany().id === "javed" ? "Muhammad Ali Ashfaq" : currentCompany().adminName, name: "", assignedCity: "" } };
 }
 
 export function lockMarketerCard(original, incoming) {
@@ -171,7 +173,7 @@ export function lockMarketerCard(original, incoming) {
       const moved = incoming.fields.find((item) => item.id === field.id);
       return moved ? { ...field, x: moved.x, y: moved.y } : field;
     }),
-    values: { ...original.values, email: PUBLISHER_CARD_EMAIL, assignedCity: String(incoming.values?.assignedCity ?? original.values?.assignedCity ?? "") },
+    values: { ...original.values, email: currentCompany().supportEmail || "", assignedCity: String(incoming.values?.assignedCity ?? original.values?.assignedCity ?? "") },
     manualCardCity: String(incoming.values?.assignedCity ?? original.values?.assignedCity ?? "") !== String(original.values?.assignedCity ?? "")
       ? String(incoming.values.assignedCity).trim()
       : original.manualCardCity || "",

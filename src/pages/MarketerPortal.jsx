@@ -1,3 +1,5 @@
+import CompanyBrand from '../ui/CompanyBrand.jsx';
+import { companyName, allowedCompanyItem, featureEnabled } from '../services/companyBranding.js';
 import { PortalContext } from "../context/PortalContext.jsx";
 import { visitTimeForDisplay } from "../domain/visitTime.js";
 import MarketerHomePanel from "./marketer/MarketerHomePanel.jsx";
@@ -85,25 +87,25 @@ return (
       <div className={`marketer-sidebar-backdrop ${marketerSidebarOpen ? "open" : ""}`} onClick={() => setMarketerSidebarOpen(false)} aria-hidden="true" />
       <aside className={`marketer-sidebar ${marketerSidebarOpen ? "open" : ""}`}>
         <div className="marketer-sidebar-head">
-          <div className="portal-sidebar-brand"><span className="portal-sidebar-logo">JP<span>.</span></span><strong>JAVED PUBLISHERS</strong></div>
+          <CompanyBrand />
           <div className="marketer-sidebar-head-actions">
             <button type="button" className="marketer-sidebar-close" onClick={() => setMarketerSidebarOpen(false)} title="Close menu" aria-label="Close menu"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m14 5-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
             <button type="button" className="marketer-sidebar-logout" onClick={() => { setMarketerSidebarOpen(false); handleLogout(); }} title="Logout" aria-label="Logout">{renderLogoutArrowIcon(18)}</button>
           </div>
         </div>
         <nav className="marketer-sidebar-nav">
-          {marketerSidebarItems.map((item) => (
+          {marketerSidebarItems.filter(allowedCompanyItem).map((item) => (
 <button type="button" key={item.key} className={`marketer-sidebar-item ${item.active ? "active" : ""}`} onClick={() => openMarketerSidebarSection(item.key)}>
               <span className="marketer-sidebar-icon">{item.icon}</span>
               <span>{item.label}</span>{item.badge > 0 && <span className="marketer-news-sidebar-badge" aria-label={`${item.badge} unread news`}>{item.badge}</span>}
             </button>
 ))}
         </nav>
-          <div className="portal-sidebar-footer"><div className="portal-sidebar-profile"><span className="portal-sidebar-avatar">{user?.profilePhoto ? <img src={user.profilePhoto} alt="" /> : (user?.name || "M").charAt(0).toUpperCase()}</span><span><strong>{user?.name || "Marketer"}</strong><small>Javed Publishers</small></span></div><button type="button" onClick={handleLogout}>{renderLogoutArrowIcon(16)} Logout</button></div>
+          <div className="portal-sidebar-footer"><div className="portal-sidebar-profile"><span className="portal-sidebar-avatar">{user?.profilePhoto ? <img src={user.profilePhoto} alt="" /> : (user?.name || "M").charAt(0).toUpperCase()}</span><span><strong>{user?.name || "Marketer"}</strong><small>{companyName()}</small></span></div><button type="button" onClick={handleLogout}>{renderLogoutArrowIcon(16)} Logout</button></div>
       </aside>
       <div className={`app-responsive marketer-portal-content ${marketerSidebarOpen ? "sidebar-open" : ""}`} style={containerStyle}>
         {renderResponsiveStyles()}
-        <PortalTopBar role="marketer" name={user?.name || "Marketer"} items={marketerSidebarItems} onNavigate={openMarketerSidebarSection} onMenu={() => setMarketerSidebarOpen(true)} onLogout={handleLogout} profilePhoto={user?.profilePhoto} onProfilePhotoChange={(photo) => setUser((current) => ({ ...current, profilePhoto: photo }))} onExpandProfilePhoto={(photo) => setFullScreenImage(photo)} onSync={onSync} syncState={syncState} online={online} />
+        <PortalTopBar role="marketer" name={user?.name || "Marketer"} items={marketerSidebarItems.filter(allowedCompanyItem)} onNavigate={openMarketerSidebarSection} onMenu={() => setMarketerSidebarOpen(true)} onLogout={handleLogout} profilePhoto={user?.profilePhoto} onProfilePhotoChange={(photo) => setUser((current) => ({ ...current, profilePhoto: photo }))} onExpandProfilePhoto={(photo) => setFullScreenImage(photo)} onSync={onSync} syncState={syncState} online={online} />
         {unreadCount > 0 && unreadKey !== dismissedNews && marketerView === "home" && <aside className="marketer-news-alert" role="status" aria-label="Unread news">
           <span className="marketer-news-alert-icon" aria-hidden="true">📰</span>
           <div className="marketer-news-alert-copy"><span className="marketer-news-alert-count">{unreadCount} new</span><strong>New news available</strong><small>{unreadCount === 1 ? "You have an unread update." : `You have ${unreadCount} unread updates.`}</small><button type="button" className="marketer-news-alert-open" onClick={() => setMarketerview("news")}>View News <span aria-hidden="true">→</span></button></div>

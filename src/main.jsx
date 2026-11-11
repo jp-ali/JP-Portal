@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
+import { initializeCompany, installCompanyDownloadControls } from './services/companyBranding.js'
+import './styles/company.css'
 import ConfirmDialogHost from './ui/ConfirmDialogHost.jsx'
 import { installIosPullToRefresh } from './services/pwaRefresh.js'
 
@@ -16,12 +17,22 @@ if (isStaticPagesHost && livePortalUrl && navigator.onLine) {
   document.getElementById('root').innerHTML = '<main style="max-width:34rem;margin:12vh auto;padding:2rem;font:16px system-ui;color:#3b2329"><h1>Portal server is not available here</h1><p>This GitHub Pages address hosts the frontend only. Open the live portal URL to sign in.</p></main>'
 } else {
   installIosPullToRefresh()
-  ReactDOM.createRoot(document.getElementById('root')).render(
-    <React.StrictMode>
-      <App />
-      <ConfirmDialogHost />
-    </React.StrictMode>,
-  )
+  const root = ReactDOM.createRoot(document.getElementById('root'))
+  const boot = async () => {
+    try {
+      root.render(<div style={{ padding: 50, textAlign: 'center', fontFamily: 'system-ui' }}>Loading portal…</div>)
+      const ownerMode = /^\/owner(?:\/|$)/.test(location.pathname) || /^(manage|owner)\./.test(location.hostname)
+      if (!ownerMode) { await initializeCompany(); installCompanyDownloadControls() }
+      let pageModule
+      if (ownerMode) pageModule = await import('./pages/OwnerPortal.jsx')
+      else pageModule = await import('./App.jsx')
+      const App = pageModule.default
+      root.render(<React.StrictMode><App /><ConfirmDialogHost /></React.StrictMode>)
+    } catch (error) {
+      root.render(<main style={{ padding: 40, fontFamily: 'system-ui', textAlign: 'center' }}><h2>Portal unavailable</h2><p>{error.message}</p><button onClick={boot}>Retry</button></main>)
+    }
+  }
+  boot()
 }
 
 if ('serviceWorker' in navigator) {

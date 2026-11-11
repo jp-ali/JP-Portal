@@ -1,3 +1,5 @@
+import { assertExportsAllowed } from './companyBranding.js';
+import { companyName } from './companyBranding.js';
 import { showNotice as alert } from "../ui/confirmDialog.js";
 import { mergedReportSheet } from "./mergedReportSheet.js";
 import { PDF_BANNER, PDF_TABLE_HEAD, PDF_FOOTER, pdfTextFill, pdfTextWidth, pdfCenteredTextTop } from "./pdfTheme.js";
@@ -66,7 +68,7 @@ merges.push({ s: { r: personStart + 3, c }, e: { r: body.length + 2, c } });
 });
 const worksheet = XLSX.utils.aoa_to_sheet([
 ["SCHOOL VISITS REPORT"],
-[`JAVED PUBLISHERS  |  ${rows.length} records`],
+[`${companyName().toUpperCase()}  |  ${rows.length} records`],
 headings,
 ...body
 ]);
@@ -198,7 +200,7 @@ const pages = [];
 const newPage = () => {
 const c = [];
 c.push(rectCmd(LEFT, 5, RIGHT - LEFT, 24, 0.55, PDF_BANNER));
-c.push(drawText(148.5, 9, "JAVED PUBLISHERS", 18, "center", true));
+c.push(drawText(148.5, 9, companyName().toUpperCase(), 18, "center", true));
 c.push(drawText(148.5, 15.5, isSampleReport ? "SCHOOL SAMPLE REPORT" : "SCHOOL VISIT REPORT", 11.5, "center", true));
 c.push(drawText(10, 22.5, `Report Date: ${new Date().toLocaleDateString("en-GB")}`, 6.5, "left", false));
 c.push(drawText(148.5, 22.5, `Total Records: ${rows.length}`, 6.5, "center", false));
@@ -493,7 +495,7 @@ const pages = [];
 const newPage = () => {
 const c = [];
 c.push(rectCmd(LEFT, 5, RIGHT - LEFT, 24, 0.55, PDF_BANNER));
-c.push(drawText(148.5, 9, "JAVED PUBLISHERS", 18, "center", true));
+c.push(drawText(148.5, 9, companyName().toUpperCase(), 18, "center", true));
 c.push(drawText(148.5, 15.5, "MARKETER DETAILS REPORT", 11.5, "center", true));
 c.push(drawText(10, 22.5, `Report Date: ${new Date().toLocaleDateString("en-GB")}`, 6.5, "left", false));
 c.push(drawText(148.5, 22.5, `Total Marketers: ${rows.length}`, 6.5, "center", false));

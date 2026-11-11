@@ -1,10 +1,11 @@
+import { companyStorage } from './companyBranding.js';
 import { canSeeSchool } from "../domain/schoolOwnership.js";
 
 const keyFor = (email) => `jp-offline-visit-catalog:${String(email || "").trim().toLowerCase()}`;
 
 export function readOfflineVisitCatalog(email) {
   try {
-    const data = JSON.parse(localStorage.getItem(keyFor(email)) || "null");
+    const data = JSON.parse(companyStorage.getItem(keyFor(email)) || "null");
     return data && typeof data === "object" ? data : { cities: [], areas: [], schools: [] };
   } catch {
     return { cities: [], areas: [], schools: [] };
@@ -25,5 +26,5 @@ export function cacheOfflineVisitCatalog(user, cities = [], areas = [], schools 
     schools: merge(previous.schools, schools.filter((row) => areaIds.includes(row.areaId)))
       .filter((school) => areaIds.includes(school.areaId) && canSeeSchool(school, user))
   };
-  try { localStorage.setItem(keyFor(user.email), JSON.stringify(catalog)); } catch { /* Storage may be full. */ }
+  try { companyStorage.setItem(keyFor(user.email), JSON.stringify(catalog)); } catch { /* Storage may be full. */ }
 }

@@ -12,6 +12,9 @@ import { newsRoutes } from "./routes/newsRoutes.js";
 import { dataRoutes } from "./routes/dataRoutes.js";
 import { trainerRoutes } from "./routes/trainerRoutes.js";
 import { visitLocationRoutes } from "./routes/visitLocationRoutes.js";
+import { ownerRoutes } from './routes/ownerRoutes.js';
+import { resolveCompany } from './services/companyService.js';
+import { companyRoutes } from './routes/companyRoutes.js';
 
 export const app = express();
 
@@ -41,6 +44,9 @@ app.use((request, response, next) => {
 app.get("/api/health", (_request, response) => {
   response.json({ status: "ok" });
 });
+app.use('/api/owner', ownerRoutes);
+app.use((request, response, next) => request.path.startsWith('/api/') ? resolveCompany(request, response, next) : next());
+app.use('/api/company', companyRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/marketers", marketerRoutes);
 app.use("/api/trainers", trainerRoutes);
@@ -63,6 +69,7 @@ if (existsSync(frontendIndex)) {
 }
 
 app.use((error, _request, response, _next) => {
+  if ([401, 403, 409].includes(error.status)) return response.status(error.status).json({ error: error.message });
   if (error instanceof SyntaxError && "body" in error) {
     return response.status(400).json({ error: "Invalid JSON request body" });
   }

@@ -1,6 +1,9 @@
 import { portalStore } from "../config/portalStore.js";
 import { FieldValue } from "../config/portalStore.js";
 import { sendNewsPush } from "./newsPushDelivery.js";
+import { postgresPool } from '../config/postgres.js';
+import { publicCompany } from './companyService.js';
+import { withCompany } from './companyContext.js';
 
 const ZONE = "Asia/Karachi";
 const localParts = new Intl.DateTimeFormat("en-GB", {
@@ -141,7 +144,13 @@ export function startNewsScheduler() {
   const tick = async () => {
     if (running) return;
     running = true;
-    try { await runDueNewsSchedules(); }
+    try {
+      const companies = (await postgresPool().query('SELECT * FROM portal_companies WHERE active=true')).rows;
+      for (const row of companies) {
+        const company = publicCompany(row);
+        if (company.features.news && company.features.expenses) await withCompany(company, () => runDueNewsSchedules());
+      }
+    }
     catch (error) { console.error("News scheduler check failed:", error); }
     finally { running = false; }
   };

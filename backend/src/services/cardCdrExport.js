@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { currentCompany } from './companyContext.js';
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
@@ -14,7 +15,7 @@ function cardObjects(card) {
   const { image, imageWidth: width, imageHeight: height, fields, values } = card;
   const labels = fields.flatMap((field) => {
     let value = String(values[field.id] || "");
-    if (field.id === "depotName" && value.trim().toUpperCase() === "JAVED PUBLISHERS") return [];
+    if (field.id === "depotName" && value.trim().toUpperCase() === currentCompany().name.toUpperCase()) return [];
     let { x, y } = field;
     if (field.id === "phone2") {
       const first = fields.find((item) => item.id === "phone");

@@ -4,9 +4,26 @@ import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 function offlinePrecache() {
+  let runtimeShell = []
   return {
     name: 'offline-precache',
     apply: 'build',
+    generateBundle(_options, bundle) {
+      const collected = new Set()
+      const visit = name => {
+        if (collected.has(name) || !bundle[name]) return
+        collected.add(name)
+        const chunk = bundle[name]
+        if (chunk.type === 'chunk') {
+          chunk.imports.forEach(visit)
+          for (const css of chunk.viteMetadata?.importedCss || []) collected.add(css)
+        }
+      }
+      // App is loaded after company branding resolves. Its static dependencies
+      // contain both offline visit portals and must exist on the first offline launch.
+      Object.values(bundle).filter(chunk => chunk.type === 'chunk' && (chunk.isEntry || chunk.name === 'App')).forEach(chunk => visit(chunk.fileName))
+      runtimeShell = [...collected]
+    },
     async closeBundle() {
       const dist = join(process.cwd(), 'dist')
       const assets = await readdir(join(dist, 'assets'))
@@ -16,7 +33,7 @@ function offlinePrecache() {
       // Offline Add Visit lives in the entry bundle. Keep installation small;
       // other portal chunks are cached when opened online.
       const base = process.env.GITHUB_PAGES === 'true' ? '/JP-Portal/' : '/'
-      const files = ['', 'index.html', 'manifest.webmanifest', 'icons/app-icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', ...assets.filter((file) => /^(index-[\w-]+\.(js|css)|heic2any-[\w-]+\.js|login-reference-panel-[\w-]+\.webp|dashboard-books-mobile-[\w-]+\.webp)$/.test(file)).map((file) => `assets/${file}`)].map((file) => `${base}${file}`)
+      const files = [...new Set(['', 'index.html', 'manifest.webmanifest', 'icons/app-icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', ...runtimeShell, ...assets.filter((file) => /^(index-[\w-]+\.(js|css)|heic2any-[\w-]+\.js|login-reference-panel-[\w-]+\.webp|dashboard-books-mobile-[\w-]+\.webp)$/.test(file)).map((file) => `assets/${file}`)])].map((file) => `${base}${file}`)
       const swPath = join(dist, 'sw.js')
       const sw = await readFile(swPath, 'utf8')
       await writeFile(swPath, sw.replace('self.__PRECACHE__ ||', `${JSON.stringify(files)} ||`).replace('jp-portal-pwa-v1', `jp-portal-pwa-${entry}`))

@@ -1,3 +1,5 @@
+import { assertExportsAllowed } from './companyBranding.js';
+import { companyName, getCompany, companySlugFromPath } from './companyBranding.js';
 import { strToU8, zipSync } from "fflate";
 
 const escapeXml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[char]);
@@ -13,16 +15,16 @@ export const defaultCardFields = [
 ];
 
 export const defaultCardValues = {
-  depotName: "Muhammad Ali Ashfaq",
+  depotName: getCompany().id === "javed" ? "Muhammad Ali Ashfaq" : companyName(),
   name: "",
   designation: "Marketing Coordinator",
-  phone: "+92-3068482000",
+  phone: getCompany().supportPhone,
   phone2: "",
-  email: "info@javedpublishers.com",
-  website: "javedpublishers.com",
-  address: "Main Outfall Road, Sanat Nagar, Lahore, Punjab"
+  email: getCompany().supportEmail,
+  website: getCompany().website,
+  address: getCompany().id === "javed" ? "Main Outfall Road, Sanat Nagar, Lahore, Punjab" : ""
 };
-const marketerCardEmail = "info@javedpublishers.com";
+const marketerCardEmail = () => getCompany().supportEmail;
 
 function cardDisplayCase(value) {
   return String(value ?? "").replace(/\p{L}+/gu, (word) => {
@@ -34,8 +36,8 @@ function cardDisplayCase(value) {
 export function cardRenderEntries(template, values) {
   return template.fields.map((field) => {
     let value = String(values[field.id] || "");
-    if (field.id === "depotName" && value.trim().toUpperCase() === "JAVED PUBLISHERS") value = "";
-    if (template.marketerId && field.id === "email") value = marketerCardEmail;
+    if (field.id === "depotName" && value.trim().toUpperCase() === companyName().toUpperCase()) value = "";
+    if (template.marketerId && field.id === "email") value = marketerCardEmail();
     if (field.id === "address") value = value.replace(/\bsanint\b/gi, "Sanat");
     if (template.marketerId && ["name", "designation", "assignedCity"].includes(field.id)) {
       value = cardDisplayCase(value);
@@ -99,7 +101,7 @@ export function cardSvg(template, values) {
 }
 
 function cardFileName(values, extension) {
-  const label = values.depotName === "JAVED PUBLISHERS" && values.name ? values.name : values.depotName || values.name || "card";
+  const label = values.depotName === companyName().toUpperCase() && values.name ? values.name : values.depotName || values.name || "card";
   const name = String(label).trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").slice(0, 55) || "card";
   return `${name}.${extension}`;
 }
@@ -117,6 +119,7 @@ function saveDownload(blob, fileName) {
 }
 
 export function downloadCardSvg(template, values) {
+  assertExportsAllowed();
   const blob = new Blob([cardSvg(template, values)], { type: "image/svg+xml;charset=utf-8" });
   return saveDownload(blob, cardFileName(values, "svg"));
 }
@@ -126,6 +129,7 @@ export function corelShareFile(svg, svgFileName = "Card-Corel.svg") {
 }
 
 export function downloadCardShareZip(template, values) {
+  assertExportsAllowed();
   return saveDownload(corelShareFile(cardSvg(template, values), cardFileName(values, "svg")), cardFileName(values, "zip"));
 }
 
@@ -157,10 +161,12 @@ export function cardSheetSvg(cards) {
 }
 
 export function downloadCardSheetSvg(cards) {
+  assertExportsAllowed();
   return saveDownload(new Blob([cardSheetSvg(cards)], { type: "image/svg+xml;charset=utf-8" }), "Cards-Corel-Sheet.svg");
 }
 
 export function downloadCardSheetShareZip(cards) {
+  assertExportsAllowed();
   return saveDownload(corelShareFile(cardSheetSvg(cards), "Cards-Corel-Sheet.svg"), "Cards-Corel-Share.zip");
 }
 
@@ -171,7 +177,7 @@ async function requestCdr(body) {
     const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "/api"}/cards/export-cdr`, {
       method: "POST",
       credentials: "same-origin",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...(companySlugFromPath() ? { "x-company-slug": companySlugFromPath() } : {}) },
       body: JSON.stringify(body),
       signal: controller.signal
     });
@@ -189,11 +195,13 @@ async function requestCdr(body) {
 }
 
 export async function downloadCardCdr(template, values) {
+  assertExportsAllowed();
   const file = await requestCdr({ template, values });
   return saveDownload(file, cardFileName(values, "cdr"));
 }
 
 export async function downloadCardSheetCdr(ids, values = {}) {
+  assertExportsAllowed();
   const file = await requestCdr({ ids });
   return saveDownload(file, ids.length === 1 ? cardFileName(values, "cdr") : "Cards-Corel-Sheet.cdr");
 }
@@ -242,6 +250,7 @@ function drawPdfCard(pdf, template, values, x, y, width, height) {
 }
 
 export async function downloadCardPdf(template, values) {
+  assertExportsAllowed();
   const { jsPDF } = await import("jspdf");
   const { imageWidth: width, imageHeight: height, widthMm } = template;
   const heightMm = widthMm * height / width;
@@ -252,6 +261,7 @@ export async function downloadCardPdf(template, values) {
 }
 
 export async function downloadCardSheetPdf(cards) {
+  assertExportsAllowed();
   if (!cards.length) throw new Error("Select at least one card.");
   const { jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
