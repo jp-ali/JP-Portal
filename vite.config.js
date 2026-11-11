@@ -21,7 +21,7 @@ function offlinePrecache() {
       }
       // App is loaded after company branding resolves. Its static dependencies
       // contain both offline visit portals and must exist on the first offline launch.
-      Object.values(bundle).filter(chunk => chunk.type === 'chunk' && (chunk.isEntry || chunk.name === 'App')).forEach(chunk => visit(chunk.fileName))
+      Object.values(bundle).filter(chunk => chunk.type === 'chunk' && (chunk.isEntry || chunk.name === 'App' || chunk.name === 'OwnerPortal')).forEach(chunk => visit(chunk.fileName))
       runtimeShell = [...collected]
     },
     async closeBundle() {

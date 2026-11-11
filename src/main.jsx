@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { initializeCompany, installCompanyDownloadControls } from './services/companyBranding.js'
+import { freshPortalUrl, isModuleLoadError, recoverModuleLoad } from './services/moduleRecovery.js'
 import './styles/company.css'
 import ConfirmDialogHost from './ui/ConfirmDialogHost.jsx'
 import { installIosPullToRefresh } from './services/pwaRefresh.js'
@@ -29,7 +30,9 @@ if (isStaticPagesHost && livePortalUrl && navigator.onLine) {
       const App = pageModule.default
       root.render(<React.StrictMode><App /><ConfirmDialogHost /></React.StrictMode>)
     } catch (error) {
-      root.render(<main style={{ padding: 40, fontFamily: 'system-ui', textAlign: 'center' }}><h2>Portal unavailable</h2><p>{error.message}</p><button onClick={boot}>Retry</button></main>)
+      if (await recoverModuleLoad(error)) return
+      const moduleFailed = isModuleLoadError(error)
+      root.render(<main style={{ maxWidth: 550, margin: '12vh auto', padding: 32, fontFamily: 'system-ui', textAlign: 'center', color: '#442c36' }}><h2>Portal could not finish loading</h2><p>{moduleFailed ? 'Check your connection, then reload to open the latest portal.' : error.message}</p><button style={{ background: '#800e2d', color: 'white', padding: '12px 24px', border: 0, borderRadius: 8, cursor: 'pointer' }} onClick={() => moduleFailed ? location.replace(freshPortalUrl()) : boot()}>{moduleFailed ? 'Reload portal' : 'Retry'}</button></main>)
     }
   }
   boot()

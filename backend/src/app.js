@@ -61,9 +61,14 @@ app.use("/api/data", dataRoutes);
 const frontendDirectory = fileURLToPath(new URL("../../dist/", import.meta.url));
 const frontendIndex = fileURLToPath(new URL("../../dist/index.html", import.meta.url));
 if (existsSync(frontendIndex)) {
-  app.use(express.static(frontendDirectory));
+  app.use(express.static(frontendDirectory, { setHeaders(response, file) {
+    if (/[/\\]assets[/\\]/.test(file)) response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    else if (file.endsWith('index.html') || file.endsWith('sw.js')) response.setHeader('Cache-Control', 'no-store');
+  } }));
+  app.use('/assets', (_request, response) => response.set('Cache-Control', 'no-store').status(404).end());
   app.use((request, response, next) => {
-    if (request.method !== "GET" || request.path === "/api" || request.path.startsWith("/api/")) return next();
+    if (!["GET", "HEAD"].includes(request.method) || request.path === "/api" || request.path.startsWith("/api/")) return next();
+    response.set('Cache-Control', 'no-store');
     return response.sendFile(frontendIndex);
   });
 }
