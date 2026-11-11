@@ -19,8 +19,8 @@ export default function DashboardHome({ role, accountId, stats, sections, title,
   return <main className="portal-dashboard">
     {visible(dashboardItemKeys.hero) && <section className="portal-dashboard-hero">
       <div className="portal-dashboard-hero-copy"><span className="portal-dashboard-hero-overline">{companyName().toUpperCase()}</span><h1>{title || (role === "admin" ? "Admin Dashboard" : "Marketer Dashboard")}</h1><p>{description || (role === "admin" ? "Track visits, manage marketers, view reports and more. Everything you need, in one place." : "Plan your day, record visits and keep your reports in one place.")}</p></div>
-      {(company.banner || company.logo || company.id === 'javed') && <><img src={company.banner || company.logo || heroBooks} alt="" className="portal-dashboard-hero-art" />
-      <img src={company.banner || company.logo || mobileHeroBooks} alt="" className="portal-dashboard-hero-art-mobile" /></>}
+      <img src={company.banner || heroBooks} alt="" className="portal-dashboard-hero-art" onError={event => { if (event.currentTarget.getAttribute('src') !== heroBooks) event.currentTarget.src = heroBooks; }} />
+      <img src={company.banner || mobileHeroBooks} alt="" className="portal-dashboard-hero-art-mobile" onError={event => { if (event.currentTarget.getAttribute('src') !== mobileHeroBooks) event.currentTarget.src = mobileHeroBooks; }} />
       {showHideButtons && <HideButton title="Dashboard banner" onClick={() => hide({ key: dashboardItemKeys.hero, title: "Dashboard banner", type: "Banner" })} />}
     </section>}
     <div className="portal-dashboard-stats">{stats.filter((stat) => visible(dashboardItemKeys.stat(stat.label))).map((stat) => {

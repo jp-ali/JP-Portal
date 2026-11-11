@@ -2,13 +2,12 @@
 .portal-shell .admin-desktop-sidebar,.portal-shell .marketer-sidebar{background:var(--company-primary)!important}
 .portal-shell .portal-sidebar-brand strong{overflow-wrap:anywhere}
 .portal-shell .portal-sidebar-logo{flex-shrink:0}
-.portal-shell .portal-dashboard-group-header h2,.portal-shell .portal-dashboard-hero-overline{color:var(--company-primary)}
+.portal-shell .portal-dashboard-group-header h2{color:var(--company-primary)}
+.portal-shell .portal-dashboard-hero-overline{color:#fff}
 .login-brand,.login-submit{background:var(--company-primary)!important}
 .portal-shell .portal-dashboard-hero,.portal-shell .portal-dashboard-group{border-color:color-mix(in srgb,var(--company-primary) 18%,white)}
 .portal-shell .trainer-back,.portal-shell .trainer-refresh,.portal-shell .trainer-primary,.portal-shell .report-expanded-pdf,.portal-shell .report-expanded-excel{background:var(--company-primary)!important}
 .portal-shell .portal-sidebar-footer button{background:color-mix(in srgb,var(--company-primary) 75%,white)!important}
 .company-login-placeholder{height:100%;min-height:500px;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:50px;color:var(--company-primary);background:#fbf6f8;text-align:center}
 .company-login-placeholder h2{font-size:42px;margin:20px 0}.company-login-placeholder p{font-size:18px}
-html[data-company]:not([data-company="javed"]) .portal-dashboard-hero{background:color-mix(in srgb,var(--company-primary) 8%,white)}
-html[data-company]:not([data-company="javed"]) .portal-dashboard-hero-art,html[data-company]:not([data-company="javed"]) .portal-dashboard-hero-art-mobile{object-fit:contain}
 html[data-no-exports="true"] button[data-export],html[data-no-exports="true"] .company-export-hidden{display:none!important}
